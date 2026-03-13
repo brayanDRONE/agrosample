@@ -1,11 +1,29 @@
 .header {
-  background: var(--theme-gradient);
+  background-image: url('../images/header-fondo.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-bottom: 3px solid rgba(var(--theme-secondary-rgb), 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 0;
 }
 
 .header-content {
+  position: relative;
+  z-index: 1;
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem 1rem;

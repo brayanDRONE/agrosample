@@ -1,0 +1,280 @@
+/* DiagramaPalletCard.css - Estilo tarjeta INACAP para Pallets */
+
+.pallet-card-container {
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.pallet-card-container:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+}
+
+/* Header con gradiente */
+.pallet-card-header {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Código del pallet */
+.pallet-card-code {
+  font-size: 2.5em;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  letter-spacing: 2px;
+}
+
+/* Cuerpo de la tarjeta */
+.pallet-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+/* Título */
+.pallet-card-title {
+  margin: 0;
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #2d3748;
+  letter-spacing: -0.5px;
+}
+
+/* Información del pallet */
+.pallet-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.info-label {
+  color: #718096;
+  font-weight: 600;
+}
+
+.info-value {
+  color: #2d3748;
+  font-weight: 700;
+}
+
+.muestra-badge {
+  background: #bee3f8;
+  color: #2c5282;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+/* Barra de progreso */
+.pallet-card-progress {
+  margin-top: 8px;
+}
+
+.progress-label {
+  font-size: 0.85em;
+  color: #718096;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4299e1 0%, #3182ce 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Divisor */
+.pallet-card-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 8px 0;
+}
+
+/* Footer con acciones */
+.pallet-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.pallet-card-expand {
+  flex-grow: 1;
+  padding: 8px 12px;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #2d3748;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+}
+
+.pallet-card-expand:hover {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+  color: #1a202c;
+}
+
+/* Menú de opciones */
+.pallet-card-menu {
+  position: relative;
+}
+
+.menu-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  background: #f7fafc;
+  border-radius: 6px;
+  font-size: 1.2em;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.menu-button:hover {
+  background: #edf2f7;
+  color: #2d3748;
+  border-color: #cbd5e0;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  min-width: 120px;
+  margin-top: 4px;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.menu-item:hover {
+  background: #f7fafc;
+  padding-left: 20px;
+}
+
+.menu-item.edit {
+  color: #3182ce;
+}
+
+.menu-item.delete {
+  color: #c53030;
+}
+
+.menu-item.delete:hover {
+  background: #fff5f5;
+}
+
+/* Grid de tarjetas */
+.pallet-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .pallet-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pallet-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .pallet-card-header {
+    height: 100px;
+  }
+
+  .pallet-card-code {
+    font-size: 2em;
+  }
+
+  .pallet-card-body {
+    padding: 16px;
+  }
+
+  .pallet-card-title {
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  .pallet-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .pallet-card-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pallet-card-expand {
+    margin-right: 0;
+    width: 100%;
+  }
+
+  .menu-button {
+    width: 100%;
+  }
+}

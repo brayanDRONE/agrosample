@@ -224,14 +224,21 @@ function ConfiguracionDiagramaView({ inspection, onConfigured, onClose }) {
       };
 
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Solo agregar Authorization si existe token
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(
         `${API_URL}/muestreo/configurar-pallets/${inspection.id}/`,
         {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers,
           body: JSON.stringify(payload)
         }
       );

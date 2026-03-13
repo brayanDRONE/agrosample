@@ -1,4 +1,5 @@
 from django.db import migrations
+from django.contrib.auth.hashers import make_password
 
 
 def create_superuser(apps, schema_editor):
@@ -14,7 +15,7 @@ def create_superuser(apps, schema_editor):
             is_superuser=True,
             is_staff=True
         )
-        admin_user.set_password('admin123')
+        admin_user.password = make_password('admin123')
         admin_user.save()
         
         # Crear perfil con rol SUPERADMIN
@@ -23,7 +24,7 @@ def create_superuser(apps, schema_editor):
             role='SUPERADMIN'
         )
         
-        print("✅ Superusuario 'admin' y perfil SUPERADMIN creados exitosamente")
+        print("OK: Superusuario 'admin' y perfil SUPERADMIN creados exitosamente")
     else:
         # Si el usuario ya existe, verificar que tenga perfil
         admin_user = User.objects.get(username='admin')
@@ -32,9 +33,9 @@ def create_superuser(apps, schema_editor):
                 user=admin_user,
                 role='SUPERADMIN'
             )
-            print("✅ Perfil SUPERADMIN creado para usuario 'admin' existente")
+            print("OK: Perfil SUPERADMIN creado para usuario 'admin' existente")
         else:
-            print("ℹ️ Superusuario 'admin' y perfil ya existen")
+            print("INFO: Superusuario 'admin' y perfil ya existen")
 
 
 class Migration(migrations.Migration):

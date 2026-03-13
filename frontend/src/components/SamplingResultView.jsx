@@ -124,7 +124,7 @@ function SamplingResultView({ result, onNewInspection }) {
     yPos = 58; // Reset a la misma altura que columna izquierda
     
     doc.text('Planta', rightCol, yPos);
-    doc.text(': ' + (inspection.establishment_name || ''), rightValCol, yPos);
+    doc.text(': ' + (inspection.establecimiento_nombre || inspection.establishment_name || ''), rightValCol, yPos);
     yPos += 6;
     
     doc.text('Hora', rightCol, yPos);
@@ -349,7 +349,7 @@ function SamplingResultView({ result, onNewInspection }) {
               </div>
               <div className="info-item">
                 <span className="info-label">Establecimiento:</span>
-                <span className="info-value">{inspection.establishment_name}</span>
+                <span className="info-value">{inspection.establecimiento_nombre || inspection.establishment_name}</span>
               </div>
               <div className="info-item">
                 <span className="info-label">Inspector SAG:</span>

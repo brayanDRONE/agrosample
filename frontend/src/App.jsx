@@ -10,6 +10,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import EstablishmentManagement from './components/admin/EstablishmentManagement';
 import ThemeEditor from './components/admin/ThemeEditor';
 import InspectionApp from './components/InspectionApp';
+import LandingPage from './pages/LandingPage';
 import './App.css';
 
 function AppRoutes() {
@@ -55,14 +56,16 @@ function AppRoutes() {
         }
       />
 
-      {/* Ruta de inspección (para usuarios de establecimiento) */}
+      {/* Ruta pública para la aplicación de inspección */}
+      <Route
+        path="/muestreo"
+        element={<InspectionApp />}
+      />
+
+      {/* Ruta raíz - mostrar LandingPage */}
       <Route
         path="/"
-        element={
-          <ProtectedRoute>
-            <InspectionApp />
-          </ProtectedRoute>
-        }
+        element={<LandingPage />}
       />
 
       {/* Redirección por defecto */}

@@ -1,0 +1,175 @@
+﻿./venv/Scripts/python 
+: Creating test 
+database for alias 
+'default'...
+En línea: 1 Carácter: 
+1
++ 
+./venv/Scripts/python 
+manage.py test > 
+test_output.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (Creating t   
+ est d...as 'defau    
+lt'...:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+
+================================================================================
+PRUEBA DE TABLAS OFICIALES SAG-USDA
+================================================================================
+
+================================================================================
+HIPERGEOM╔TRICA 3% - Damasco (sin frÝo)
+================================================================================
+Found 16 test(s).
+OK: Superusuario 'admin' y perfil SUPERADMIN creados exitosamente
+System check identified no issues (0 silenced).
+E........E..F...
+======================
+======================
+======================
+====
+ERROR: 
+test_tablas_muestreo (
+unittest.loader._Faile
+dTest.test_tablas_mues
+treo)
+----------------------
+----------------------
+----------------------
+----
+ImportError: Failed 
+to import test 
+module: 
+test_tablas_muestreo
+Traceback (most 
+recent call last):
+  File "C:\Python313\L
+ib\unittest\loader.py"
+, line 396, in 
+_find_test_path
+    module = self._get
+_module_from_name(name
+)
+  File "C:\Python313\L
+ib\unittest\loader.py"
+, line 339, in 
+_get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "C:\proyecto_us
+da\backend\test_tablas
+_muestreo.py", line 
+40, in <module>
+    print(f"{ok} 
+Lote: {lote:>6} 
+\u2192 Muestra: {resul
+tado['tamano_muestra']
+:>3} (esperado: 
+{esperado:>3}) 
+[{rango}]")
+    ~~~~~^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+^^^^
+  File "C:\Python313\L
+ib\encodings\cp1252.py
+", line 19, in encode
+    return codecs.char
+map_encode(input,self.
+errors,encoding_table)
+[0]
+           ~~~~~~~~~~~
+~~~~~~~~~~^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2192' in position 
+16: character maps to 
+<undefined>
+
+
+======================
+======================
+======================
+====
+ERROR: test_calcular_m
+uestreo_basico (inspec
+tions.tests.SamplingUt
+ilsTest.test_calcular_
+muestreo_basico)
+Verifica el cßlculo 
+bßsico de muestreo al 
+2%
+----------------------
+----------------------
+----------------------
+----
+Traceback (most 
+recent call last):
+  File "C:\proyecto_us
+da\backend\inspections
+\tests.py", line 54, 
+in test_calcular_muest
+reo_basico
+    self.assertEqual(r
+esultado['porcentaje_m
+uestreo'], 2.0)
+                     ~
+~~~~~~~~^^^^^^^^^^^^^^
+^^^^^^^^^
+KeyError: 
+'porcentaje_muestreo'
+
+======================
+======================
+======================
+====
+FAIL: test_error_porce
+ntaje_invalido (inspec
+tions.tests.SamplingUt
+ilsTest.test_error_por
+centaje_invalido)
+Verifica que rechaza 
+porcentajes invßlidos
+----------------------
+----------------------
+----------------------
+----
+Traceback (most 
+recent call last):
+  File "C:\proyecto_us
+da\backend\inspections
+\tests.py", line 94, 
+in test_error_porcenta
+je_invalido
+    with self.assertRa
+ises(ValueError):
+         ~~~~~~~~~~~~~
+~~~~^^^^^^^^^^^^
+AssertionError: 
+ValueError not raised
+
+----------------------
+----------------------
+----------------------
+----
+Ran 16 tests in 0.022s
+
+FAILED (failures=1, 
+errors=2)
+Destroying test 
+database for alias 
+'default'...
+

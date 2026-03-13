@@ -1,0 +1,245 @@
+/* DiagramaPalletCardsView.css */
+
+.pallets-view-container {
+  width: 100%;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+}
+
+/* Overlay modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content.modal-large {
+  max-width: 1400px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 2em;
+  cursor: pointer;
+  color: #718096;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+/* Header */
+.cards-header {
+  margin-bottom: 32px;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.cards-header h2 {
+  margin: 0;
+  font-size: 2.5em;
+  font-weight: 800;
+  color: #1a202c;
+  letter-spacing: -1px;
+}
+
+.cards-subtitle {
+  margin: 8px 0 0 0;
+  font-size: 1.05em;
+  color: #718096;
+  font-weight: 500;
+}
+
+/* Grid de tarjetas */
+.pallet-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 100%;
+}
+
+/* Estados cargando/vacío */
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  gap: 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #4299e1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner p {
+  font-size: 1.1em;
+  color: #718096;
+  font-weight: 600;
+}
+
+.error-message {
+  background: #fff5f5;
+  border: 2px solid #fc8181;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  max-width: 500px;
+  margin: 40vh auto 0;
+}
+
+.error-message p {
+  margin: 0 0 16px 0;
+  color: #c53030;
+  font-size: 1.05em;
+  font-weight: 600;
+}
+
+.retry-button {
+  padding: 12px 24px;
+  background: #fc8181;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+  background: #f56565;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(252, 129, 129, 0.3);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #718096;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+/* Botón de vuelta */
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #2d3748;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  color: #1a202c;
+  transform: translateX(-2px);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .pallet-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .cards-header h2 {
+    font-size: 2em;
+  }
+}
+
+@media (max-width: 768px) {
+  .pallets-view-container {
+    padding: 12px;
+  }
+
+  .pallet-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .cards-header {
+    margin-bottom: 24px;
+  }
+
+  .cards-header h2 {
+    font-size: 1.5em;
+  }
+
+  .cards-subtitle {
+    font-size: 0.95em;
+  }
+}
+
+@media (max-width: 480px) {
+  .pallets-view-container {
+    padding: 8px;
+  }
+
+  .pallet-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .cards-header h2 {
+    font-size: 1.3em;
+  }
+
+  .cards-subtitle {
+    font-size: 0.9em;
+  }
+}

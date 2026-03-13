@@ -26,7 +26,20 @@ export function ThemeProvider({ children }) {
   }, [user]);
 
   const loadTheme = async () => {
+    // Tema por defecto adaptado a los colores de la página de inicio (Landing)
+    const defaultTheme = {
+      primary_color: '#2c6e49',
+      secondary_color: '#1f4d35',
+      accent_color: '#10b981',
+      company_name: user?.establishment?.nombre || 'Sistema de Inspecciones SAG-USDA',
+      welcome_message: 'Gestión Documental y Automatización',
+      show_logo: true,
+      dark_mode: false
+    };
+
     if (!user || !user.establishment) {
+      setTheme(defaultTheme);
+      applyTheme(defaultTheme);
       setLoading(false);
       return;
     }
@@ -39,14 +52,6 @@ export function ThemeProvider({ children }) {
     } catch (err) {
       console.error('Error loading theme:', err);
       // Si falla, usa tema por defecto
-      const defaultTheme = {
-        primary_color: '#667eea',
-        secondary_color: '#764ba2',
-        accent_color: '#f56565',
-        company_name: user.establishment?.nombre || '',
-        show_logo: true,
-        dark_mode: false
-      };
       setTheme(defaultTheme);
       applyTheme(defaultTheme);
     } finally {

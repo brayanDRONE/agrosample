@@ -115,11 +115,171 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 10px 12px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Vista Detallada */
+.diagramas-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.counter {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #1f2937;
+  padding: 6px 12px;
+  background: #dbeafe;
+  border-radius: 6px;
+  min-width: fit-content;
+}
+
+.detail-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-detail-nav {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-detail-nav:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-detail-nav:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.detail-viewer {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+  min-height: 300px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow-x: auto;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.detail-viewer .diagrama-pallet-container {
+  width: auto;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+/* Miniaturas */
+.diagramas-thumbnails {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  align-content: start;
+}
+
+.thumbnails-label {
+  margin: 0;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #1f2937;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.thumbnails-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.thumbnail-item {
+  padding: 10px 8px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85em;
+}
+
+.thumbnail-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transform: translateY(-2px);
+}
+
+.thumbnail-item.active {
+  background: #3b82f6;
+  border-color: #2563eb;
+  color: white;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+.thumbnail-number {
+  font-weight: 800;
+  font-size: 1.2em;
+}
+
+.thumbnail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.thumbnail-cajas {
+  font-weight: 700;
+  font-size: 1em;
+}
+
+.thumbnail-label {
+  font-size: 0.7em;
+  opacity: 0.8;
+}
+
+.thumbnail-muestra {
+  font-size: 0.75em;
+  font-weight: 600;
+  color: #ef4444;
+}
+
+.thumbnail-item.active .thumbnail-muestra {
+  color: #fecaca;
 }
 
 .diagramas-content::-webkit-scrollbar {
@@ -239,20 +399,88 @@
 
 /* Responsive */
 @media (max-width: 1400px) {
-  .diagramas-content {
-    gap: 16px;
+  .thumbnails-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   }
 }
 
 @media (max-width: 1200px) {
-  .diagramas-content {
-    grid-template-columns: repeat(2, 1fr);
+  .thumbnails-grid {
+    grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
+  }
+  
+  .diagramas-detail-section {
+    padding: 8px;
+  }
+  
+  .detail-viewer {
+    min-height: 350px;
+    padding: 10px;
   }
 }
 
 @media (max-width: 900px) {
   .diagramas-content {
-    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 16px;
+  }
+  
+  .thumbnails-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+  
+  .detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .detail-controls {
+    width: 100%;
+  }
+  
+  .btn-detail-nav {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .diagramas-modal {
+    max-height: 95vh;
+    border-radius: 0;
+  }
+  
+  .diagramas-overlay {
+    padding: 0;
+  }
+  
+  .diagramas-content {
+    padding: 10px;
+    gap: 12px;
+  }
+  
+  .thumbnails-grid {
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 8px;
+  }
+  
+  .thumbnail-item {
+    padding: 12px 10px;
+    min-height: 90px;
+    font-size: 0.8em;
+  }
+  
+  .counter {
+    font-size: 0.85em;
+    padding: 4px 8px;
+  }
+  
+  .btn-detail-nav {
+    padding: 6px 12px;
+    font-size: 0.85em;
+  }
+  
+  .detail-viewer {
+    min-height: 300px;
   }
 }
 

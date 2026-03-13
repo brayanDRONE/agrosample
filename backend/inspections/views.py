@@ -2,7 +2,7 @@
 Vistas para la API REST.
 """
 import json
-from rest_framework import viewsets, status, serializers
+from rest_framework import viewsets, status, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -24,45 +24,59 @@ from .utils import (
 )
 
 
+class AllowAnyReadPermission(permissions.BasePermission):
+    """
+    Permite acceso anónimo para lectura (GET).
+    Requiere autenticación para escritura (POST, PUT, DELETE).
+    """
+    def has_permission(self, request, view):
+        # Permitir GET sin autenticación
+        if request.method == 'GET':
+            return True
+        # Permitir POST sin autenticación también (para usuarios públicos generando muestreos)
+        if request.method == 'POST':
+            return True
+        # Para otras operaciones, requerir autenticación
+        return request.user and request.user.is_authenticated
+
+
 class EstablishmentViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet para consultar establecimientos.
-    Solo lectura desde el frontend.
+    Solo lectura desde el frontend. Acceso público.
     """
     queryset = Establishment.objects.filter(is_active=True)
     serializer_class = EstablishmentSerializer
+    permission_classes = [AllowAnyReadPermission]
 
 
 class InspectionViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestionar inspecciones.
+    Acceso público.
     """
     queryset = Inspection.objects.all()
     serializer_class = InspectionSerializer
+    permission_classes = [AllowAnyReadPermission]
     
-    def perform_create(self, serializer):
-        """Valida suscripción antes de crear inspección."""
-        establishment = serializer.validated_data.get('establishment')
-        if not establishment.has_active_subscription():
-            raise serializers.ValidationError({
-                'establishment': 'El establecimiento no tiene una suscripción activa.'
-            })
-        serializer.save()
 
 
 class SamplingResultViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet para consultar resultados de muestreo.
-    Solo lectura.
+    Solo lectura. Acceso público.
     """
     queryset = SamplingResult.objects.all()
     serializer_class = SamplingResultSerializer
+    permission_classes = [AllowAnyReadPermission]
 
 
 class MuestreoViewSet(viewsets.ViewSet):
     """
     ViewSet personalizado para generar muestreos.
+    Acceso público para usuarios anónimos.
     """
+    permission_classes = [AllowAnyReadPermission]
     
     @action(detail=False, methods=['post'], url_path='generar')
     def generar_muestreo(self, request):
@@ -74,7 +88,7 @@ class MuestreoViewSet(viewsets.ViewSet):
         Request Body:
         {
             "exportador": "string",
-            "establishment": int,
+            "establecimiento_nombre": "string",
             "inspector_sag": "string",
             "contraparte_sag": "string",
             "especie": "string",
@@ -112,16 +126,6 @@ class MuestreoViewSet(viewsets.ViewSet):
         
         data = serializer.validated_data
         
-        # Verificar que el establecimiento tenga suscripción activa
-        establishment = get_object_or_404(Establishment, id=data['establishment'])
-        if not establishment.has_active_subscription():
-            return Response({
-                'success': False,
-                'message': 'Suscripción vencida o inactiva',
-                'error': 'SUBSCRIPTION_EXPIRED',
-                'details': 'El establecimiento no tiene una suscripción activa. Contacte al administrador.'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
         try:
             # Validaciones específicas para muestreo por etapa
             if data['tipo_muestreo'] == 'POR_ETAPA':
@@ -151,7 +155,8 @@ class MuestreoViewSet(viewsets.ViewSet):
             # Crear la inspección
             inspection = Inspection.objects.create(
                 exportador=data['exportador'],
-                establishment=establishment,
+                establecimiento_nombre=data['establecimiento_nombre'],
+                establishment=None,  # Ya no se asocia obligatoriamente a un Establishment oficial
                 inspector_sag=data['inspector_sag'],
                 contraparte_sag=data['contraparte_sag'],
                 especie=data['especie'],
@@ -529,10 +534,11 @@ class MuestreoViewSet(viewsets.ViewSet):
 class ThemeViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet público para que los establecimientos obtengan su tema.
-    Solo lectura.
+    Solo lectura. Acceso público.
     """
     queryset = EstablishmentTheme.objects.all()
     serializer_class = EstablishmentThemeSerializer
+    permission_classes = [AllowAnyReadPermission]
     
     @action(detail=False, methods=['get'], url_path='my-theme')
     def my_theme(self, request):

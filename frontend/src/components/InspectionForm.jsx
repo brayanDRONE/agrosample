@@ -13,11 +13,10 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
   const [establishments, setEstablishments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] =useState(null);
-  const [isEstablishmentFixed, setIsEstablishmentFixed] = useState(false);
   
   const [formData, setFormData] = useState({
     exportador: '',
-    establishment: '',
+    establecimiento_nombre: '',
     inspector_sag: '',
     contraparte_sag: '',
     especie: '',
@@ -102,30 +101,9 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
   };
 
   useEffect(() => {
-    loadEstablishments();
-    
-    // Autocompletar campos si el usuario tiene un establecimiento asignado
-    if (user?.establishment) {
-      setFormData(prev => ({
-        ...prev,
-        exportador: user.establishment.exportadora || '',
-        establishment: user.establishment.id.toString()
-      }));
-      setIsEstablishmentFixed(true);
-    } else {
-      setIsEstablishmentFixed(false);
-    }
+    // Ya no cargamos establecimientos del backend ni bloqueamos los campos, 
+    // el usuario simplemente escribe el texto.
   }, [user]);
-
-  const loadEstablishments = async () => {
-    try {
-      const data = await apiService.getEstablishments();
-      setEstablishments(data);
-    } catch (err) {
-      console.error('Error al cargar establecimientos:', err);
-      setError('No se pudieron cargar los establecimientos');
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -159,8 +137,8 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
     e.preventDefault();
     
     // Validaciones básicas
-    if (!formData.establishment) {
-      setError('Debe seleccionar un establecimiento');
+    if (!formData.establecimiento_nombre) {
+      setError('Debe ingresar un establecimiento');
       return;
     }
 
@@ -206,9 +184,9 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
     try {
       const payload = {
         ...formData,
-        establishment: parseInt(formData.establishment),
         tamano_lote: parseInt(formData.tamano_lote),
         cantidad_pallets: parseInt(formData.cantidad_pallets),
+        establishment: null, // Ya no enviamos el ID del establecimiento
       };
 
       // Solo incluir boxes_per_pallet si es muestreo por etapa
@@ -228,16 +206,11 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
     } catch (err) {
       console.error('Error:', err);
       
-      // Verificar si es error de suscripción
-      if (err.response?.status === 403 || err.response?.data?.error === 'SUBSCRIPTION_EXPIRED') {
-        onSubscriptionError();
-      } else {
-        setError(
-          err.response?.data?.message || 
-          err.response?.data?.details ||
-          'Error al generar el muestreo. Por favor intente nuevamente.'
-        );
-      }
+      setError(
+        err.response?.data?.message || 
+        err.response?.data?.details ||
+        'Error al generar el muestreo. Por favor intente nuevamente.'
+      );
     } finally {
       setLoading(false);
     }
@@ -265,51 +238,21 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
                 value={formData.exportador}
                 onChange={handleChange}
                 required
-                readOnly={isEstablishmentFixed}
-                disabled={isEstablishmentFixed}
                 placeholder="Nombre del exportador"
-                className={isEstablishmentFixed ? 'readonly-field' : ''}
               />
-              {isEstablishmentFixed && (
-                <small className="field-hint">Campo asignado según su establecimiento</small>
-              )}
             </div>
 
             <div className="form-group">
-              <label htmlFor="establishment">Planta/Establecimiento *</label>
-              {isEstablishmentFixed ? (
-                <>
-                  <input
-                    type="text"
-                    id="establishment"
-                    value={user?.establishment?.nombre || ''}
-                    readOnly
-                    disabled
-                    className="readonly-field"
-                  />
-                  <input
-                    type="hidden"
-                    name="establishment"
-                    value={formData.establishment}
-                  />
-                  <small className="field-hint">Campo asignado según su establecimiento</small>
-                </>
-              ) : (
-                <select
-                  id="establishment"
-                  name="establishment"
-                  value={formData.establishment}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione...</option>
-                  {establishments.map(est => (
-                    <option key={est.id} value={est.id}>
-                      {est.planta_fruticola}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <label htmlFor="establecimiento_nombre">Planta/Establecimiento *</label>
+              <input
+                type="text"
+                id="establecimiento_nombre"
+                name="establecimiento_nombre"
+                value={formData.establecimiento_nombre}
+                onChange={handleChange}
+                required
+                placeholder="Nombre del establecimiento"
+              />
             </div>
           </div>
 

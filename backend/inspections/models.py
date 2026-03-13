@@ -131,7 +131,15 @@ class Inspection(models.Model):
         Establishment,
         on_delete=models.CASCADE,
         related_name='inspections',
-        verbose_name='Planta/Establecimiento'
+        verbose_name='Planta/Establecimiento (Referencia)',
+        null=True,
+        blank=True
+    )
+    establecimiento_nombre = models.CharField(
+        max_length=255, 
+        verbose_name='Planta/Establecimiento',
+        null=True,
+        blank=True
     )
     inspector_sag = models.CharField(max_length=255, verbose_name='Inspector SAG')
     contraparte_sag = models.CharField(max_length=255, verbose_name='Contraparte SAG')

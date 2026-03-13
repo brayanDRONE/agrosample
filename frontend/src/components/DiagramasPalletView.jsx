@@ -17,6 +17,7 @@ function DiagramasPalletView({ inspection, onClose }) {
   const [error, setError] = useState(null);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [requiresConfiguration, setRequiresConfiguration] = useState(false);
+  const [selectedPalletIndex, setSelectedPalletIndex] = useState(0); // Vista detallada
 
   useEffect(() => {
     fetchDiagramData();
@@ -29,13 +30,20 @@ function DiagramasPalletView({ inspection, onClose }) {
 
       const token = localStorage.getItem('access_token');
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Solo agregar Authorization si existe token
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(
         `${API_URL}/muestreo/diagrama-pallets/${inspection.id}/`,
         {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers
         }
       );
 
@@ -367,15 +375,60 @@ function DiagramasPalletView({ inspection, onClose }) {
 
         {/* Lista de diagramas */}
         <div className="diagramas-content">
-          {diagramData.pallets.map((pallet) => (
-            <DiagramaPallet
-              key={pallet.numero_pallet}
-              palletData={pallet}
-              basePallet={pallet.base}
-              alturaPallet={pallet.altura}
-              distribucionCaras={pallet.distribucion_caras || []}
-            />
-          ))}
+          {/* Vista Detallada - Pallet Grande */}
+          <div className="diagramas-detail-section">
+            <div className="detail-header">
+              <span className="counter">Pallet {selectedPalletIndex + 1} de {diagramData.pallets.length}</span>
+              <div className="detail-controls">
+                <button 
+                  className="btn-detail-nav btn-detail-nav-prev"
+                  onClick={() => setSelectedPalletIndex((prev) => Math.max(0, prev - 1))}
+                  disabled={selectedPalletIndex === 0}
+                >
+                  ← Anterior
+                </button>
+                <button 
+                  className="btn-detail-nav btn-detail-nav-next"
+                  onClick={() => setSelectedPalletIndex((prev) => Math.min(diagramData.pallets.length - 1, prev + 1))}
+                  disabled={selectedPalletIndex === diagramData.pallets.length - 1}
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </div>
+            
+            <div className="detail-viewer">
+              <DiagramaPallet
+                key={`detail-${diagramData.pallets[selectedPalletIndex].numero_pallet}`}
+                palletData={diagramData.pallets[selectedPalletIndex]}
+                basePallet={diagramData.pallets[selectedPalletIndex].base}
+                alturaPallet={diagramData.pallets[selectedPalletIndex].altura}
+                distribucionCaras={diagramData.pallets[selectedPalletIndex].distribucion_caras || []}
+              />
+            </div>
+          </div>
+
+          {/* Miniaturas - Grid Responsivo */}
+          <div className="diagramas-thumbnails">
+            <p className="thumbnails-label">Todos los Pallets:</p>
+            <div className="thumbnails-grid">
+              {diagramData.pallets.map((pallet, index) => (
+                <button
+                  key={`thumb-${pallet.numero_pallet}`}
+                  className={`thumbnail-item ${selectedPalletIndex === index ? 'active' : ''}`}
+                  onClick={() => setSelectedPalletIndex(index)}
+                  title={`Pallet ${pallet.numero_pallet}`}
+                >
+                  <div className="thumbnail-number">P{pallet.numero_pallet}</div>
+                  <div className="thumbnail-info">
+                    <span className="thumbnail-cajas">{pallet.fin_caja - pallet.inicio_caja + 1}</span>
+                    <span className="thumbnail-label">cajas</span>
+                    <span className="thumbnail-muestra">{pallet.total_cajas_muestra} muestras</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

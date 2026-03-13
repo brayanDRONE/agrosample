@@ -2,11 +2,19 @@
 
 .diagrama-pallet-container {
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   position: relative;
+  overflow: hidden;
+  width: auto;
+  transition: all 0.3s ease;
+}
+
+.diagrama-pallet-container:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 /* Header del pallet */
@@ -14,32 +22,36 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
-  padding-bottom: 2px;
-  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f3f4f6;
+  gap: 8px;
 }
 
 .pallet-header h3 {
   margin: 0;
-  font-size: 0.75em;
-  font-weight: 700;
+  font-size: 1.2em;
+  font-weight: 800;
   color: #1f2937;
+  letter-spacing: -0.5px;
 }
 
 .pallet-info {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .info-badge {
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.6em;
-  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75em;
+  font-weight: 700;
   background: #f3f4f6;
   color: #6b7280;
   white-space: nowrap;
+  border: 1px solid #e5e7eb;
 }
 
 .badge-muestra {
@@ -56,88 +68,90 @@
 .pallet-grid {
   display: grid;
   gap: 1px;
-  padding: 2px;
+  padding: 8px;
   background: #f9fafb;
-  border-radius: 4px;
-  margin-bottom: 4px;
-  min-height: 60px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  min-height: 50px;
+  width: auto;
+  overflow: hidden;
 }
 
 .box-cell {
   position: relative;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  border-radius: 2px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.55em;
-  font-weight: 600;
+  font-size: 0.6em;
+  font-weight: 700;
   color: #374151;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 18px;
-  aspect-ratio: 1;
+  width: 100%;
+  height: 16px;
+  line-height: 1;
+  overflow: hidden;
 }
 
 .box-cell:hover {
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  transform: scale(1.05);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
   z-index: 10;
 }
 
 /* Caja seleccionada para muestra */
 .box-cell.box-selected {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-color: #1d4ed8;
+  background: #2563eb;
+  border: 2px solid #2563eb;
   color: #ffffff;
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
 .box-cell.box-selected:hover {
-  border-color: #1e3a8a;
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.2);
+  background: #1d4ed8;
+  border: 2px solid #1d4ed8;
+  box-shadow: 0 0 8px rgba(29, 78, 216, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
 .box-number {
-  font-size: 1em;
+  font-size: 0.9em;
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .box-indicator {
-  position: absolute;
-  top: 1px;
-  right: 2px;
-  font-size: 0.7em;
-  font-weight: 900;
-  opacity: 0.9;
+  display: none;
 }
 
 /* Leyenda */
 .pallet-legend {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  padding: 4px;
+  gap: 16px;
+  padding: 12px;
   background: #f9fafb;
-  border-radius: 4px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.6em;
+  gap: 8px;
+  font-size: 0.8em;
   color: #6b7280;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .legend-box {
   width: 14px;
   height: 14px;
-  border-radius: 2px;
-  border: 1px solid;
+  border-radius: 4px;
+  border: 1.5px solid;
 }
 
 .legend-box-normal {
@@ -146,8 +160,9 @@
 }
 
 .legend-box-muestra {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-color: #1d4ed8;
+  background: #2563eb;
+  border-color: #1e40af;
+}
 }
 
 /* Tooltip */
@@ -300,25 +315,31 @@
 /* Wrapper para grilla con caras */
 .pallet-grid-wrapper {
   position: relative;
+  overflow-x: auto;
+  width: auto;
+  margin-bottom: 8px;
 }
 
 /* Etiquetas de caras */
 .caras-labels {
   display: flex;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   padding: 0 8px;
+  font-size: 0.65em;
+  flex-wrap: wrap;
 }
 
 .cara-label-top {
   text-align: center;
-  font-size: 0.75em;
+  font-size: 0.7em;
   font-weight: 700;
   color: #6b7280;
   background: #f3f4f6;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
+  line-height: 1;
 }
 
 /* Separador vertical entre caras */
@@ -326,13 +347,13 @@
   background: repeating-linear-gradient(
     to bottom,
     #9333ea 0px,
-    #9333ea 4px,
-    transparent 4px,
-    transparent 8px
+    #9333ea 2px,
+    transparent 2px,
+    transparent 4px
   );
-  width: 8px;
-  margin: 0 2px;
-  border-radius: 2px;
+  width: 2px;
+  margin: 0 0px;
+  border-radius: 1px;
   pointer-events: none;
   opacity: 0.7;
 }

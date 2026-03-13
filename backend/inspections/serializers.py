@@ -32,7 +32,7 @@ class InspectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inspection
         fields = [
-            'id', 'exportador', 'establishment', 'establishment_name',
+            'id', 'exportador', 'establishment', 'establecimiento_nombre', 'establishment_name',
             'inspector_sag', 'contraparte_sag', 'fecha', 'hora',
             'especie', 'numero_lote', 'tamano_lote', 'tipo_muestreo',
             'tipo_despacho', 'cantidad_pallets', 'pallet_configurations',
@@ -78,7 +78,7 @@ class GenerarMuestreoSerializer(serializers.Serializer):
     """
     # Datos de la inspección
     exportador = serializers.CharField(max_length=255)
-    establishment = serializers.IntegerField()
+    establecimiento_nombre = serializers.CharField(max_length=255)
     inspector_sag = serializers.CharField(max_length=255)
     contraparte_sag = serializers.CharField(max_length=255)
     especie = serializers.CharField(max_length=100)
@@ -116,16 +116,3 @@ class GenerarMuestreoSerializer(serializers.Serializer):
         if value not in [0, 20, 40]:
             raise serializers.ValidationError("El incremento debe ser 0, 20 o 40")
         return value
-    
-    def validate_establishment(self, value):
-        """Valida que el establecimiento exista y tenga suscripción activa."""
-        try:
-            establishment = Establishment.objects.get(id=value)
-            if not establishment.has_active_subscription():
-                raise serializers.ValidationError(
-                    "El establecimiento no tiene una suscripción activa. "
-                    "Contacte al administrador."
-                )
-            return value
-        except Establishment.DoesNotExist:
-            raise serializers.ValidationError("Establecimiento no encontrado")

@@ -241,7 +241,7 @@ def calcular_muestreo(tamano_lote, especie=None, porcentaje=None, incremento_int
             raise ValueError("No se puede aplicar incremento de intensidad a especies con tabla hipergeométrica")
         
         muestra_base, nombre_tabla = calcular_tamano_muestra_por_tabla(tamano_lote, tipo_tabla)
-    elif porcentaje:
+    elif porcentaje is not None:
         if porcentaje <= 0 or porcentaje > 100:
             raise ValueError("El porcentaje debe estar entre 0 y 100")
         muestra_base = math.ceil(tamano_lote * (porcentaje / 100))

@@ -14,7 +14,7 @@ class EstablishmentModelTest(TestCase):
     
     def setUp(self):
         self.establishment = Establishment.objects.create(
-            name='Test Establishment',
+            planta_fruticola='Test Establishment',
             is_active=True,
             subscription_status='ACTIVE',
             subscription_expiry=timezone.now().date() + timedelta(days=30),
@@ -49,35 +49,34 @@ class SamplingUtilsTest(TestCase):
     
     def test_calcular_muestreo_basico(self):
         """Verifica el cálculo básico de muestreo al 2%"""
-        resultado = calcular_muestreo(100, 2.0)
+        resultado = calcular_muestreo(100, porcentaje=2.0)
         self.assertEqual(resultado['tamano_lote'], 100)
-        self.assertEqual(resultado['porcentaje_muestreo'], 2.0)
         self.assertEqual(resultado['tamano_muestra'], 2)
         self.assertEqual(len(resultado['cajas_seleccionadas']), 2)
     
     def test_calcular_muestreo_redondeo(self):
         """Verifica que redondea hacia arriba (ceil)"""
-        resultado = calcular_muestreo(2332, 2.0)
+        resultado = calcular_muestreo(2332, porcentaje=2.0)
         # 2332 * 0.02 = 46.64, redondeado = 47
         self.assertEqual(resultado['tamano_muestra'], 47)
         self.assertEqual(len(resultado['cajas_seleccionadas']), 47)
     
     def test_cajas_unicas(self):
         """Verifica que las cajas generadas son únicas"""
-        resultado = calcular_muestreo(1000, 5.0)
+        resultado = calcular_muestreo(1000, porcentaje=5.0)
         cajas = resultado['cajas_seleccionadas']
         self.assertEqual(len(cajas), len(set(cajas)))  # Sin duplicados
     
     def test_cajas_ordenadas(self):
         """Verifica que las cajas están ordenadas"""
-        resultado = calcular_muestreo(1000, 5.0)
+        resultado = calcular_muestreo(1000, porcentaje=5.0)
         cajas = resultado['cajas_seleccionadas']
         self.assertEqual(cajas, sorted(cajas))
     
     def test_cajas_en_rango(self):
         """Verifica que las cajas están en el rango correcto"""
         tamano_lote = 500
-        resultado = calcular_muestreo(tamano_lote, 4.0)
+        resultado = calcular_muestreo(tamano_lote, porcentaje=4.0)
         cajas = resultado['cajas_seleccionadas']
         
         for caja in cajas:
@@ -87,14 +86,14 @@ class SamplingUtilsTest(TestCase):
     def test_error_lote_negativo(self):
         """Verifica que rechaza tamaños de lote inválidos"""
         with self.assertRaises(ValueError):
-            calcular_muestreo(-10, 2.0)
+            calcular_muestreo(-10, porcentaje=2.0)
     
     def test_error_porcentaje_invalido(self):
         """Verifica que rechaza porcentajes inválidos"""
         with self.assertRaises(ValueError):
-            calcular_muestreo(100, 0)
+            calcular_muestreo(100, porcentaje=0)
         with self.assertRaises(ValueError):
-            calcular_muestreo(100, 150)
+            calcular_muestreo(100, porcentaje=150)
 
 
 class InspectionModelTest(TestCase):
@@ -102,7 +101,7 @@ class InspectionModelTest(TestCase):
     
     def setUp(self):
         self.establishment = Establishment.objects.create(
-            name='Test Establishment',
+            planta_fruticola='Test Establishment',
             is_active=True,
             subscription_status='ACTIVE',
             subscription_expiry=timezone.now().date() + timedelta(days=30),

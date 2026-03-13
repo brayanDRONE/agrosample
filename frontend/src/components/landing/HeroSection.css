@@ -1,0 +1,133 @@
+/* HeroSection.css */
+
+.hero-section {
+  background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+  padding: 8rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(44, 110, 73, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(44, 110, 73, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+.hero-subtitle {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #2c6e49;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.hero-description {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #6b7280;
+  line-height: 1.6;
+  max-width: 700px;
+}
+
+.btn-primary-hero {
+  background: linear-gradient(135deg, #2c6e49 0%, #1f4d35 100%);
+  color: #ffffff;
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.05rem;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(44, 110, 73, 0.2);
+  margin-top: 1rem;
+}
+
+.btn-primary-hero:hover {
+  background: linear-gradient(135deg, #1f4d35 0%, #173d2a 100%);
+  box-shadow: 0 8px 24px rgba(44, 110, 73, 0.4);
+  transform: translateY(-3px);
+}
+
+.btn-primary-hero:active {
+  transform: translateY(-1px);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 5rem 1.5rem;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.5rem;
+  }
+
+  .hero-description {
+    font-size: 1rem;
+  }
+
+  .btn-primary-hero {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 3rem 1rem;
+  }
+
+  .hero-title {
+    font-size: 1.875rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+  }
+
+  .hero-description {
+    font-size: 0.95rem;
+  }
+
+  .btn-primary-hero {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
