@@ -15,7 +15,7 @@ import MaintenanceMode from './components/MaintenanceMode';
 import './App.css';
 
 // 🔧 FLAG DE MANTENIMIENTO - Cambiar a false para habilitar la aplicación
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 function AppRoutes() {
   const { user, isSuperAdmin } = useAuth();
