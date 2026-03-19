@@ -1,6 +1,8 @@
 .admin-dashboard {
   min-height: 100vh;
-  background: #f7fafc;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -430,4 +432,209 @@
   .activity-table td {
     padding: 10px 12px;
   }
+}
+
+/* Tabs Navigation */
+.dashboard-tabs {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 0;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  color: #718096;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 24px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-button:hover {
+  color: #4a5568;
+}
+
+.tab-button.active {
+  color: #10b981;
+  border-bottom-color: #10b981;
+}
+
+/* Management Section */
+.management-section {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.management-section h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 24px;
+}
+
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.management-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  text-align: left;
+}
+
+.management-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.15);
+  transform: translateY(-2px);
+}
+
+.card-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.card-content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 8px;
+}
+
+.card-content p {
+  font-size: 14px;
+  color: #718096;
+  margin: 0;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Establishments List Section */
+.establishments-list-section {
+  margin-top: 40px;
+  animation: slideInUp 0.3s ease-out;
+}
+
+.establishments-list-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.establishments-table-wrapper {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow-x: auto;
+}
+
+.establishments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.establishments-table thead {
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.establishments-table thead th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #4a5568;
+  white-space: nowrap;
+}
+
+.establishments-table tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background 0.2s;
+}
+
+.establishments-table tbody tr:hover {
+  background: #f7fafc;
+}
+
+.establishments-table tbody td {
+  padding: 16px;
+  color: #2d3748;
+}
+
+.est-name {
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge.status-active {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-badge.status-expired {
+  background: #fed7d7;
+  color: #742a2a;
+}
+
+.status-badge.status-suspended {
+  background: #feebc8;
+  color: #7c2d12;
+}
+
+.status-active {
+  color: #22543d;
+}
+
+.status-inactive {
+  color: #742a2a;
+}
+
+.empty-establishments {
+  background: white;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  color: #a0aec0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.empty-establishments p {
+  font-size: 16px;
+  margin: 0;
 }

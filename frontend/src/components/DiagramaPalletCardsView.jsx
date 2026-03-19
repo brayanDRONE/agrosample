@@ -5,7 +5,7 @@
  * similar a la interfaz de INACAP.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DiagramaPalletCard from './DiagramaPalletCard';
 import DiagramaPallet from './DiagramaPallet';
 import ConfiguracionDiagramaView from './ConfiguracionDiagramaView';
@@ -16,8 +16,12 @@ function DiagramaPalletCardsView({ inspection, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPallet, setSelectedPallet] = useState(null);
+  const [inspectionData, setInspectionData] = useState(null);
   const [viewMode, setViewMode] = useState('cards'); // 'cards' o 'detail'
   const [requiresConfiguration, setRequiresConfiguration] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
+  const [deleting, setDeleting] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   useEffect(() => {
     if (inspection && inspection.id) {
@@ -60,8 +64,16 @@ function DiagramaPalletCardsView({ inspection, onClose }) {
         throw new Error(data.message || 'Error al obtener datos de diagrama');
       }
 
-      setPallets(data.data.pallets || []);
+      const palletsLoaded = data.data.pallets || [];
+      console.log('✅ Pallets cargados:', palletsLoaded);
+      
+      setPallets(palletsLoaded);
+      setInspectionData(data.data.inspection || null);
       setRequiresConfiguration(false);
+      
+      if (palletsLoaded.length === 0) {
+        console.warn('⚠️ No hay pallets en la respuesta del servidor');
+      }
     } catch (err) {
       console.error('Error loading pallets:', err);
       setError('No se pudieron cargar los pallets. Intenta nuevamente.');
@@ -92,7 +104,9 @@ function DiagramaPalletCardsView({ inspection, onClose }) {
 
   const handleConfigurationCompleted = () => {
     // Después de configurar, volver a cargar los datos del diagrama
+    console.log('✅ handleConfigurationCompleted ejecutado');
     setRequiresConfiguration(false);
+    setLoading(true); // Asegurar que loading esté true cuando recargamos
     loadPallets();
   };
 
@@ -146,9 +160,10 @@ function DiagramaPalletCardsView({ inspection, onClose }) {
           <div style={{ padding: '20px' }}>
             <DiagramaPallet
               palletData={selectedPallet}
-              basePallet={selectedPallet.base_pallet || 10}
-              alturaPallet={selectedPallet.altura_pallet || 10}
+              basePallet={selectedPallet.base}
+              alturaPallet={selectedPallet.altura}
               distribucionCaras={selectedPallet.distribucion_caras || []}
+              inspectionNumber={inspectionData?.numero_lote}
             />
           </div>
         </div>
@@ -181,9 +196,9 @@ function DiagramaPalletCardsView({ inspection, onClose }) {
         </div>
 
         <div className="pallet-cards-grid">
-          {pallets.map((pallet) => (
+          {pallets.map((pallet, idx) => (
             <DiagramaPalletCard
-              key={pallet.id}
+              key={pallet.id || `pallet-${idx}`}
               palletData={pallet}
               onExpand={handleExpandPallet}
               onDelete={handleDeletePallet}

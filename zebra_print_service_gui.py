@@ -41,7 +41,26 @@ def get_zebra_printers():
     zebra_printers = [p for p in printers if 'zebra' in p.lower() or 'zdesigner' in p.lower()]
     return zebra_printers, printers
 
-def build_zpl_double_label(lote, left_num, right_num=None):
+def split_sample_text(sample_text):
+    """Divide texto personalizado en dos líneas para la etiqueta."""
+    raw = str(sample_text or 'MUESTRA USDA').strip()
+    if not raw:
+        raw = 'MUESTRA USDA'
+
+    if '\n' in raw:
+        parts = [p.strip() for p in raw.split('\n') if p.strip()]
+    elif '|' in raw:
+        parts = [p.strip() for p in raw.split('|') if p.strip()]
+    else:
+        split_once = raw.split(' ', 1)
+        parts = [split_once[0], split_once[1] if len(split_once) > 1 else '']
+
+    line1 = parts[0] if parts else 'MUESTRA'
+    line2 = parts[1] if len(parts) > 1 else ''
+    return line1, line2
+
+
+def build_zpl_double_label(lote, left_num, right_num=None, sample_text='MUESTRA USDA'):
     """
     Construye ZPL para una tira con dos etiquetas 5x5cm lado a lado.
     Ajusta el tamaño del número para que quepa: si el número es muy largo
@@ -96,15 +115,17 @@ def build_zpl_double_label(lote, left_num, right_num=None):
     zpl.append("^XA")
     zpl.append("^LH0,0")
 
+    line1, line2 = split_sample_text(sample_text)
+
     # --- IZQUIERDA ---
     # MUESTRA (arriba)
     zpl.append(f"^CF0,{sub_font_h}")
     zpl.append(f"^FO{left_x},{muestra_y}^FB{LABEL_W},1,0,C,0")
-    zpl.append(f"^FDMUESTRA^FS")
-    # USDA (debajo)
+    zpl.append(f"^FD{line1}^FS")
+    # Línea 2 (debajo)
     zpl.append(f"^CF0,{sub_font_h}")
     zpl.append(f"^FO{left_x},{usda_y}^FB{LABEL_W},1,0,C,0")
-    zpl.append(f"^FDUSDA^FS")
+    zpl.append(f"^FD{line2}^FS")
 
     # Número grande (centrado) - IZQUIERDA
     zpl.append(f"^CF0,{left_big_h}")
@@ -118,14 +139,14 @@ def build_zpl_double_label(lote, left_num, right_num=None):
     zpl.append(f"^FDLOTE: {lote}^FS")
 
     # --- DERECHA ---
-    # MUESTRA (arriba)
+    # Línea 1 (arriba)
     zpl.append(f"^CF0,{sub_font_h}")
     zpl.append(f"^FO{right_x},{muestra_y}^FB{LABEL_W},1,0,C,0")
-    zpl.append(f"^FDMUESTRA^FS")
-    # USDA (debajo)
+    zpl.append(f"^FD{line1}^FS")
+    # Línea 2 (debajo)
     zpl.append(f"^CF0,{sub_font_h}")
     zpl.append(f"^FO{right_x},{usda_y}^FB{LABEL_W},1,0,C,0")
-    zpl.append(f"^FDUSDA^FS")
+    zpl.append(f"^FD{line2}^FS")
 
     # Número grande (centrado) - DERECHA
     zpl.append(f"^CF0,{right_big_h}")
@@ -141,7 +162,7 @@ def build_zpl_double_label(lote, left_num, right_num=None):
     zpl.append("^XZ")
     return "\n".join(zpl)
 
-def imprimir_etiquetas(lote, numeros, printer_name):
+def imprimir_etiquetas(lote, numeros, printer_name, sample_text='MUESTRA USDA'):
     """Imprime etiquetas en pares (tiras de 10x5cm con dos etiquetas de 5x5cm)."""
     try:
         # Verificar que la impresora existe
@@ -160,11 +181,11 @@ def imprimir_etiquetas(lote, numeros, printer_name):
         while i < len(numeros):
             left = str(numeros[i])
             right = str(numeros[i+1]) if i+1 < len(numeros) else None
-            etiqueta_zpl = build_zpl_double_label(lote, left, right)
+            etiqueta_zpl = build_zpl_double_label(lote, left, right, sample_text)
             
             hPrinter = win32print.OpenPrinter(printer_name)
             try:
-                hJob = win32print.StartDocPrinter(hPrinter, 1, ("Etiqueta USDA", None, "RAW"))
+                hJob = win32print.StartDocPrinter(hPrinter, 1, ("Etiqueta AGROSAMPLE", None, "RAW"))
                 try:
                     win32print.StartPagePrinter(hPrinter)
                     win32print.WritePrinter(hPrinter, etiqueta_zpl.encode('utf-8'))
@@ -263,6 +284,7 @@ class ZebraServiceHandler(BaseHTTPRequestHandler):
                 lote = data.get('lote', '')
                 numeros = data.get('numeros', [])
                 printer = data.get('printer', '')
+                sample_text = data.get('sample_text', 'MUESTRA USDA')
                 
                 # Validaciones
                 if not lote:
@@ -279,7 +301,7 @@ class ZebraServiceHandler(BaseHTTPRequestHandler):
                         raise ValueError("No se encontró impresora Zebra")
                 
                 # Imprimir
-                result = imprimir_etiquetas(lote, numeros, printer)
+                result = imprimir_etiquetas(lote, numeros, printer, sample_text)
                 
                 self.send_response(200 if result['success'] else 400)
                 self.send_header('Content-Type', 'application/json')

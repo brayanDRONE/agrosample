@@ -31,8 +31,8 @@ export function ThemeProvider({ children }) {
       primary_color: '#2c6e49',
       secondary_color: '#1f4d35',
       accent_color: '#10b981',
-      company_name: user?.establishment?.nombre || 'Sistema de Inspecciones SAG-USDA',
-      welcome_message: 'Gestión Documental y Automatización',
+      company_name: user?.establishment?.nombre || 'agrosample',
+      welcome_message: 'Automatización de etiquetas y muestreo de pallets',
       show_logo: true,
       dark_mode: false
     };

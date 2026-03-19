@@ -77,16 +77,24 @@ class GenerarMuestreoSerializer(serializers.Serializer):
     Serializer para el endpoint de generación de muestreo.
     """
     # Datos de la inspección
-    exportador = serializers.CharField(max_length=255)
-    establecimiento_nombre = serializers.CharField(max_length=255)
-    inspector_sag = serializers.CharField(max_length=255)
-    contraparte_sag = serializers.CharField(max_length=255)
-    especie = serializers.CharField(max_length=100)
+    exportador = serializers.CharField(max_length=255, required=False, allow_blank=True, default='N/A')
+    establecimiento_nombre = serializers.CharField(max_length=255, required=False, allow_blank=True, default='N/A')
+    inspector_sag = serializers.CharField(max_length=255, required=False, allow_blank=True, default='N/A')
+    contraparte_sag = serializers.CharField(max_length=255, required=False, allow_blank=True, default='N/A')
+    especie = serializers.CharField(max_length=100, required=False, allow_blank=True, default='N/A')
     numero_lote = serializers.CharField(max_length=100)
-    tamano_lote = serializers.IntegerField(min_value=1)
-    tipo_muestreo = serializers.ChoiceField(choices=['NORMAL', 'POR_ETAPA'])
-    tipo_despacho = serializers.CharField(max_length=100)
+    tamano_lote = serializers.IntegerField(min_value=1, required=False)
+    tipo_muestreo = serializers.ChoiceField(choices=['NORMAL', 'POR_ETAPA'], default='NORMAL', required=False)
+    tipo_despacho = serializers.CharField(max_length=100, required=False, allow_blank=True, default='N/A')
     cantidad_pallets = serializers.IntegerField(min_value=1)
+
+    # Modo manual: números definidos por el usuario (opcional en esta etapa)
+    numeros_muestra_manual = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+        default=list
+    )
     
     # Para muestreo por etapa
     boxes_per_pallet = serializers.ListField(
@@ -116,3 +124,15 @@ class GenerarMuestreoSerializer(serializers.Serializer):
         if value not in [0, 20, 40]:
             raise serializers.ValidationError("El incremento debe ser 0, 20 o 40")
         return value
+
+    def validate(self, attrs):
+        """Completa valores por defecto para el flujo simplificado."""
+        tamano_lote = attrs.get('tamano_lote')
+        cantidad_pallets = attrs.get('cantidad_pallets')
+
+        if not tamano_lote:
+            attrs['tamano_lote'] = cantidad_pallets
+
+        numeros = attrs.get('numeros_muestra_manual', [])
+        attrs['numeros_muestra_manual'] = sorted(set(numeros))
+        return attrs

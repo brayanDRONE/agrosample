@@ -11,7 +11,7 @@ import DiagramaPallet from './DiagramaPallet';
 import ConfiguracionDiagramaView from './ConfiguracionDiagramaView';
 import './DiagramasPalletView.css';
 
-function DiagramasPalletView({ inspection, onClose }) {
+function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
   const [diagramData, setDiagramData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,9 +19,49 @@ function DiagramasPalletView({ inspection, onClose }) {
   const [requiresConfiguration, setRequiresConfiguration] = useState(false);
   const [selectedPalletIndex, setSelectedPalletIndex] = useState(0); // Vista detallada
 
+  const totalPallets = diagramData?.pallets?.length || 0;
+  const detailPallets = diagramData?.pallets?.slice(selectedPalletIndex, selectedPalletIndex + 2) || [];
+
   useEffect(() => {
     fetchDiagramData();
-  }, [inspection.id]);
+  }, [inspection.id, selectedNumbers]);
+
+  const applyUserSelectionToDiagramData = (rawData) => {
+    if (!rawData || !Array.isArray(rawData.pallets)) return rawData;
+
+    const validUserNumbers = (selectedNumbers || [])
+      .map((n) => parseInt(n, 10))
+      .filter((n) => Number.isFinite(n) && n > 0);
+
+    if (validUserNumbers.length === 0) {
+      return rawData;
+    }
+
+    const selectedSet = new Set(validUserNumbers);
+
+    const updatedPallets = rawData.pallets.map((pallet) => {
+      const updatedCajas = (pallet.cajas || []).map((caja) => ({
+        ...caja,
+        seleccionada: selectedSet.has(caja.numero)
+      }));
+
+      const cajasMuestra = updatedCajas
+        .filter((caja) => caja.seleccionada)
+        .map((caja) => caja.numero);
+
+      return {
+        ...pallet,
+        cajas: updatedCajas,
+        cajas_muestra: cajasMuestra,
+        total_cajas_muestra: cajasMuestra.length
+      };
+    });
+
+    return {
+      ...rawData,
+      pallets: updatedPallets
+    };
+  };
 
   const fetchDiagramData = async () => {
     try {
@@ -65,7 +105,7 @@ function DiagramasPalletView({ inspection, onClose }) {
         throw new Error(data.message);
       }
 
-      setDiagramData(data.data);
+      setDiagramData(applyUserSelectionToDiagramData(data.data));
       setRequiresConfiguration(false);
     } catch (err) {
       console.error('Error fetching diagram data:', err);
@@ -81,7 +121,7 @@ function DiagramasPalletView({ inspection, onClose }) {
     fetchDiagramData();
   };
 
-  const generatePDF = async () => {
+  const generatePDF = () => {
     if (!diagramData) return;
 
     setGeneratingPDF(true);
@@ -93,23 +133,24 @@ function DiagramasPalletView({ inspection, onClose }) {
       
       const { inspection: inspData, pallets } = diagramData;
 
-      // Procesar pallets de 2 en 2 (2 pallets por página)
+      // Procesar pallets de 2 en 2 (2 por página)
       for (let i = 0; i < pallets.length; i += 2) {
-        // Nueva página (excepto para los primeros 2 pallets)
+        // Nueva página (excepto para los primeros 2)
         if (i > 0) {
           doc.addPage();
         }
 
-        // Calcular espacio disponible para 2 pallets optimizado
-        const spaceBetweenPallets = 8; // Gap aumentado entre pallets para evitar solapamiento
+        // Espacios
+        const spaceBetweenPallets = 8;
         const topMargin = 5;
         const bottomMargin = 15;
         const maxHeightPerPallet = (pageHeight - topMargin - bottomMargin - spaceBetweenPallets) / 2;
 
+        // PALLET 1 (ARRIBA)
         const palletTop = pallets[i];
         drawPalletOnPDF(doc, palletTop, inspData, pageWidth, topMargin, maxHeightPerPallet, true);
 
-        // Dibujar segundo pallet (abajo) si existe
+        // PALLET 2 (ABAJO) - Si existe
         if (i + 1 < pallets.length) {
           const palletBottom = pallets[i + 1];
           const startYBottom = topMargin + maxHeightPerPallet + spaceBetweenPallets;
@@ -117,10 +158,12 @@ function DiagramasPalletView({ inspection, onClose }) {
         }
       }
 
-      // Guardar PDF
-      doc.save(`Diagramas_Pallets_${inspData.numero_lote}.pdf`);
+      // Guardar archivo
+      const filename = `Diagramas_Pallets_${inspData.numero_lote}.pdf`;
+      doc.save(filename);
+      console.log(`PDF generado: ${filename}`);
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error generando PDF:', error);
       alert('Error al generar PDF: ' + error.message);
     } finally {
       setGeneratingPDF(false);
@@ -150,17 +193,16 @@ function DiagramasPalletView({ inspection, onClose }) {
     yPos += 8;
 
     // Configuración de separadores entre caras
-    const separatorWidth = distribucion_caras.length > 1 ? 3 : 0; // 3mm de separador
+    const separatorWidth = distribucion_caras.length > 1 ? 3 : 0;
     const numSeparators = Math.max(0, distribucion_caras.length - 1);
     const totalSeparatorWidth = numSeparators * separatorWidth;
 
     // Calcular tamaño de celda para que quepa en el espacio disponible
-    // Márgenes mínimos optimizados para 2 pallets por página
     const availableHeight = maxHeight - (yPos - startY) - 12;
     const cellSize = Math.min(
-      (pageWidth - 2 - totalSeparatorWidth) / base,  // Márgenes de 1mm c/lado
+      (pageWidth - 2 - totalSeparatorWidth) / base,
       availableHeight / altura,
-      55  // Reducido a 55mm para mayor separación entre números
+      55
     );
 
     const gridWidth = base * cellSize + totalSeparatorWidth;
@@ -175,21 +217,17 @@ function DiagramasPalletView({ inspection, onClose }) {
 
       let acumulado = 0;
       let xOffset = 0;
-      let caraIndex = 0;
 
       for (let i = 0; i < distribucion_caras.length; i++) {
         const colsEnCara = distribucion_caras[i];
         if (col <= acumulado + colsEnCara) {
-          // Está en esta cara
           const colEnCara = col - acumulado;
           return startX + xOffset + ((colEnCara - 1) * cellSize);
         }
         acumulado += colsEnCara;
         xOffset += colsEnCara * cellSize + separatorWidth;
-        caraIndex = i + 1;
       }
 
-      // Fallback
       return startX + ((col - 1) * cellSize);
     };
 
@@ -217,16 +255,20 @@ function DiagramasPalletView({ inspection, onClose }) {
       
       for (let i = 0; i < distribucion_caras.length - 1; i++) {
         xOffset += distribucion_caras[i] * cellSize;
-        
-        // Dibujar separador con patrón punteado
-        doc.setDrawColor(147, 51, 234); // Púrpura
-        doc.setLineWidth(0.8);
-        
+
         // Línea punteada vertical
+        doc.setDrawColor(147, 51, 234);
+        doc.setLineWidth(0.8);
+
         const sepX = xOffset + separatorWidth / 2;
         const dashLength = 2;
         for (let y = yPos; y < yPos + gridHeight; y += dashLength * 2) {
-          doc.line(sepX, y, sepX, Math.min(y + dashLength, yPos + gridHeight));
+          doc.line(
+            sepX,
+            y,
+            sepX,
+            Math.min(y + dashLength, yPos + gridHeight)
+          );
         }
         
         xOffset += separatorWidth;
@@ -256,9 +298,7 @@ function DiagramasPalletView({ inspection, onClose }) {
       doc.setLineWidth(0.3);
       doc.rect(x, y, cellSize, cellSize, 'FD');
 
-      // Número de caja - máxima separación para números de 1-4 dígitos
-      // Proporción muy conservadora: 28% del cellSize para amplio espaciado
-      // Evita completamente el solapamiento de números de 4 dígitos
+      // Número
       const fontSize = Math.max(8, Math.min(cellSize * 0.28, 16));
       doc.setFontSize(fontSize);
       doc.setFont('helvetica', 'bold');
@@ -287,7 +327,7 @@ function DiagramasPalletView({ inspection, onClose }) {
     doc.rect(45, legendY, 5, 5, 'FD');
     doc.text('Muestra', 52, legendY + 4);
 
-    // Info adicional con distribución de caras
+    // Info adicional
     doc.setFontSize(6);
     doc.setTextColor(107, 114, 128);
     let infoText = `Base: ${base} | Capas: ${altura} | Total: ${cantidad_cajas}`;
@@ -378,33 +418,39 @@ function DiagramasPalletView({ inspection, onClose }) {
           {/* Vista Detallada - Pallet Grande */}
           <div className="diagramas-detail-section">
             <div className="detail-header">
-              <span className="counter">Pallet {selectedPalletIndex + 1} de {diagramData.pallets.length}</span>
+              <span className="counter">
+                Mostrando pallets {selectedPalletIndex + 1}
+                {selectedPalletIndex + 1 < totalPallets ? ` y ${selectedPalletIndex + 2}` : ''}
+                {' '}de {totalPallets}
+              </span>
               <div className="detail-controls">
                 <button 
                   className="btn-detail-nav btn-detail-nav-prev"
-                  onClick={() => setSelectedPalletIndex((prev) => Math.max(0, prev - 1))}
+                  onClick={() => setSelectedPalletIndex((prev) => Math.max(0, prev - 2))}
                   disabled={selectedPalletIndex === 0}
                 >
                   ← Anterior
                 </button>
                 <button 
                   className="btn-detail-nav btn-detail-nav-next"
-                  onClick={() => setSelectedPalletIndex((prev) => Math.min(diagramData.pallets.length - 1, prev + 1))}
-                  disabled={selectedPalletIndex === diagramData.pallets.length - 1}
+                  onClick={() => setSelectedPalletIndex((prev) => Math.min(Math.max(0, totalPallets - 1), prev + 2))}
+                  disabled={selectedPalletIndex >= totalPallets - 2}
                 >
                   Siguiente →
                 </button>
               </div>
             </div>
             
-            <div className="detail-viewer">
-              <DiagramaPallet
-                key={`detail-${diagramData.pallets[selectedPalletIndex].numero_pallet}`}
-                palletData={diagramData.pallets[selectedPalletIndex]}
-                basePallet={diagramData.pallets[selectedPalletIndex].base}
-                alturaPallet={diagramData.pallets[selectedPalletIndex].altura}
-                distribucionCaras={diagramData.pallets[selectedPalletIndex].distribucion_caras || []}
-              />
+            <div className="detail-viewer detail-viewer-grid">
+              {detailPallets.map((pallet) => (
+                <DiagramaPallet
+                  key={`detail-${pallet.numero_pallet}`}
+                  palletData={pallet}
+                  basePallet={pallet.base}
+                  alturaPallet={pallet.altura}
+                  distribucionCaras={pallet.distribucion_caras || []}
+                />
+              ))}
             </div>
           </div>
 

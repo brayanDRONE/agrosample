@@ -66,6 +66,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             data['user']['role'] = self.user.profile.role
             data['user']['is_superadmin'] = self.user.profile.is_superadmin()
             data['user']['is_establishment_admin'] = self.user.profile.is_establishment_admin()
+            data['user']['sample_label_text'] = self.user.profile.sample_label_text or 'MUESTRA USDA'
         
         establishment = None
         

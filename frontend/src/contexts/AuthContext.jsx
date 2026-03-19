@@ -53,6 +53,13 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
+      const hasValidToken = await apiService.ensureValidToken();
+      if (!hasValidToken) {
+        logout();
+        setLoading(false);
+        return;
+      }
+
       const userData = await apiService.getCurrentUser();
       setUser(userData);
       // Guardar ID de usuario actual para detectar cambios de sesión

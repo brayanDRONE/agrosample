@@ -24,6 +24,31 @@ from .utils import (
 )
 
 
+def parse_manual_sample_numbers(raw_numbers):
+    """Normaliza números manuales aceptando lista o texto separado por coma/salto."""
+    if raw_numbers is None:
+        return []
+
+    if isinstance(raw_numbers, list):
+        values = raw_numbers
+    elif isinstance(raw_numbers, str):
+        normalized = raw_numbers.replace('\n', ',').replace(';', ',')
+        values = [token.strip() for token in normalized.split(',') if token.strip()]
+    else:
+        return []
+
+    parsed = []
+    for value in values:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            continue
+        if number > 0:
+            parsed.append(number)
+
+    return sorted(set(parsed))
+
+
 class AllowAnyReadPermission(permissions.BasePermission):
     """
     Permite acceso anónimo para lectura (GET).
@@ -127,143 +152,51 @@ class MuestreoViewSet(viewsets.ViewSet):
         data = serializer.validated_data
         
         try:
-            # Validaciones específicas para muestreo por etapa
-            if data['tipo_muestreo'] == 'POR_ETAPA':
-                boxes_per_pallet = data.get('boxes_per_pallet', [])
-                
-                if not boxes_per_pallet:
-                    return Response({
-                        'success': False,
-                        'message': 'Debe especificar las cajas por pallet para muestreo por etapa'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                
-                # Validar restricciones SAG/USDA
-                es_valido, errores, warnings = validate_stage_sampling(
-                    total_pallets=data['cantidad_pallets'],
-                    boxes_per_pallet=boxes_per_pallet,
-                    total_boxes_lot=data['tamano_lote']
-                )
-                
-                if not es_valido:
-                    return Response({
-                        'success': False,
-                        'message': 'Validación de muestreo por etapa fallida',
-                        'errors': errores,
-                        'warnings': warnings
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Crear la inspección
+            # Flujo manual: al crear solo se registra el lote y cantidad de pallets.
+            # Los números de muestra se ingresan posteriormente en configuración de diagramas.
+            manual_numbers = parse_manual_sample_numbers(data.get('numeros_muestra_manual', []))
+
             inspection = Inspection.objects.create(
-                exportador=data['exportador'],
-                establecimiento_nombre=data['establecimiento_nombre'],
-                establishment=None,  # Ya no se asocia obligatoriamente a un Establishment oficial
-                inspector_sag=data['inspector_sag'],
-                contraparte_sag=data['contraparte_sag'],
-                especie=data['especie'],
+                exportador=data.get('exportador') or 'N/A',
+                establecimiento_nombre=data.get('establecimiento_nombre') or 'N/A',
+                establishment=None,
+                inspector_sag=data.get('inspector_sag') or 'N/A',
+                contraparte_sag=data.get('contraparte_sag') or 'N/A',
+                especie=data.get('especie') or 'N/A',
                 numero_lote=data['numero_lote'],
                 tamano_lote=data['tamano_lote'],
-                tipo_muestreo=data['tipo_muestreo'],
-                tipo_despacho=data['tipo_despacho'],
+                tipo_muestreo='NORMAL',
+                tipo_despacho=data.get('tipo_despacho') or 'N/A',
                 cantidad_pallets=data['cantidad_pallets'],
-                boxes_per_pallet=data.get('boxes_per_pallet', [])
+                boxes_per_pallet=[]
             )
-            
-            # Obtener incremento de intensidad (opcional)
-            incremento_intensidad = data.get('incremento_intensidad', 0)
-            
-            # Calcular muestreo según el tipo
-            if data['tipo_muestreo'] == 'POR_ETAPA':
-                # Seleccionar pallets (25%)
-                selected_pallets = select_stage_sampling_pallets(data['cantidad_pallets'])
-                inspection.selected_pallets = selected_pallets
-                inspection.save()
-                
-                # Calcular cajas totales SOLO de pallets seleccionados
-                cajas_en_pallets_seleccionados = sum(
-                    data['boxes_per_pallet'][i - 1] 
-                    for i in selected_pallets
-                )
-                
-                # Calcular tamaño de muestra basado SOLO en pallets seleccionados
-                resultado_muestreo_base = calcular_muestreo(
-                    tamano_lote=cajas_en_pallets_seleccionados,
-                    especie=data['especie'],
-                    incremento_intensidad=incremento_intensidad
-                )
-                
-                # Distribuir muestras proporcionalmente entre pallets seleccionados
-                sample_distribution = distribute_samples_proportionally(
-                    boxes_per_pallet=data['boxes_per_pallet'],
-                    selected_pallet_indices=selected_pallets,
-                    total_sample_size=resultado_muestreo_base['tamano_muestra']
-                )
-                
-                # Generar números aleatorios de cajas
-                cajas_seleccionadas = generate_stage_sampling_numbers(
-                    boxes_per_pallet=data['boxes_per_pallet'],
-                    selected_pallet_indices=selected_pallets,
-                    sample_distribution=sample_distribution
-                )
-                
-                resultado_muestreo = {
-                    'tamano_lote': data['tamano_lote'],  # Mantener el lote original para referencia
-                    'tamano_lote_muestreado': cajas_en_pallets_seleccionados,  # Cajas realmente muestreadas
-                    'tipo_tabla': resultado_muestreo_base['tipo_tabla'],
-                    'nombre_tabla': resultado_muestreo_base['nombre_tabla'],
-                    'muestra_base': resultado_muestreo_base['muestra_base'],
-                    'incremento_aplicado': resultado_muestreo_base['incremento_aplicado'],
-                    'muestra_final': resultado_muestreo_base['muestra_final'],
-                    'tamano_muestra': len(cajas_seleccionadas),
-                    'cajas_seleccionadas': cajas_seleccionadas,
-                    'selected_pallets': selected_pallets,
-                    'sample_distribution': sample_distribution
-                }
-            else:
-                # Muestreo normal
-                resultado_muestreo = calcular_muestreo(
-                    tamano_lote=data['tamano_lote'],
-                    especie=data['especie'],
-                    incremento_intensidad=incremento_intensidad
-                )
-            
-            # Guardar resultado del muestreo
+
             sampling_result = SamplingResult.objects.create(
                 inspection=inspection,
-                tipo_tabla=resultado_muestreo['tipo_tabla'],
-                nombre_tabla=resultado_muestreo['nombre_tabla'],
-                muestra_base=resultado_muestreo.get('muestra_base'),
-                incremento_aplicado=resultado_muestreo.get('incremento_aplicado', 0),
-                muestra_final=resultado_muestreo.get('muestra_final'),
-                tamano_muestra=resultado_muestreo['tamano_muestra'],
-                cajas_seleccionadas=json.dumps(resultado_muestreo['cajas_seleccionadas'])
+                tipo_tabla='MANUAL',
+                nombre_tabla='Ingreso Manual de Números',
+                muestra_base=len(manual_numbers),
+                incremento_aplicado=0,
+                muestra_final=len(manual_numbers),
+                tamano_muestra=len(manual_numbers),
+                cajas_seleccionadas=json.dumps(manual_numbers)
             )
-            
-            # Preparar respuesta
-            response_data = {
+
+            return Response({
                 'success': True,
-                'message': 'Muestreo generado exitosamente',
+                'message': 'Lote registrado. Continúe con configuración de diagramas e ingreso manual de números.',
                 'data': {
                     'inspection': InspectionSerializer(inspection).data,
                     'sampling_result': {
                         'id': sampling_result.id,
-                        'tamano_lote': resultado_muestreo['tamano_lote'],
-                        'tipo_tabla': resultado_muestreo['tipo_tabla'],
-                        'nombre_tabla': resultado_muestreo['nombre_tabla'],
-                        'tamano_muestra': resultado_muestreo['tamano_muestra'],
-                        'cajas_seleccionadas': resultado_muestreo['cajas_seleccionadas']
+                        'tamano_lote': inspection.tamano_lote,
+                        'tipo_tabla': sampling_result.tipo_tabla,
+                        'nombre_tabla': sampling_result.nombre_tabla,
+                        'tamano_muestra': sampling_result.tamano_muestra,
+                        'cajas_seleccionadas': manual_numbers
                     }
                 }
-            }
-            
-            # Agregar datos extra para muestreo por etapa
-            if data['tipo_muestreo'] == 'POR_ETAPA':
-                response_data['data']['sampling_result']['tamano_lote_muestreado'] = resultado_muestreo.get('tamano_lote_muestreado', resultado_muestreo['tamano_lote'])
-                response_data['data']['stage_sampling'] = {
-                    'selected_pallets': resultado_muestreo.get('selected_pallets', []),
-                    'sample_distribution': resultado_muestreo.get('sample_distribution', {})
-                }
-            
-            return Response(response_data, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
             return Response({
@@ -298,6 +231,9 @@ class MuestreoViewSet(viewsets.ViewSet):
             inspection = get_object_or_404(Inspection, id=inspection_id)
             
             configurations = request.data.get('configurations', [])
+            manual_sample_numbers = parse_manual_sample_numbers(
+                request.data.get('manual_sample_numbers', [])
+            )
             
             if not configurations:
                 return Response({
@@ -365,12 +301,26 @@ class MuestreoViewSet(viewsets.ViewSet):
             # Guardar configuraciones procesadas
             inspection.pallet_configurations = processed_configs
             inspection.save()
+
+            # Actualizar muestreo manual si se enviaron números
+            if hasattr(inspection, 'sampling_result'):
+                sampling_result = inspection.sampling_result
+                if manual_sample_numbers:
+                    sampling_result.tipo_tabla = 'MANUAL'
+                    sampling_result.nombre_tabla = 'Ingreso Manual de Números'
+                    sampling_result.muestra_base = len(manual_sample_numbers)
+                    sampling_result.incremento_aplicado = 0
+                    sampling_result.muestra_final = len(manual_sample_numbers)
+                    sampling_result.tamano_muestra = len(manual_sample_numbers)
+                    sampling_result.cajas_seleccionadas = json.dumps(manual_sample_numbers)
+                    sampling_result.save()
             
             return Response({
                 'success': True,
                 'message': 'Configuraciones guardadas exitosamente',
                 'data': {
-                    'configurations': processed_configs
+                    'configurations': processed_configs,
+                    'manual_sample_numbers': manual_sample_numbers
                 }
             }, status=status.HTTP_200_OK)
             
