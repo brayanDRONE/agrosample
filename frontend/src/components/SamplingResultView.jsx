@@ -25,7 +25,7 @@ function SamplingResultView({ result, onNewInspection }) {
   const [editingNumber, setEditingNumber] = useState(null); // Controla qué número se está editando
   const [editValue, setEditValue] = useState(''); // Valor temporal mientras se edita
   const [showDiagrams, setShowDiagrams] = useState(false);
-  const labelText = user?.sample_label_text || 'MUESTRA USDA';
+  const labelText = (user?.sample_label_text || user?.establishment?.sample_label_text || 'MUESTRA USDA').trim();
 
   // Debug: Log del usuario y labelText
   useEffect(() => {

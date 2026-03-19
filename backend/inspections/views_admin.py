@@ -18,7 +18,8 @@ from .serializers_admin import (
     EstablishmentThemeSerializer,
     UserSerializer,
     UserProfileSerializer,
-    DashboardStatsSerializer
+    DashboardStatsSerializer,
+    resolve_effective_sample_label
 )
 
 
@@ -66,7 +67,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             data['user']['role'] = self.user.profile.role
             data['user']['is_superadmin'] = self.user.profile.is_superadmin()
             data['user']['is_establishment_admin'] = self.user.profile.is_establishment_admin()
-            data['user']['sample_label_text'] = self.user.profile.sample_label_text or 'MUESTRA USDA'
+            data['user']['sample_label_text'] = resolve_effective_sample_label(self.user)
         
         establishment = None
         
@@ -313,7 +314,8 @@ class CurrentUserViewSet(viewsets.ViewSet):
                 'exportadora': establishment.exportadora or '',
                 'has_active_subscription': establishment.has_active_subscription(),
                 'subscription_expiry': establishment.subscription_expiry,
-                'days_until_expiry': establishment.days_until_expiry()
+                'days_until_expiry': establishment.days_until_expiry(),
+                'sample_label_text': establishment.sample_label_text or 'MUESTRA USDA'
             }
             
             # Agregar tema si existe

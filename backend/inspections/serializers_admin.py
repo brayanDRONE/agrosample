@@ -7,6 +7,32 @@ from django.contrib.auth.hashers import make_password
 from .models import Establishment, EstablishmentTheme, UserProfile
 
 
+DEFAULT_SAMPLE_LABEL = 'MUESTRA USDA'
+
+
+def resolve_effective_sample_label(user):
+    """Resuelve el texto efectivo de etiqueta desde perfil y establecimiento."""
+    if hasattr(user, 'profile'):
+        profile_label = (user.profile.sample_label_text or '').strip()
+        if profile_label and profile_label != DEFAULT_SAMPLE_LABEL:
+            return profile_label
+
+        if user.profile.establishment and user.profile.establishment.sample_label_text:
+            establishment_label = user.profile.establishment.sample_label_text.strip()
+            if establishment_label:
+                return establishment_label
+
+        if profile_label:
+            return profile_label
+
+    if hasattr(user, 'establishment_admin') and user.establishment_admin:
+        establishment_label = (user.establishment_admin.sample_label_text or '').strip()
+        if establishment_label:
+            return establishment_label
+
+    return DEFAULT_SAMPLE_LABEL
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer para perfil de usuario."""
     username = serializers.CharField(source='user.username', read_only=True)
@@ -61,9 +87,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_sample_label_text(self, obj):
         """Obtiene texto personalizado para etiquetas de muestra."""
-        if hasattr(obj, 'profile') and obj.profile.sample_label_text:
-            return obj.profile.sample_label_text
-        return 'MUESTRA USDA'
+        return resolve_effective_sample_label(obj)
 
 
 class EstablishmentThemeSerializer(serializers.ModelSerializer):
@@ -127,6 +151,19 @@ class EstablishmentDetailSerializer(serializers.ModelSerializer):
     def get_has_active_subscription(self, obj):
         return obj.has_active_subscription()
 
+    def update(self, instance, validated_data):
+        """Sincroniza el texto de etiqueta del perfil admin al actualizar establecimiento."""
+        new_label = validated_data.get('sample_label_text', instance.sample_label_text)
+        instance = super().update(instance, validated_data)
+
+        if instance.admin_user and hasattr(instance.admin_user, 'profile'):
+            profile = instance.admin_user.profile
+            if (profile.sample_label_text or '').strip() != (new_label or '').strip():
+                profile.sample_label_text = new_label or DEFAULT_SAMPLE_LABEL
+                profile.save(update_fields=['sample_label_text', 'updated_at'])
+
+        return instance
+
 
 class EstablishmentCreateSerializer(serializers.ModelSerializer):
     """Serializer para crear establecimiento con usuario."""
@@ -161,7 +198,7 @@ class EstablishmentCreateSerializer(serializers.ModelSerializer):
         subscription_days = validated_data.pop('subscription_days', 30)
         
         # Obtener texto de etiqueta (desde sample_label_text del establecimiento)
-        sample_label_text = validated_data.get('sample_label_text', 'MUESTRA USDA')
+        sample_label_text = validated_data.get('sample_label_text', DEFAULT_SAMPLE_LABEL)
         
         # Crear usuario
         admin_user = User.objects.create_user(
