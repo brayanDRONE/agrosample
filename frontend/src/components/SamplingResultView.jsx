@@ -8,6 +8,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import DiagramasPalletView from './DiagramasPalletView';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import './SamplingResultView.css';
 import usdaLogo from '../images/usda.svg';
 import chileLogoImg from '../images/logo_chile.png';
@@ -338,6 +339,23 @@ function SamplingResultView({ result, onNewInspection }) {
     setZebraError(null);
 
     try {
+      let effectiveLabelText = labelText;
+
+      // Obtener etiqueta más reciente desde backend para evitar usar datos en caché.
+      try {
+        const latestUser = await apiService.getCurrentUser();
+        const latestLabel = (
+          latestUser?.sample_label_text ||
+          latestUser?.establishment?.sample_label_text ||
+          labelText
+        ).trim();
+        if (latestLabel) {
+          effectiveLabelText = latestLabel;
+        }
+      } catch (refreshUserError) {
+        console.warn('No se pudo refrescar usuario antes de imprimir, usando etiqueta de sesión.', refreshUserError);
+      }
+
       // Verificar que el servicio esté disponible y obtener impresoras
       const PRINT_SERVICE_URL = import.meta.env.VITE_PRINT_SERVICE_URL || 'http://localhost:5000';
       const healthResponse = await fetch(`${PRINT_SERVICE_URL}/health`);
@@ -391,7 +409,7 @@ function SamplingResultView({ result, onNewInspection }) {
           lote: inspection.numero_lote,
           numeros: parsedNumbers,
           printer: selectedPrinter,
-          sample_text: labelText
+          sample_text: effectiveLabelText
         }),
       });
 
