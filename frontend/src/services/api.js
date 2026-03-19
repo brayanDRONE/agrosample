@@ -13,6 +13,31 @@ const api = axios.create({
   },
 });
 
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const now = Date.now();
+    const expMs = (payload.exp || 0) * 1000;
+    // Considerar expirado si faltan <= 5 segundos para vencer
+    return expMs <= now + 5000;
+  } catch {
+    return true;
+  }
+};
+
+const refreshAccessToken = async () => {
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) return null;
+
+  const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
+    refresh: refreshToken
+  });
+
+  const { access } = response.data;
+  localStorage.setItem('access_token', access);
+  return access;
+};
+
 // Interceptor para agregar token JWT a las peticiones
 api.interceptors.request.use(
   (config) => {
@@ -65,6 +90,25 @@ api.interceptors.response.use(
 
 // Servicios de API
 export const apiService = {
+  async ensureValidToken() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return false;
+
+    if (!isTokenExpired(token)) {
+      return true;
+    }
+
+    try {
+      const newAccess = await refreshAccessToken();
+      return !!newAccess;
+    } catch {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      return false;
+    }
+  },
+
   // ========== Autenticación ==========
   async login(username, password) {
     const response = await api.post('/auth/login/', { username, password });

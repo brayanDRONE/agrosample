@@ -6,12 +6,23 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import { useAuth } from '../contexts/AuthContext';
 import './ConfiguracionDiagramaView.css';
 
-function ConfiguracionDiagramaView({ inspection, onConfigured, onClose }) {
+function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, onClose }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { inspectionId } = useParams();
+  
+  // Obtener inspection del state de navigation o de props (mode modal vs página)
+  const inspection = location.state?.inspection || inspectionProp;
   const [configurations, setConfigurations] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
 
   useEffect(() => {
     initializeConfigurations();
@@ -254,12 +265,138 @@ function ConfiguracionDiagramaView({ inspection, onConfigured, onClose }) {
       }
 
       // Notificar éxito
-      onConfigured();
+      if (inspectionId) {
+        // Modo página independiente: mostrar mensaje después de 2 segundos
+        setTimeout(() => {
+          navigate('/muestreo');
+        }, 2000);
+      } else if (onConfigured) {
+        // Modo modal: llamar callback después de 2 segundos
+        setTimeout(() => {
+          onConfigured();
+        }, 2000);
+      }
     } catch (err) {
       console.error('Error saving configurations:', err);
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const generateConfigPDF = () => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
+      let yPos = 20;
+      const margin = 15;
+      const footerHeight = 10;
+
+      // Título
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text('Configuración de Diagramas de Pallets', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // Información de la inspección
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text('Información de la Inspección', margin, yPos);
+      yPos += 8;
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Lote: ${inspection.numero_lote}`, margin, yPos);
+      yPos += 6;
+      doc.text(`Total de Pallets: ${configurations.length}`, margin, yPos);
+      yPos += 6;
+      doc.text(`Fecha: ${new Date().toLocaleDateString('es-CL')}`, margin, yPos);
+      yPos += 12;
+
+      // Tabla con configuraciones
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text('Detalle de Configuración por Pallet', margin, yPos);
+      yPos += 10;
+
+      // Headers de la tabla
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      const colWidths = [30, 30, 35, 50];
+      const headers = ['Pallet', 'Base', 'Cantidad', 'Distribución Caras'];
+      let xPos = margin;
+      
+      headers.forEach((header, idx) => {
+        doc.text(header, xPos, yPos);
+        xPos += colWidths[idx];
+      });
+      
+      yPos += 8;
+      doc.setDrawColor(200, 200, 200);
+      doc.line(margin, yPos - 2, pageWidth - margin, yPos - 2);
+      yPos += 5;
+
+      // Datos de configuración
+      doc.setFont(undefined, 'normal');
+      configurations.forEach((config, idx) => {
+        const distribucion = (config.distribucion_caras || []);
+        const distribucionText = distribucion.map((col, i) => `Cara ${String.fromCharCode(65 + i)}: ${col}`).join(' | ');
+        
+        // Verificar si necesitamos nueva página
+        if (yPos > pageHeight - footerHeight - 15) {
+          // Pie de página
+          doc.setFontSize(8);
+          doc.setFont(undefined, 'normal');
+          doc.text(`Página ${doc.internal.pages.length - 1}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+          
+          // Nueva página
+          doc.addPage();
+          yPos = 20;
+          
+          // Repetir headers en nueva página
+          doc.setFontSize(9);
+          doc.setFont(undefined, 'bold');
+          xPos = margin;
+          headers.forEach((header, idx) => {
+            doc.text(header, xPos, yPos);
+            xPos += colWidths[idx];
+          });
+          yPos += 8;
+          doc.setDrawColor(200, 200, 200);
+          doc.line(margin, yPos - 2, pageWidth - margin, yPos - 2);
+          yPos += 5;
+          doc.setFont(undefined, 'normal');
+        }
+        
+        xPos = margin;
+        doc.text(`Pallet ${config.numero_pallet}`, xPos, yPos);
+        xPos += colWidths[0];
+        
+        doc.text(String(config.base), xPos, yPos);
+        xPos += colWidths[1];
+        
+        doc.text(String(config.cantidad_cajas), xPos, yPos);
+        xPos += colWidths[2];
+        
+        // Texto de distribución con wrapping
+        const splitDistribucion = doc.splitTextToSize(distribucionText, colWidths[3] - 3);
+        doc.text(splitDistribucion, xPos, yPos);
+        
+        yPos += Math.max(6, splitDistribucion.length * 4) + 3;
+      });
+
+      // Pie de página
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Página ${doc.internal.pages.length - 1}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+
+      // Descargar
+      const filename = `Configuracion_Diagramas_${inspection.numero_lote}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Error al generar el PDF');
     }
   };
 
@@ -269,6 +406,40 @@ function ConfiguracionDiagramaView({ inspection, onConfigured, onClose }) {
       return sum + cantidad;
     }, 0);
   };
+
+  // Handler para cerrar (adapta según contexto: modal vs página)
+  const handleClose = () => {
+    if (inspectionId) {
+      // Modo página independiente
+      navigate('/muestreo');
+    } else if (onClose) {
+      // Modo modal
+      onClose();
+    }
+  };
+
+  // Mostrar error si falta inspection data
+  if (!inspection) {
+    return (
+      <div className="configuracion-overlay">
+        <div className="configuracion-modal">
+          <div className="configuracion-header">
+            <h2>Error: Datos de inspección no disponibles</h2>
+          </div>
+          <div className="configuracion-info">
+            <div className="info-alert" style={{ background: '#fee2e2', color: '#991b1b', borderRadius: '8px', padding: '12px' }}>
+              No se pudo cargar la inspección. Por favor, intente nuevamente desde el formulario de ingreso.
+            </div>
+          </div>
+          <div className="configuracion-footer">
+            <button className="btn btn-secondary" onClick={handleClose}>
+              Volver
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="configuracion-overlay">
@@ -281,7 +452,9 @@ function ConfiguracionDiagramaView({ inspection, onConfigured, onClose }) {
               Ingrese base (cajas por capa) y cantidad total de cajas por pallet
             </p>
           </div>
-          <button className="btn-close" onClick={onClose}>×</button>
+          <button className="btn-close" onClick={handleClose}>
+            {inspectionId ? '←' : '×'}
+          </button>
         </div>
 
         {/* Info del lote */}
@@ -468,10 +641,12 @@ function ConfiguracionDiagramaView({ inspection, onConfigured, onClose }) {
           </div>
         )}
 
+
+
         {/* Footer */}
         <div className="configuracion-footer">
-          <button className="btn btn-secondary" onClick={onClose}>
-            Cancelar
+          <button className="btn btn-secondary" onClick={handleClose}>
+            {inspectionId ? 'Volver' : 'Cancelar'}
           </button>
           <button 
             className="btn btn-success" 
@@ -482,6 +657,10 @@ function ConfiguracionDiagramaView({ inspection, onConfigured, onClose }) {
               <>
                 <span className="spinner"></span>
                 Guardando...
+              </>
+            ) : inspectionId ? (
+              <>
+                ✓ Guardar y Volver
               </>
             ) : (
               <>

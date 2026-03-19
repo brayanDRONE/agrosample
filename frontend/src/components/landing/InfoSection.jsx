@@ -2,72 +2,82 @@ import React from 'react';
 import './InfoSection.css';
 
 function InfoSection() {
+  const features = [
+    {
+      icon: '📋',
+      title: 'Registro de Lotes',
+      description: 'Ingresa números de lote y cantidad de pallets de forma rápida y sencilla.'
+    },
+    {
+      icon: '🔢',
+      title: 'Muestreo Manual',
+      description: 'Define números de muestra manualmente con máxima flexibilidad operativa.'
+    },
+    {
+      icon: '📊',
+      title: 'Diagramas Visuales',
+      description: 'Visualiza pallets con números marcados automáticamente en diagramas.'
+    },
+    {
+      icon: '🖨️',
+      title: 'Impresoras Zebra',
+      description: 'Imprime etiquetas profesionales con texto personalizado por usuario.'
+    }
+  ];
+
   return (
     <section id="about-system" className="info-section">
       <div className="info-container">
-
-        <h2 className="info-title">Sistema de Automatización de Muestreos</h2>
-        <p className="info-subtitle">
-          Programa de Pre-embarque SAG / USDA-APHIS / Frutas de Chile
-        </p>
-
-        <div className="info-content">
-          <p className="info-text">
-            El Sistema de Automatización de Muestreos es una plataforma diseñada como
-            herramienta de apoyo para optimizar los procesos asociados a las inspecciones
-            fitosanitarias en el programa de pre-embarque de frutas destinadas a exportación.
-          </p>
-
-          <p className="info-text">
-            La plataforma automatiza cálculos de muestreo que tradicionalmente se realizan de
-            forma manual, permitiendo a administradores y supervisores generar rápidamente los
-            parámetros necesarios para la inspección de lotes, reduciendo tiempos operativos y
-            minimizando errores en la determinación de tamaños de muestra.
-          </p>
-
-          <p className="info-text">
-            El sistema permite configurar especies y parámetros de incremento de muestreo,
-            facilitando la preparación del proceso de inspección y la generación automática
-            de la documentación requerida para su ejecución.
-          </p>
-
-          <p className="info-text">
-            La plataforma no almacena información de inspecciones ni resultados operativos,
-            funcionando exclusivamente como una herramienta de apoyo para la generación de
-            muestreos y emisión de documentación asociada al proceso de inspección.
+        <div className="section-header">
+          <h2 className="info-title">¿Cómo Funciona agrosample?</h2>
+          <p className="info-subtitle">
+            Flujo simplificado de muestreo y control de pallets
           </p>
         </div>
 
-        <div className="info-features">
-          <div className="feature-card">
-            <h4 className="feature-title">✓ Automatización de Muestreos</h4>
-            <p className="feature-text">
-              Generación automática de parámetros de muestreo utilizados en inspecciones fitosanitarias.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <h4 className="feature-title">✓ Reducción de Tiempos</h4>
-            <p className="feature-text">
-              Elimina cálculos manuales y optimiza los tiempos de preparación de inspecciones.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <h4 className="feature-title">✓ Documentación Automática</h4>
-            <p className="feature-text">
-              Generación e impresión de documentos necesarios para el proceso de inspección.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <h4 className="feature-title">✓ Acceso Controlado</h4>
-            <p className="feature-text">
-              Uso exclusivo para administradores y supervisores autorizados del sistema.
-            </p>
-          </div>
+        <div className="features-grid">
+          {features.map((feature, index) => (
+            <div key={index} className="feature-box">
+              <div className="feature-icon">{feature.icon}</div>
+              <h3 className="feature-title">{feature.title}</h3>
+              <p className="feature-description">{feature.description}</p>
+            </div>
+          ))}
         </div>
 
+        <div className="benefits-section">
+          <h3 className="benefits-title">Ventajas del Sistema</h3>
+          <div className="benefits-grid">
+            <div className="benefit-item">
+              <div className="benefit-check">✓</div>
+              <div>
+                <h4>Operación Flexible</h4>
+                <p>Adaptable a diferentes procesos y necesidades de muestreo</p>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-check">✓</div>
+              <div>
+                <h4>Errores Reducidos</h4>
+                <p>Validación integrada en cada paso del proceso</p>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-check">✓</div>
+              <div>
+                <h4>Trazabilidad Total</h4>
+                <p>Registro completo de lotes, muestras y etiquetas impresas</p>
+              </div>
+            </div>
+            <div className="benefit-item">
+              <div className="benefit-check">✓</div>
+              <div>
+                <h4>Acceso Controlado</h4>
+                <p>Seguro con autenticación y personalización por usuario</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );

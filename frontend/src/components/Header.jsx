@@ -12,8 +12,8 @@ function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const companyName = theme?.company_name || user?.establishment?.nombre || 'Sistema de Inspecciones SAG-USDA';
-  const welcomeMessage = theme?.welcome_message || 'Gestión Documental y Automatización';
+  const companyName = theme?.company_name || user?.establishment?.nombre || 'agrosample';
+  const welcomeMessage = theme?.welcome_message || 'Automatización de etiquetas y muestreo de pallets';
 
   const handleLogout = () => {
     logout();

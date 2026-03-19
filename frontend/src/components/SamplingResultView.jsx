@@ -3,9 +3,11 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import DiagramasPalletView from './DiagramasPalletView';
+import { useAuth } from '../contexts/AuthContext';
 import './SamplingResultView.css';
 import usdaLogo from '../images/usda.svg';
 import chileLogoImg from '../images/logo_chile.png';
@@ -13,10 +15,91 @@ import chileLogoImg from '../images/logo_chile.png';
 import minsalLogoImg from '../images/Logo MINSAL.jpg';
 
 function SamplingResultView({ result, onNewInspection }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const { inspection, sampling_result } = result;
   const [printingZebra, setPrintingZebra] = useState(false);
   const [zebraError, setZebraError] = useState(null);
+  const [manualNumbersInput, setManualNumbersInput] = useState('');
+  const [manualNumbers, setManualNumbers] = useState([]);
+  const [editingNumber, setEditingNumber] = useState(null); // Controla qué número se está editando
+  const [editValue, setEditValue] = useState(''); // Valor temporal mientras se edita
   const [showDiagrams, setShowDiagrams] = useState(false);
+  const labelText = user?.sample_label_text || 'MUESTRA USDA';
+
+  // Debug: Log del usuario y labelText
+  useEffect(() => {
+    console.log('DEBUG - User object:', user);
+    console.log('DEBUG - sample_label_text:', user?.sample_label_text);
+    console.log('DEBUG - labelText:', labelText);
+  }, [user, labelText]);
+
+  // Parsear números ingresados en el textarea
+  const parseManualNumbers = () => {
+    // Mantener orden original, solo eliminar duplicados
+    return Array.from(new Set(manualNumbers));
+  };
+
+  // Agregar número a la lista
+  const addManualNumber = () => {
+    const num = parseInt(manualNumbersInput.trim(), 10);
+    if (isNaN(num) || num <= 0) {
+      setZebraError('Ingresa un número válido (mayor a 0)');
+      return;
+    }
+    
+    if (manualNumbers.includes(num)) {
+      setZebraError(`El número ${num} ya existe`);
+      return;
+    }
+
+    setManualNumbers([...manualNumbers, num]);
+    setManualNumbersInput('');
+    setZebraError(null);
+  };
+
+  // Eliminar número de la lista
+  const removeManualNumber = (num) => {
+    setManualNumbers(manualNumbers.filter(n => n !== num));
+  };
+
+  // Iniciar edición de un número
+  const startEditingNumber = (num) => {
+    setEditingNumber(num);
+    setEditValue(num.toString());
+  };
+
+  // Guardar cambio del número editado
+  const saveEditedNumber = (oldNum) => {
+    const parsed = parseInt(editValue.trim(), 10);
+    
+    if (isNaN(parsed) || parsed <= 0) {
+      setZebraError('Ingresa un número válido (mayor a 0)');
+      return;
+    }
+    
+    if (parsed !== oldNum && manualNumbers.includes(parsed)) {
+      setZebraError(`El número ${parsed} ya existe`);
+      return;
+    }
+
+    // Actualizar solo el número que se estaba editando
+    setManualNumbers(manualNumbers.map(n => n === oldNum ? parsed : n));
+    setEditingNumber(null);
+    setEditValue('');
+    setZebraError(null);
+  };
+
+  // Cancelar edición
+  const cancelEditingNumber = () => {
+    setEditingNumber(null);
+    setEditValue('');
+  };
+
+  // Handlers para el modal de diagramas
+  const handleCloseDiagrams = () => {
+    setShowDiagrams(false);
+  };
 
   const generatePDF = async () => {
     const doc = new jsPDF();
@@ -58,8 +141,8 @@ function SamplingResultView({ result, onNewInspection }) {
     // Título centrado
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Muestreo Aleatorio con Despacho', pageWidth / 2, 15, { align: 'center' });
-    doc.text(`a ${inspection.tipo_despacho}`, pageWidth / 2, 20, { align: 'center' });
+    doc.text('AGROSAMPLE - Muestreo de Lote', pageWidth / 2, 15, { align: 'center' });
+    doc.text(`Despacho: ${inspection.tipo_despacho || 'N/A'}`, pageWidth / 2, 20, { align: 'center' });
     
     // ==================== NRO LOTE Y PRODUCTO (HORIZONTAL CENTRADO) ====================
     doc.setFontSize(10);
@@ -92,11 +175,11 @@ function SamplingResultView({ result, onNewInspection }) {
     doc.text(`: ${fecha.toLocaleDateString('es-CL')}`, leftValCol, yPos);
     yPos += 6;
     
-    doc.text('Inspector SAG', leftCol, yPos);
+    doc.text('Inspector', leftCol, yPos);
     doc.text(': ' + (inspection.inspector_sag || ''), leftValCol, yPos);
     yPos += 6;
     
-    doc.text('Responsable Planta', leftCol, yPos);
+    doc.text('Responsable', leftCol, yPos);
     doc.text(': ' + (inspection.contraparte_sag || ''), leftValCol, yPos);
     yPos += 6;
     
@@ -196,7 +279,7 @@ function SamplingResultView({ result, onNewInspection }) {
     
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('Certificado de Pre-Muestreo USDA/SAG', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('Certificado de Muestreo', pageWidth / 2, yPos, { align: 'center' });
     yPos += 5;
     doc.text(`Detalle del Lote Nro    : ${inspection.numero_lote}`, pageWidth / 2, yPos, { align: 'center' });
     yPos += 10;
@@ -205,7 +288,7 @@ function SamplingResultView({ result, onNewInspection }) {
     doc.setFont('helvetica', 'normal');
     const certLeftCol = 25;
     
-    doc.text('MUESTRA   :', certLeftCol, yPos);
+    doc.text(`${labelText} :`, certLeftCol, yPos);
     doc.text('DE', certLeftCol + 30, yPos);
     doc.rect(certLeftCol + 40, yPos - 4, 40, 6); // Campo vacío
     doc.text('A', certLeftCol + 85, yPos);
@@ -243,6 +326,14 @@ function SamplingResultView({ result, onNewInspection }) {
   };
 
   const printZebraLabels = async () => {
+    // Usar números del estado
+    const parsedNumbers = parseManualNumbers();
+    
+    if (parsedNumbers.length === 0) {
+      setZebraError('Ingresa al menos un número de caja válido');
+      return;
+    }
+
     setPrintingZebra(true);
     setZebraError(null);
 
@@ -290,7 +381,7 @@ function SamplingResultView({ result, onNewInspection }) {
       
       const selectedPrinter = printers[printerIndex];
 
-      // Enviar datos de impresión
+      // Enviar datos de impresión con los números parseados
       const response = await fetch(`${PRINT_SERVICE_URL}/print`, {
         method: 'POST',
         headers: {
@@ -298,8 +389,9 @@ function SamplingResultView({ result, onNewInspection }) {
         },
         body: JSON.stringify({
           lote: inspection.numero_lote,
-          numeros: sampling_result.cajas_seleccionadas,
-          printer: selectedPrinter
+          numeros: parsedNumbers,
+          printer: selectedPrinter,
+          sample_text: labelText
         }),
       });
 
@@ -326,38 +418,17 @@ function SamplingResultView({ result, onNewInspection }) {
     <div className="results-container">
       {/* Información de la Inspección */}
       <div className="card result-card">
-        <div className="card-header success-header">
-          <div className="success-icon">
-            <svg width="32" height="32" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div>
-            <h2>Muestreo Generado Exitosamente</h2>
-            <p>Lote: {inspection.numero_lote} - {inspection.especie}</p>
-          </div>
-        </div>
-
-        {/* Detalles de Inspección */}
         <div className="card-body">
           <div className="info-section">
             <h3 className="section-title">Información de la Inspección</h3>
             <div className="info-grid">
               <div className="info-item">
-                <span className="info-label">Exportador:</span>
-                <span className="info-value">{inspection.exportador}</span>
+                <span className="info-label">Lote:</span>
+                <span className="info-value">{inspection.numero_lote}</span>
               </div>
               <div className="info-item">
-                <span className="info-label">Establecimiento:</span>
-                <span className="info-value">{inspection.establecimiento_nombre || inspection.establishment_name}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Inspector SAG:</span>
-                <span className="info-value">{inspection.inspector_sag}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Contraparte SAG:</span>
-                <span className="info-value">{inspection.contraparte_sag}</span>
+                <span className="info-label">Pallets del Lote:</span>
+                <span className="info-value">{inspection.cantidad_pallets}</span>
               </div>
               <div className="info-item">
                 <span className="info-label">Fecha:</span>
@@ -366,112 +437,219 @@ function SamplingResultView({ result, onNewInspection }) {
                 </span>
               </div>
               <div className="info-item">
-                <span className="info-label">Tipo de Muestreo:</span>
-                <span className="info-value">
-                  {inspection.tipo_muestreo === 'NORMAL' ? 'Normal' : 'Por Etapa'}
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Tipo de Despacho:</span>
-                <span className="info-value">{inspection.tipo_despacho}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Cantidad de Pallets:</span>
-                <span className="info-value">{inspection.cantidad_pallets}</span>
+                <span className="info-label">Etiqueta del Usuario:</span>
+                <span className="info-value">{labelText}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Resultados del Muestreo */}
+      {/* Ingreso Manual de Números */}
       <div className="card result-card">
         <div className="card-header">
-          <h2>Resultados del Muestreo</h2>
+          <h2>Ingreso Manual de Números</h2>
+          <p className="card-subtitle">Ingresa los números de cajas que serán capturados en el diagrama</p>
         </div>
 
         <div className="card-body">
-          {/* Estadísticas */}
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-label">Tamaño del Lote</div>
-              <div className="stat-value">{sampling_result.tamano_lote}</div>
-              <div className="stat-unit">cajas</div>
+          <div className="manual-input-section">
+            <label htmlFor="manual-number-input" className="input-label">
+              Ingreso de Números de Cajas
+            </label>
+            
+            {/* Input single-line */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <input
+                id="manual-number-input"
+                type="number"
+                className="manual-input-textarea"
+                style={{ flex: 1, padding: '10px 12px' }}
+                placeholder="Ej: 5 o 12 o 88"
+                value={manualNumbersInput}
+                onChange={(e) => {
+                  setManualNumbersInput(e.target.value);
+                  setZebraError(null);
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addManualNumber();
+                  }
+                }}
+              />
+              <button
+                className="btn btn-secondary"
+                onClick={addManualNumber}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                + Agregar
+              </button>
             </div>
 
-            <div className="stat-card stat-highlight">
-              <div className="stat-label" style={{ fontSize: '0.9em' }}>Tabla de Muestreo</div>
-              <div className="stat-value" style={{ fontSize: '0.8em', lineHeight: '1.2', padding: '5px' }}>
-                {sampling_result.nombre_tabla || 'Hipergeométrica del 6%'}
-              </div>
-              <div className="stat-unit" style={{ fontSize: '0.85em' }}>aplicada</div>
-            </div>
+            <small style={{ color: '#4b5563', display: 'block', marginBottom: '12px' }}>
+              Presiona Enter o click en "+ Agregar"
+            </small>
 
-            <div className="stat-card stat-primary">
-              <div className="stat-label">Tamaño de la Muestra</div>
-              <div className="stat-value">{sampling_result.tamano_muestra}</div>
-              <div className="stat-unit">cajas a inspeccionar</div>
-              {sampling_result.incremento_aplicado > 0 && (
-                <div style={{ marginTop: '8px', fontSize: '0.85em', color: '#059669', fontWeight: 600 }}>
-                  Base: {sampling_result.muestra_base} → Final: {sampling_result.muestra_final}
+            {/* Lista de números ingresados */}
+            {manualNumbers.length > 0 && (
+              <div style={{
+                display: 'grid',
+                gap: '8px',
+                padding: '12px',
+                backgroundColor: '#f0fdf4',
+                borderRadius: '8px',
+                border: '1px solid #d1fae5',
+                marginBottom: '12px'
+              }}>
+                <div style={{ fontSize: '0.9em', fontWeight: '600', color: '#059669', marginBottom: '4px' }}>
+                  ✓ Números capturados ({manualNumbers.length}):
                 </div>
-              )}
-            </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {parseManualNumbers().map((num, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        backgroundColor: editingNumber === num ? '#0891b2' : '#10b981',
+                        color: 'white',
+                        borderRadius: '6px',
+                        padding: '6px 10px',
+                        fontSize: '0.95em',
+                        fontWeight: '600',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {editingNumber === num ? (
+                        // Modo edición
+                        <>
+                          <input
+                            type="number"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveEditedNumber(num);
+                              } else if (e.key === 'Escape') {
+                                cancelEditingNumber();
+                              }
+                            }}
+                            autoFocus
+                            style={{
+                              width: '50px',
+                              padding: '4px 6px',
+                              border: '2px solid rgba(255,255,255,0.5)',
+                              borderRadius: '4px',
+                              fontSize: '0.95em',
+                              backgroundColor: 'rgba(0,0,0,0.2)',
+                              color: 'white',
+                              textAlign: 'center',
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <button
+                            onClick={() => saveEditedNumber(num)}
+                            style={{
+                              background: 'rgba(255,255,255,0.4)',
+                              border: 'none',
+                              color: 'white',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              padding: '2px 6px',
+                              fontSize: '0.85em',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.6)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.4)'}
+                            title="Guardar (Enter)"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={cancelEditingNumber}
+                            style={{
+                              background: 'rgba(255,255,255,0.4)',
+                              border: 'none',
+                              color: 'white',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              padding: '2px 6px',
+                              fontSize: '0.85em',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.6)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.4)'}
+                            title="Cancelar (Esc)"
+                          >
+                            ✕
+                          </button>
+                        </>
+                      ) : (
+                        // Modo lectura
+                        <>
+                          <span
+                            onClick={() => startEditingNumber(num)}
+                            style={{
+                              cursor: 'pointer',
+                              padding: '2px 4px',
+                              borderRadius: '3px',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0,0,0,0.2)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            title="Click para editar"
+                          >
+                            {num}
+                          </span>
+                          <button
+                            onClick={() => removeManualNumber(num)}
+                            style={{
+                              background: 'rgba(255,255,255,0.3)',
+                              border: 'none',
+                              color: 'white',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              padding: '2px 6px',
+                              fontSize: '0.85em',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.5)'}
+                            onMouseLeave={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.3)'}
+                            title="Eliminar"
+                          >
+                            ✕
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <small style={{ color: '#059669', marginTop: '4px' }}>
+                  Haz click en el número para editar (Enter para guardar, Esc para cancelar)
+                </small>
+              </div>
+            )}
           </div>
 
-          {/* Información adicional para Muestreo por Etapa */}
-          {inspection.tipo_muestreo === 'POR_ETAPA' && result.stage_sampling && (
-            <div className="stage-sampling-info">
-              <div className="info-box info-box-primary">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <div>
-                  <strong>Muestreo por Etapa:</strong> Se seleccionaron {result.stage_sampling.selected_pallets.length} pallets 
-                  ({Math.round((result.stage_sampling.selected_pallets.length / inspection.cantidad_pallets) * 100)}% del total)
-                  <div style={{ marginTop: '8px' }}>
-                    <strong>Pallets Seleccionados:</strong> {result.stage_sampling.selected_pallets.join(', ')}
-                  </div>
-                  {sampling_result.tamano_lote_muestreado && (
-                    <div style={{ marginTop: '4px', fontSize: '0.95em', color: '#059669', fontWeight: 600 }}>
-                      Cajas en pallets seleccionados: {sampling_result.tamano_lote_muestreado} 
-                      (de {sampling_result.tamano_lote} totales)
-                    </div>
-                  )}
-                  <div style={{ marginTop: '4px', fontSize: '0.9em', opacity: '0.9' }}>
-                    Total de pallets en el lote: {inspection.cantidad_pallets}
-                  </div>
-                </div>
-              </div>
+          {/* Error de Zebra */}
+          {zebraError && (
+            <div style={{
+              padding: '12px',
+              marginBottom: '16px',
+              backgroundColor: '#fee2e2',
+              color: '#991b1b',
+              borderRadius: '8px',
+              border: '1px solid #fecaca',
+              fontSize: '0.95em'
+            }}>
+              ⚠️ {zebraError}
             </div>
           )}
 
-          {/* Lista de Cajas */}
-          <div className="boxes-section">
-            <h3 className="section-title">
-              Cajas Seleccionadas ({sampling_result.cajas_seleccionadas.length})
-            </h3>
-            <div className="boxes-container">
-              {sampling_result.cajas_seleccionadas.map((numero, index) => (
-                <div key={index} className="box-number">
-                  {numero}
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Acciones */}
           <div className="actions-section">
-            <button 
-              className="btn btn-success"
-              onClick={generatePDF}
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clipRule="evenodd" />
-              </svg>
-              Imprimir PDF
-            </button>
-
             <button 
               className="btn btn-secondary"
               onClick={printZebraLabels}
@@ -507,11 +685,12 @@ function SamplingResultView({ result, onNewInspection }) {
         </div>
       </div>
 
-      {/* Modal de diagramas */}
+      {/* Modal de Configuración de Diagramas */}
       {showDiagrams && (
         <DiagramasPalletView
           inspection={inspection}
-          onClose={() => setShowDiagrams(false)}
+          selectedNumbers={parseManualNumbers()}
+          onClose={handleCloseDiagrams}
         />
       )}
     </div>

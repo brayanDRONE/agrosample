@@ -1,5 +1,6 @@
 /**
  * AdminDashboard - Panel de control para superadministrador
+ * Gestiona establecimientos, suscripciones y estadísticas generales
  */
 
 import { useState, useEffect } from 'react';
@@ -12,23 +13,47 @@ function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
+  const [establishments, setEstablishments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('management');
 
   useEffect(() => {
+    // Verificar que es superadmin
+    if (!user?.is_superadmin) {
+      navigate('/muestreo');
+      return;
+    }
     loadDashboardData();
+    loadEstablishments();
+    
+    // Recargar stats cada 30 segundos
+    const interval = setInterval(() => {
+      loadDashboardData();
+      loadEstablishments();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      setLoading(true);
       setError(null);
-
+      
       const statsData = await apiService.getAdminStats();
       setStats(statsData);
     } catch (err) {
       console.error('Error loading dashboard:', err);
       setError('Error al cargar los datos del dashboard');
+    }
+  };
+
+  const loadEstablishments = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getAllEstablishments();
+      setEstablishments(data);
+    } catch (err) {
+      console.error('Error loading establishments:', err);
     } finally {
       setLoading(false);
     }
@@ -39,7 +64,7 @@ function AdminDashboard() {
     navigate('/login');
   };
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <div className="dashboard-loading">
         <div className="spinner-large"></div>
@@ -48,16 +73,16 @@ function AdminDashboard() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="dashboard-error">
-        <p>{error}</p>
-        <button onClick={loadDashboardData} className="btn btn-primary">
-          Reintentar
-        </button>
+  const StatCard = ({ icon, title, value, color, action }) => (
+    <div className={`stat-card stat-${color}`}>
+      <div className="stat-icon">{icon}</div>
+      <div className="stat-content">
+        <h3>{title}</h3>
+        <p className="stat-value">{value}</p>
+        {action && <button className="stat-link" onClick={action}>{action.label} →</button>}
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="admin-dashboard">
@@ -65,21 +90,16 @@ function AdminDashboard() {
       <header className="dashboard-header">
         <div className="header-content">
           <div className="header-left">
-            <h1>Panel de Administración</h1>
-            <p>Sistema de Inspecciones SAG-USDA</p>
+            <h1>🏢 Panel de Administración</h1>
+            <p>Gestión de establecimientos y suscripciones</p>
           </div>
           <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                {user?.username?.[0]?.toUpperCase() || 'A'}
-              </div>
-              <div className="user-details">
-                <span className="user-name">{user?.username}</span>
-                <span className="user-role">Superadministrador</span>
-              </div>
+            <div className="user-badge">
+              <span className="badge-label">Admin:</span>
+              <span className="badge-value">{user?.username}</span>
             </div>
             <button onClick={handleLogout} className="btn btn-secondary btn-sm">
-              Cerrar Sesión
+              Salir
             </button>
           </div>
         </div>
@@ -88,84 +108,92 @@ function AdminDashboard() {
       {/* Main Content */}
       <main className="dashboard-main">
         <div className="dashboard-container">
-          {/* Quick Actions */}
-          <div className="quick-actions">
+          {error && (
+            <div className="alert alert-error">
+              <p>{error}</p>
+              <button onClick={loadDashboardData} className="btn btn-sm btn-primary">
+                Reintentar
+              </button>
+            </div>
+          )}
+
+          {/* Navigation Tabs */}
+          <div className="dashboard-tabs">
             <button 
-              onClick={() => navigate('/admin/establishments')}
-              className="btn btn-primary"
+              className="tab-button active"
             >
-              Gestionar Establecimientos
+              🔧 Gestión
             </button>
           </div>
 
-          {/* Stats Cards */}
-          <div className="stats-grid">
-            <div className="stat-card stat-total">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                </svg>
-              </div>
-              <div className="stat-content">
-                <h3>Total Establecimientos</h3>
-                <p className="stat-value">{stats?.total_establishments || 0}</p>
-              </div>
-            </div>
-
-            <div className="stat-card stat-active">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="stat-content">
-                <h3>Activos</h3>
-                <p className="stat-value">{stats?.active_establishments || 0}</p>
+          <div className="management-section">
+            <h2>Centro de Gestión</h2>
+              <div className="management-grid">
                 <button 
-                  onClick={() => navigate('/admin/establishments?filter=active')}
-                  className="stat-link"
+                  onClick={() => navigate('/admin/establishments')}
+                  className="management-card"
                 >
-                  Ver detalles →
+                  <div className="card-icon">🏢</div>
+                  <div className="card-content">
+                    <h3>Establecimientos</h3>
+                    <p>Crear, editar, y eliminar establecimientos</p>
+                  </div>
+                </button>
+                <button 
+                  onClick={loadDashboardData}
+                  className="management-card"
+                >
+                  <div className="card-icon">🔄</div>
+                  <div className="card-content">
+                    <h3>Actualizar Datos</h3>
+                    <p>Recargar información en tiempo real</p>
+                  </div>
                 </button>
               </div>
-            </div>
 
-            <div className="stat-card stat-expiring">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="stat-content">
-                <h3>Por Vencer (7 días)</h3>
-                <p className="stat-value">{stats?.expiring_establishments || 0}</p>
-                <button 
-                  onClick={() => navigate('/admin/establishments?filter=expiring_soon')}
-                  className="stat-link"
-                >
-                  Ver detalles →
-                </button>
+              {/* Establishments List */}
+              <div className="establishments-list-section">
+                <h3>Establecimientos en el Sistema</h3>
+                {establishments && establishments.length > 0 ? (
+                  <div className="establishments-table-wrapper">
+                    <table className="establishments-table">
+                      <thead>
+                        <tr>
+                          <th>Nombre</th>
+                          <th>Exportadora</th>
+                          <th>Suscripción</th>
+                          <th>Vence</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {establishments.map((est) => (
+                          <tr key={est.id}>
+                            <td className="est-name">{est.planta_fruticola}</td>
+                            <td>{est.exportadora}</td>
+                            <td>
+                              <span className={`status-badge status-${est.subscription_status.toLowerCase()}`}>
+                                {est.subscription_status === 'ACTIVE' ? '✅ Activa' : 
+                                 est.subscription_status === 'EXPIRED' ? '❌ Expirada' : 
+                                 '⏸️ Suspendida'}
+                              </span>
+                            </td>
+                            <td>{est.subscription_expiry || '-'}</td>
+                            <td className={`status-${est.is_active ? 'active' : 'inactive'}`}>
+                              {est.is_active ? '🟢 Activo' : '🔴 Inactivo'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="empty-establishments">
+                    <p>No hay establecimientos registrados aún</p>
+                  </div>
+                )}
               </div>
             </div>
-
-            <div className="stat-card stat-expired">
-              <div className="stat-icon">
-                <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="stat-content">
-                <h3>Expirados</h3>
-                <p className="stat-value">{stats?.expired_establishments || 0}</p>
-                <button 
-                  onClick={() => navigate('/admin/establishments?filter=expired')}
-                  className="stat-link"
-                >
-                  Ver detalles →
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </main>
     </div>

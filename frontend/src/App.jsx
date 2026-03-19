@@ -36,7 +36,7 @@ function AppRoutes() {
         path="/login" 
         element={
           user ? (
-            <Navigate to={isSuperAdmin() ? '/admin' : '/'} replace />
+            <Navigate to={isSuperAdmin() ? '/admin' : '/muestreo'} replace />
           ) : (
             <Login />
           )
@@ -69,10 +69,14 @@ function AppRoutes() {
         }
       />
 
-      {/* Ruta pública para la aplicación de inspección */}
+      {/* Ruta protegida para la aplicación */}
       <Route
         path="/muestreo"
-        element={<InspectionApp />}
+        element={
+          <ProtectedRoute>
+            <InspectionApp />
+          </ProtectedRoute>
+        }
       />
 
       {/* Ruta raíz - mostrar LandingPage */}

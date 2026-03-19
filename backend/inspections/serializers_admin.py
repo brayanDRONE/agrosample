@@ -18,7 +18,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'role', 'phone', 'avatar', 'created_at'
+            'role', 'phone', 'avatar', 'sample_label_text', 'created_at'
         ]
 
 
@@ -28,13 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
     is_superadmin = serializers.SerializerMethodField()
     is_establishment_admin = serializers.SerializerMethodField()
+    sample_label_text = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
             'password', 'is_active', 'profile', 'role', 
-            'is_superadmin', 'is_establishment_admin'
+            'is_superadmin', 'is_establishment_admin', 'sample_label_text'
         ]
         extra_kwargs = {
             'password': {'write_only': True, 'required': False}
@@ -57,6 +58,12 @@ class UserSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'profile'):
             return obj.profile.is_establishment_admin()
         return False
+
+    def get_sample_label_text(self, obj):
+        """Obtiene texto personalizado para etiquetas de muestra."""
+        if hasattr(obj, 'profile') and obj.profile.sample_label_text:
+            return obj.profile.sample_label_text
+        return 'MUESTRA USDA'
 
 
 class EstablishmentThemeSerializer(serializers.ModelSerializer):
@@ -86,7 +93,7 @@ class EstablishmentDetailSerializer(serializers.ModelSerializer):
             'address', 'phone', 'email', 'encargado_sag',
             'admin_user', 'admin_user_details', 'is_active',
             'subscription_status', 'subscription_start', 'subscription_expiry',
-            'license_key', 'created_at', 'updated_at',
+            'license_key', 'sample_label_text', 'created_at', 'updated_at',
             'theme', 'days_until_expiry', 'is_expiring_soon',
             'has_active_subscription'
         ]
@@ -136,6 +143,7 @@ class EstablishmentCreateSerializer(serializers.ModelSerializer):
         fields = [
             'exportadora', 'planta_fruticola', 'rut', 
             'address', 'phone', 'email', 'encargado_sag',
+            'sample_label_text',
             'admin_username', 'admin_password', 'admin_email',
             'admin_first_name', 'admin_last_name', 'subscription_days'
         ]
@@ -151,6 +159,9 @@ class EstablishmentCreateSerializer(serializers.ModelSerializer):
         admin_first_name = validated_data.pop('admin_first_name', '')
         admin_last_name = validated_data.pop('admin_last_name', '')
         subscription_days = validated_data.pop('subscription_days', 30)
+        
+        # Obtener texto de etiqueta (desde sample_label_text del establecimiento)
+        sample_label_text = validated_data.get('sample_label_text', 'MUESTRA USDA')
         
         # Crear usuario
         admin_user = User.objects.create_user(
@@ -188,7 +199,8 @@ class EstablishmentCreateSerializer(serializers.ModelSerializer):
         UserProfile.objects.create(
             user=admin_user,
             role='ESTABLISHMENT_ADMIN',
-            establishment=establishment
+            establishment=establishment,
+            sample_label_text=sample_label_text
         )
         
         # Crear tema por defecto

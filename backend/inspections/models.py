@@ -72,6 +72,15 @@ class Establishment(models.Model):
         verbose_name='Clave de Licencia'
     )
     
+    # Personalización de etiquetas
+    sample_label_text = models.CharField(
+        max_length=255,
+        default='MUESTRA USDA',
+        blank=True,
+        verbose_name='Texto de Etiqueta de Muestra',
+        help_text='Texto que aparecerá en el adhesivo impreso para identificar este establecimiento'
+    )
+    
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -409,6 +418,13 @@ class UserProfile(models.Model):
         null=True,
         blank=True,
         verbose_name='Avatar'
+    )
+    sample_label_text = models.CharField(
+        max_length=255,
+        default='MUESTRA USDA',
+        blank=True,
+        verbose_name='Texto Etiqueta de Muestra',
+        help_text='Texto que reemplaza MUESTRA USDA en etiquetas e impresiones'
     )
     
     # Metadata

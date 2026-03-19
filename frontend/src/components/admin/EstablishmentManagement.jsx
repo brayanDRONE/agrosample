@@ -33,6 +33,7 @@ function EstablishmentManagement() {
     admin_email: '',
     admin_password: '',
     confirm_password: '',
+    admin_sample_label: 'MUESTRA USDA',
     subscription_days: 30
   });
 
@@ -88,6 +89,7 @@ function EstablishmentManagement() {
         admin_username: formData.admin_username,
         admin_password: formData.admin_password,
         admin_email: formData.email || '',
+        admin_sample_label: formData.admin_sample_label || 'MUESTRA USDA',
         subscription_days: formData.subscription_days
       };
       
@@ -197,6 +199,7 @@ function EstablishmentManagement() {
       admin_email: '',
       admin_password: '',
       confirm_password: '',
+      admin_sample_label: 'MUESTRA USDA',
       subscription_days: 30
     });
     setShowEditModal(true);
@@ -220,6 +223,7 @@ function EstablishmentManagement() {
       admin_email: '',
       admin_password: '',
       confirm_password: '',
+      admin_sample_label: 'MUESTRA USDA',
       subscription_days: 30
     });
   };
@@ -307,10 +311,7 @@ function EstablishmentManagement() {
               <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
             </svg>
             <h3>No hay establecimientos</h3>
-            <p>Comienza creando tu primer establecimiento</p>
-            <button onClick={() => setShowCreateModal(true)} className="btn btn-primary">
-              + Crear Establecimiento
-            </button>
+            <p>Usa el botón "Nuevo Establecimiento" en la parte superior para crear uno</p>
           </div>
         ) : (
           <div className="establishments-table-wrapper">
@@ -546,6 +547,17 @@ function EstablishmentManagement() {
                     required
                   />
                   <small className="field-hint">Debe coincidir con la contraseña anterior</small>
+                </div>
+                <div className="form-group">
+                  <label>Texto de Etiqueta de Muestra *</label>
+                  <input
+                    type="text"
+                    value={formData.admin_sample_label}
+                    onChange={(e) => setFormData({ ...formData, admin_sample_label: e.target.value })}
+                    placeholder="Ej: AGROSAMPLE CALIDAD"
+                    required
+                  />
+                  <small className="field-hint">Este texto reemplaza MUESTRA USDA en la impresión de etiquetas</small>
                 </div>
               </div>
 
