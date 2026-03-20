@@ -89,7 +89,7 @@ function EstablishmentManagement() {
         admin_username: formData.admin_username,
         admin_password: formData.admin_password,
         admin_email: formData.email || '',
-        admin_sample_label: formData.admin_sample_label || 'MUESTRA USDA',
+        sample_label_text: formData.admin_sample_label || 'MUESTRA USDA',
         subscription_days: formData.subscription_days
       };
       
@@ -120,7 +120,8 @@ function EstablishmentManagement() {
         address: formData.address,
         phone: formData.phone,
         email: formData.email,
-        encargado_sag: formData.encargado_sag
+        encargado_sag: formData.encargado_sag,
+        sample_label_text: formData.admin_sample_label
       };
       
       // Solo agregar credenciales si están siendo modificadas
@@ -199,7 +200,7 @@ function EstablishmentManagement() {
       admin_email: '',
       admin_password: '',
       confirm_password: '',
-      admin_sample_label: 'MUESTRA USDA',
+      admin_sample_label: establishment.sample_label_text || 'MUESTRA USDA',
       subscription_days: 30
     });
     setShowEditModal(true);
@@ -232,7 +233,10 @@ function EstablishmentManagement() {
     if (establishment.subscription_status === 'SUSPENDED') {
       return <span className="badge badge-suspended">Suspendido</span>;
     }
-    if (establishment.subscription_status === 'EXPIRED') {
+    const isExpired =
+      establishment.subscription_status === 'EXPIRED' ||
+      (establishment.days_until_expiry !== null && establishment.days_until_expiry <= 0);
+    if (isExpired) {
       return <span className="badge badge-expired">Expirado</span>;
     }
     if (establishment.is_expiring_soon) {
@@ -641,6 +645,21 @@ function EstablishmentManagement() {
                     value={formData.encargado_sag}
                     onChange={(e) => setFormData({ ...formData, encargado_sag: e.target.value })}
                   />
+                </div>
+              </div>
+
+              <div className="form-section-title">Texto de Etiqueta</div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Texto de Etiqueta de Muestra *</label>
+                  <input
+                    type="text"
+                    value={formData.admin_sample_label}
+                    onChange={(e) => setFormData({ ...formData, admin_sample_label: e.target.value })}
+                    placeholder="Ej: MUESTRA USDA"
+                    required
+                  />
+                  <small className="field-hint">Este texto aparece en el adhesivo de etiquetas Zebra</small>
                 </div>
               </div>
 

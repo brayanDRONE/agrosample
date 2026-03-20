@@ -7,8 +7,8 @@ function HeroSection() {
     <section className="hero-section">
       <div className="hero-background"></div>
       <div className="hero-content">
-        <div className="hero-badge">✨ Sistema Moderno de Muestreo</div>
-        <h1 className="hero-title">Muestreo Ágil y Control de Pallets</h1>
+        <div className="hero-badge">🌿 agrosample — Plataforma de Muestreo SAG·USDA</div>
+        <h1 className="hero-title">Control de Muestreo y Etiquetado de Pallets</h1>
         <p className="hero-subtitle">Registra lotes, ingresa números de muestra manualmente e imprime etiquetas Zebra en minutos</p>
         <div className="hero-cta">
           <Link to="/login" className="btn-primary-hero">

@@ -51,6 +51,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     """Serializer personalizado para JWT con información del usuario."""
     
     def validate(self, attrs):
+        from rest_framework.exceptions import ValidationError as DRFValidationError
         data = super().validate(attrs)
         
         # Agregar información del usuario
@@ -76,6 +77,18 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             establishment = self.user.establishment_admin
         elif hasattr(self.user, 'profile') and self.user.profile.establishment:
             establishment = self.user.profile.establishment
+        
+        # Bloquear login si la suscripción está expirada o suspendida
+        # (solo para admins de establecimiento, nunca para superadmins)
+        is_superadmin = hasattr(self.user, 'profile') and self.user.profile.is_superadmin()
+        if not is_superadmin and establishment and not establishment.has_active_subscription():
+            status_msg = {
+                'EXPIRED': 'Suscripción vencida.',
+                'SUSPENDED': 'Cuenta suspendida.',
+            }.get(establishment.subscription_status, 'Suscripción inactiva.')
+            raise DRFValidationError(
+                {'detail': f'{status_msg} Contacte al administrador para renovar el acceso.'}
+            )
         
         # Agregar establecimiento si existe
         if establishment:

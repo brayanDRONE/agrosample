@@ -4,6 +4,7 @@
 
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import SubscriptionExpiredView from './SubscriptionExpiredView';
 
 function ProtectedRoute({ children, requireSuperAdmin = false, requireEstablishmentAdmin = false }) {
   const { user, loading, isSuperAdmin, isEstablishmentAdmin } = useAuth();
@@ -38,6 +39,14 @@ function ProtectedRoute({ children, requireSuperAdmin = false, requireEstablishm
   // Si no hay usuario, redirigir al login
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Bloquear acceso si la suscripción del establecimiento está expirada o suspendida
+  // Los superadmins nunca son bloqueados por suscripción
+  const isEstAdmin = user?.role === 'ESTABLISHMENT_ADMIN' || user?.is_establishment_admin === true;
+  const hasActiveSubscription = user?.establishment?.has_active_subscription !== false;
+  if (isEstAdmin && !hasActiveSubscription) {
+    return <SubscriptionExpiredView />;
   }
 
   // Verificar permisos según el tipo de ruta
