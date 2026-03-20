@@ -2,7 +2,7 @@
  * Componente principal de la aplicación
  */
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -19,6 +19,9 @@ const MAINTENANCE_MODE = false;
 
 function AppRoutes() {
   const { user, isSuperAdmin } = useAuth();
+  const location = useLocation();
+  const loginAccess = new URLSearchParams(location.search).get('access');
+  const allowLogin = loginAccess === 'admin';
 
   // Si está en modo de mantenimiento, mostrar solo esa página
   if (MAINTENANCE_MODE) {
@@ -37,6 +40,8 @@ function AppRoutes() {
         element={
           user ? (
             <Navigate to={isSuperAdmin() ? '/admin' : '/muestreo'} replace />
+          ) : !allowLogin ? (
+            <Navigate to="/" replace />
           ) : (
             <Login />
           )

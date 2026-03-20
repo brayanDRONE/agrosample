@@ -284,7 +284,13 @@ class ZebraServiceHandler(BaseHTTPRequestHandler):
                 lote = data.get('lote', '')
                 numeros = data.get('numeros', [])
                 printer = data.get('printer', '')
-                sample_text = data.get('sample_text', 'MUESTRA USDA')
+                sample_text = (
+                    data.get('sample_text') or
+                    data.get('sample_label_text') or
+                    data.get('label_text') or
+                    data.get('leyenda') or
+                    'MUESTRA USDA'
+                )
                 
                 # Validaciones
                 if not lote:

@@ -232,6 +232,36 @@
   color: #ef4444;
 }
 
+.configuracion-success {
+  margin: 16px 32px;
+  padding: 14px 16px;
+  background: #dcfce7;
+  border: 2px solid #22c55e;
+  border-radius: 8px;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  animation: fadeInSuccess 0.25s ease;
+}
+
+.configuracion-success svg {
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+@keyframes fadeInSuccess {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Footer */
 .configuracion-footer {
   padding: 20px 32px;

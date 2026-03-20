@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
         if (newUserId && oldUserId && newUserId !== oldUserId) {
           console.warn('Sesión de otro usuario detectada, limpiando autenticación actual');
           setUser(null);
-          window.location.href = '/login';
+          window.location.href = '/';
         }
       }
     };

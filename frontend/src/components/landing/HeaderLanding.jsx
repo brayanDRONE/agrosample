@@ -12,12 +12,12 @@ function HeaderLanding() {
           </div>
           <div className="header-text">
             <h1 className="header-title">agrosample</h1>
-            <p className="header-subtitle">Muestreo Inteligente de Pallets</p>
+            <p className="header-subtitle">Impresion automatizada y diagramas adaptables de pallets</p>
           </div>
         </div>
         
         <nav className="header-nav">
-          <Link to="/login" className="btn-access">
+          <Link to="/login?access=admin" className="btn-access">
             Acceso
           </Link>
         </nav>

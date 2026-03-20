@@ -12,20 +12,24 @@ DEFAULT_SAMPLE_LABEL = 'MUESTRA USDA'
 
 def resolve_effective_sample_label(user):
     """Resuelve el texto efectivo de etiqueta desde perfil y establecimiento."""
-    if hasattr(user, 'profile'):
-        profile_label = (user.profile.sample_label_text or '').strip()
-        if profile_label:
-            return profile_label
+    # Prioridad de negocio:
+    # 1) Leyenda definida en establecimiento (admin)
+    # 2) Leyenda personalizada de perfil (si aplica)
+    # 3) Valor por defecto
+    if hasattr(user, 'establishment_admin') and user.establishment_admin:
+        establishment_label = (user.establishment_admin.sample_label_text or '').strip()
+        if establishment_label:
+            return establishment_label
 
+    if hasattr(user, 'profile'):
         if user.profile.establishment and user.profile.establishment.sample_label_text:
             establishment_label = user.profile.establishment.sample_label_text.strip()
             if establishment_label:
                 return establishment_label
 
-    if hasattr(user, 'establishment_admin') and user.establishment_admin:
-        establishment_label = (user.establishment_admin.sample_label_text or '').strip()
-        if establishment_label:
-            return establishment_label
+        profile_label = (user.profile.sample_label_text or '').strip()
+        if profile_label and profile_label != DEFAULT_SAMPLE_LABEL:
+            return profile_label
 
     return DEFAULT_SAMPLE_LABEL
 

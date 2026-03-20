@@ -17,7 +17,7 @@ function Header() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -49,7 +49,7 @@ function Header() {
               </button>
             </>
           ) : (
-            <button onClick={() => navigate('/login')} className="btn-logout" title="Acceso Administrador" style={{ background: 'transparent', color: '#10b981', border: '1px solid #10b981' }}>
+            <button onClick={() => navigate('/login?access=admin')} className="btn-logout" title="Acceso Administrador" style={{ background: 'transparent', color: '#10b981', border: '1px solid #10b981' }}>
               <span>Acceso Admin</span>
             </button>
           )}

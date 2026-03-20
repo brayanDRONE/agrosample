@@ -10,8 +10,8 @@ export default function Footer() {
           <div className="footer-section">
             <h3>Sobre agrosample</h3>
             <p>
-              Plataforma especializada en muestreo ágil y control de pallets con impresoras Zebra.
-              Diseñada para optimizar operaciones en viñedos, empaques y centros de distribución.
+              Plataforma especializada en muestreo agil, impresion automatizada de numeros y control de pallets con impresoras Zebra.
+              Diseñada para optimizar operaciones en plantas fruticolas.
             </p>
           </div>
 
@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="footer-section">
             <h3>Acceso</h3>
             <ul className="footer-links">
-              <li><a href="/login">Iniciar Sesión</a></li>
+              <li><a href="/login?access=admin">Iniciar Sesión</a></li>
               <li><a href="#about-system">Conocer Más</a></li>
               <li><a href="/">Inicio</a></li>
             </ul>

@@ -22,6 +22,7 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
   const [configurations, setConfigurations] = useState([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
 
   useEffect(() => {
@@ -222,6 +223,7 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
 
     setSaving(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const token = localStorage.getItem('access_token');
@@ -264,6 +266,8 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
         throw new Error(data.message);
       }
 
+      setSuccessMessage('Configuracion guardada correctamente. Abriendo diagramas...');
+
       // Notificar éxito
       if (inspectionId) {
         // Modo página independiente: mostrar mensaje después de 2 segundos
@@ -279,6 +283,7 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
     } catch (err) {
       console.error('Error saving configurations:', err);
       setError(err.message);
+      setSuccessMessage(null);
     } finally {
       setSaving(false);
     }
@@ -641,6 +646,15 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
           </div>
         )}
 
+        {successMessage && (
+          <div className="configuracion-success" role="status" aria-live="polite">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            {successMessage}
+          </div>
+        )}
+
 
 
         {/* Footer */}
@@ -651,7 +665,7 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
           <button 
             className="btn btn-success" 
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !!successMessage}
           >
             {saving ? (
               <>

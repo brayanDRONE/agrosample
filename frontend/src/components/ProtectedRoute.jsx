@@ -36,9 +36,9 @@ function ProtectedRoute({ children, requireSuperAdmin = false, requireEstablishm
     );
   }
 
-  // Si no hay usuario, redirigir al login
+  // Si no hay usuario, redirigir a la portada pública
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Bloquear acceso si la suscripción del establecimiento está expirada o suspendida

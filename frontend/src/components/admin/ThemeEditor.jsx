@@ -137,7 +137,7 @@ function ThemeEditor() {
             >
               {previewMode ? '✓ Vista Previa' : 'Ver Previa'}
             </button>
-            <button onClick={() => { logout(); navigate('/login'); }} className="btn btn-secondary">
+            <button onClick={() => { logout(); navigate('/'); }} className="btn btn-secondary">
               Cerrar Sesión
             </button>
           </div>

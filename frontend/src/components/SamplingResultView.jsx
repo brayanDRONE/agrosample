@@ -26,7 +26,16 @@ function SamplingResultView({ result, onNewInspection }) {
   const [editingNumber, setEditingNumber] = useState(null); // Controla qué número se está editando
   const [editValue, setEditValue] = useState(''); // Valor temporal mientras se edita
   const [showDiagrams, setShowDiagrams] = useState(false);
-  const labelText = (user?.sample_label_text || user?.establishment?.sample_label_text || 'MUESTRA USDA').trim();
+  const resolveSampleLabel = (userData) => {
+    return (
+      userData?.establishment?.sample_label_text ||
+      userData?.sample_label_text ||
+      userData?.profile?.sample_label_text ||
+      'MUESTRA USDA'
+    ).trim();
+  };
+
+  const labelText = resolveSampleLabel(user);
 
   // Debug: Log del usuario y labelText
   useEffect(() => {
@@ -344,11 +353,7 @@ function SamplingResultView({ result, onNewInspection }) {
       // Obtener etiqueta más reciente desde backend para evitar usar datos en caché.
       try {
         const latestUser = await apiService.getCurrentUser();
-        const latestLabel = (
-          latestUser?.sample_label_text ||
-          latestUser?.establishment?.sample_label_text ||
-          labelText
-        ).trim();
+        const latestLabel = resolveSampleLabel(latestUser) || labelText;
         if (latestLabel) {
           effectiveLabelText = latestLabel;
         }
@@ -409,7 +414,11 @@ function SamplingResultView({ result, onNewInspection }) {
           lote: inspection.numero_lote,
           numeros: parsedNumbers,
           printer: selectedPrinter,
-          sample_text: effectiveLabelText
+          // Enviar múltiples alias para compatibilidad con distintas versiones del servicio.
+          sample_text: effectiveLabelText,
+          sample_label_text: effectiveLabelText,
+          label_text: effectiveLabelText,
+          leyenda: effectiveLabelText
         }),
       });
 
@@ -480,13 +489,18 @@ function SamplingResultView({ result, onNewInspection }) {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <input
                 id="manual-number-input"
-                type="number"
+                type="text"
                 className="manual-input-textarea"
                 style={{ flex: 1, padding: '10px 12px' }}
                 placeholder="Ej: 5 o 12 o 88"
                 value={manualNumbersInput}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="off"
                 onChange={(e) => {
-                  setManualNumbersInput(e.target.value);
+                  // Solo permitir dígitos para evitar negativos/exponentes.
+                  const sanitized = e.target.value.replace(/\D/g, '');
+                  setManualNumbersInput(sanitized);
                   setZebraError(null);
                 }}
                 onKeyPress={(e) => {
