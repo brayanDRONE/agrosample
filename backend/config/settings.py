@@ -6,6 +6,14 @@ from pathlib import Path
 import os
 import dj_database_url
 
+
+def env_csv(var_name, default_csv):
+    """Lee una variable CSV de entorno y elimina valores vacios/espacios."""
+    raw = os.environ.get(var_name)
+    source = raw if raw is not None else default_csv
+    values = [item.strip() for item in source.split(',') if item.strip()]
+    return values
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,10 +24,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY') or 'django-insecure-local-dev-key-chan
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 # CSRF trusted origins for production
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173').split(',')
+CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173')
 
 
 # Application definition
@@ -181,9 +189,9 @@ SIMPLE_JWT = {
 }
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = os.environ.get(
+CORS_ALLOWED_ORIGINS = env_csv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177'
-).split(',')
+)
 
 CORS_ALLOW_CREDENTIALS = True
