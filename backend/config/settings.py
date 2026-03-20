@@ -14,6 +14,12 @@ def env_csv(var_name, default_csv):
     values = [item.strip() for item in source.split(',') if item.strip()]
     return values
 
+
+def add_unique(items, value):
+    """Agrega valor si no existe, preservando orden."""
+    if value and value not in items:
+        items.append(value)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,9 +31,13 @@ SECRET_KEY = os.environ.get('SECRET_KEY') or 'django-insecure-local-dev-key-chan
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+render_external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
+add_unique(ALLOWED_HOSTS, render_external_hostname)
 
 # CSRF trusted origins for production
 CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173')
+if render_external_hostname:
+    add_unique(CSRF_TRUSTED_ORIGINS, f'https://{render_external_hostname}')
 
 
 # Application definition
@@ -193,5 +203,9 @@ CORS_ALLOWED_ORIGINS = env_csv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177'
 )
+
+# Frontend URL opcional para producción (ej: https://mi-frontend.onrender.com)
+frontend_url = os.environ.get('FRONTEND_URL', '').strip()
+add_unique(CORS_ALLOWED_ORIGINS, frontend_url)
 
 CORS_ALLOW_CREDENTIALS = True
