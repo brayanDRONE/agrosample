@@ -13,7 +13,7 @@ function Header() {
   const navigate = useNavigate();
 
   const companyName = theme?.company_name || user?.establishment?.nombre || 'agrosample';
-  const welcomeMessage = theme?.welcome_message || 'Automatización de etiquetas y muestreo de pallets';
+  const welcomeMessage = theme?.welcome_message || 'Automatización de etiquetas y diagramas adaptables';
 
   const handleLogout = () => {
     logout();

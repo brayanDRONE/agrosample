@@ -32,7 +32,7 @@ export function ThemeProvider({ children }) {
       secondary_color: '#1f4d35',
       accent_color: '#10b981',
       company_name: user?.establishment?.nombre || 'agrosample',
-      welcome_message: 'Automatización de etiquetas y muestreo de pallets',
+      welcome_message: 'Automatización de etiquetas y diagramas adaptables',
       show_logo: true,
       dark_mode: false
     };
