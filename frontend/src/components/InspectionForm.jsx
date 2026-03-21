@@ -132,7 +132,7 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
                 Registrando Lote...
               </>
             ) : (
-              'Continuar a Configuración'
+              'Continuar muestreo'
             )}
           </button>
         </div>
