@@ -9,6 +9,16 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
     ? 'http://localhost:8000/api'
     : '/api');
 
+const MAX_SESSION_DURATION_MS = 8 * 60 * 60 * 1000;
+
+const clearAuthStorage = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('currentUserId');
+  localStorage.removeItem('login_at');
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -26,6 +36,28 @@ const isTokenExpired = (token) => {
   } catch {
     return true;
   }
+};
+
+const parseTokenPayload = (token) => {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch {
+    return null;
+  }
+};
+
+const hasExceededSessionDuration = () => {
+  const loginAtRaw = localStorage.getItem('login_at');
+  let loginAt = Number(loginAtRaw);
+
+  if (!Number.isFinite(loginAt) || loginAt <= 0) {
+    const token = localStorage.getItem('access_token');
+    const payload = token ? parseTokenPayload(token) : null;
+    loginAt = payload?.iat ? payload.iat * 1000 : Date.now();
+    localStorage.setItem('login_at', String(loginAt));
+  }
+
+  return Date.now() - loginAt >= MAX_SESSION_DURATION_MS;
 };
 
 const refreshAccessToken = async () => {
@@ -63,6 +95,12 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      if (hasExceededSessionDuration()) {
+        clearAuthStorage();
+        window.location.href = '/';
+        return Promise.reject(error);
+      }
+
       try {
         const refreshToken = localStorage.getItem('refresh_token');
         if (refreshToken) {
@@ -79,9 +117,7 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         // Si falla el refresh, limpiar tokens y redirigir al login
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+        clearAuthStorage();
         window.location.href = '/';
         return Promise.reject(refreshError);
       }
@@ -97,6 +133,11 @@ export const apiService = {
     const token = localStorage.getItem('access_token');
     if (!token) return false;
 
+    if (hasExceededSessionDuration()) {
+      clearAuthStorage();
+      return false;
+    }
+
     if (!isTokenExpired(token)) {
       return true;
     }
@@ -105,9 +146,7 @@ export const apiService = {
       const newAccess = await refreshAccessToken();
       return !!newAccess;
     } catch {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user');
+      clearAuthStorage();
       return false;
     }
   },

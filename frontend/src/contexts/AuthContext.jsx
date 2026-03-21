@@ -87,6 +87,7 @@ export const AuthProvider = ({ children }) => {
       // Guardar tokens
       localStorage.setItem('access_token', response.access);
       localStorage.setItem('refresh_token', response.refresh);
+      localStorage.setItem('login_at', String(Date.now()));
       
       // Cargar datos completos del usuario
       const userData = await apiService.getCurrentUser();
@@ -109,6 +110,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     localStorage.removeItem('currentUserId');
+    localStorage.removeItem('login_at');
     setUser(null);
   };
 
