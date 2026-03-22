@@ -123,7 +123,7 @@ function InspectionForm({ onSamplingGenerated, onSubscriptionError }) {
         <div className="form-actions">
           <button 
             type="submit" 
-            className="btn btn-primary"
+            className="btn btn-upload"
             disabled={loading}
           >
             {loading ? (

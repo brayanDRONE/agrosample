@@ -165,6 +165,22 @@
   transform: translateY(0);
 }
 
+.btn-upload {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  color: white;
+  box-shadow: 0 2px 4px rgba(8, 145, 178, 0.3);
+}
+
+.btn-upload:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0e7490, #155e75);
+  box-shadow: 0 4px 8px rgba(8, 145, 178, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-upload:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

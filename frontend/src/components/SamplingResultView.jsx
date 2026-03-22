@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import DiagramasPalletView from './DiagramasPalletView';
+import OcrImageUpload from './OcrImageUpload';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import './SamplingResultView.css';
@@ -46,9 +47,10 @@ function SamplingResultView({ result, onNewInspection }) {
 
   // Parsear números ingresados en el textarea
   const parseManualNumbers = () => {
-    // Mantener orden original, solo eliminar duplicados
-    return Array.from(new Set(manualNumbers));
+    // Eliminar duplicados y ordenar de menor a mayor
+    return Array.from(new Set(manualNumbers)).sort((a, b) => a - b);
   };
+
 
   // Agregar número a la lista
   const addManualNumber = () => {
@@ -485,20 +487,19 @@ function SamplingResultView({ result, onNewInspection }) {
               Ingreso de Números de Cajas
             </label>
             
-            {/* Input single-line */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+            {/* Input + Agregar + Subir Imagen — mismo renglón */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
               <input
                 id="manual-number-input"
                 type="text"
                 className="manual-input-textarea"
-                style={{ flex: 1, padding: '10px 12px' }}
+                style={{ flex: 1, minWidth: '120px', padding: '10px 12px' }}
                 placeholder="Ej: 5 o 12 o 88"
                 value={manualNumbersInput}
                 inputMode="numeric"
                 pattern="[0-9]*"
                 autoComplete="off"
                 onChange={(e) => {
-                  // Solo permitir dígitos para evitar negativos/exponentes.
                   const sanitized = e.target.value.replace(/\D/g, '');
                   setManualNumbersInput(sanitized);
                   setZebraError(null);
@@ -511,17 +512,25 @@ function SamplingResultView({ result, onNewInspection }) {
                 }}
               />
               <button
-                className="btn btn-secondary"
+                className="btn btn-upload"
                 onClick={addManualNumber}
                 style={{ whiteSpace: 'nowrap' }}
               >
                 + Agregar
               </button>
+              <OcrImageUpload
+                existingNumbers={manualNumbers}
+                onConfirm={(merged) => {
+                  setManualNumbers(merged);
+                  setZebraError(null);
+                }}
+              />
             </div>
 
             <small style={{ color: '#4b5563', display: 'block', marginBottom: '12px' }}>
-              Presiona Enter o click en "+ Agregar"
+              Presiona Enter o click en "+ Agregar" · o sube una imagen con los números
             </small>
+
 
             {/* Lista de números ingresados */}
             {manualNumbers.length > 0 && (
@@ -683,7 +692,7 @@ function SamplingResultView({ result, onNewInspection }) {
           {/* Acciones */}
           <div className="actions-section">
             <button 
-              className="btn btn-secondary"
+              className="btn btn-upload"
               onClick={printZebraLabels}
               disabled={printingZebra}
             >
@@ -694,7 +703,7 @@ function SamplingResultView({ result, onNewInspection }) {
             </button>
 
             <button 
-              className="btn btn-secondary"
+              className="btn btn-upload"
               onClick={() => setShowDiagrams(true)}
               title="Configurar y ver diagramas de pallets"
             >
@@ -705,7 +714,7 @@ function SamplingResultView({ result, onNewInspection }) {
             </button>
 
             <button 
-              className="btn btn-primary"
+              className="btn btn-upload"
               onClick={onNewInspection}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
