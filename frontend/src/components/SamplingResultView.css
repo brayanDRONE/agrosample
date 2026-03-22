@@ -6,6 +6,106 @@
   gap: 1rem;
 }
 
+/* ─── Barra compacta de información de inspección ─────────────────────────── */
+.inspection-info-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  background: #8FBF69;
+  border: 1px solid #7aad55;
+  box-shadow: 0 1px 4px rgba(143,191,105,0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  padding: 0 4px;
+}
+
+.info-bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #7aad55;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.3);
+  margin: 0;
+  align-self: stretch;
+  border-radius: 8px 0 0 8px;
+}
+
+.info-bar-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.35);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.info-bar-item {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 16px;
+  gap: 1px;
+}
+
+.info-bar-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.info-bar-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.info-bar-badge {
+  display: inline-block;
+  background: #f0fdf4;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  border-radius: 99px;
+  padding: 1px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+@media (max-width: 600px) {
+  .inspection-info-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+  }
+  .info-bar-brand {
+    border-radius: 8px 8px 0 0;
+    margin: 0;
+    justify-content: center;
+  }
+  .info-bar-divider {
+    width: 100%;
+    height: 1px;
+    margin: 0;
+  }
+  .info-bar-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+  }
+}
+
 .result-card {
   animation: slideIn 0.3s ease-out;
   border: 1px solid #e5e7eb;

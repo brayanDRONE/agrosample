@@ -445,32 +445,33 @@ function SamplingResultView({ result, onNewInspection }) {
 
   return (
     <div className="results-container">
-      {/* Información de la Inspección */}
-      <div className="card result-card">
-        <div className="card-body">
-          <div className="info-section">
-            <h3 className="section-title">Información de la Inspección</h3>
-            <div className="info-grid">
-              <div className="info-item">
-                <span className="info-label">Lote:</span>
-                <span className="info-value">{inspection.numero_lote}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Pallets del Lote:</span>
-                <span className="info-value">{inspection.cantidad_pallets}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Fecha:</span>
-                <span className="info-value">
-                  {new Date(inspection.fecha).toLocaleDateString('es-CL')}
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">Etiqueta del Usuario:</span>
-                <span className="info-value">{labelText}</span>
-              </div>
-            </div>
-          </div>
+      {/* Información de la Inspección — barra compacta */}
+      <div className="inspection-info-bar">
+        <div className="info-bar-brand">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h7a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+          </svg>
+          Inspección
+        </div>
+        <div className="info-bar-divider" />
+        <div className="info-bar-item">
+          <span className="info-bar-label">Lote</span>
+          <span className="info-bar-value">{inspection.numero_lote}</span>
+        </div>
+        <div className="info-bar-divider" />
+        <div className="info-bar-item">
+          <span className="info-bar-label">Pallets</span>
+          <span className="info-bar-value">{inspection.cantidad_pallets}</span>
+        </div>
+        <div className="info-bar-divider" />
+        <div className="info-bar-item">
+          <span className="info-bar-label">Fecha</span>
+          <span className="info-bar-value">{new Date(inspection.fecha).toLocaleDateString('es-CL')}</span>
+        </div>
+        <div className="info-bar-divider" />
+        <div className="info-bar-item">
+          <span className="info-bar-label">Etiqueta</span>
+          <span className="info-bar-value info-bar-badge">{labelText}</span>
         </div>
       </div>
 
