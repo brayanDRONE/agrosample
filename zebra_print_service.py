@@ -16,7 +16,7 @@ def mm_to_dots(mm):
 LABEL_MM = 50              # 5 cm (ancho)
 LABEL_W = mm_to_dots(LABEL_MM)
 LABEL_H = mm_to_dots(LABEL_MM)  # 5 cm (alto) - etiqueta estándar
-LABEL_H_SMALL = mm_to_dots(20)  # 2 cm (alto) - etiqueta 5x2
+LABEL_H_SMALL = mm_to_dots(25)  # 2.5 cm (alto) - etiqueta 5x2.5
 SMALL_BOX_MM = 20          # 2 cm
 SMALL_W = mm_to_dots(SMALL_BOX_MM)
 SMALL_H = SMALL_W
@@ -166,15 +166,15 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
     # Texto de leyenda combinado en una línea si cabe, sino solo line1
     legend = f"{line1} {line2}".strip() if line2 else line1
 
-    # Nuevas Proporciones: 30% leyenda | 46% número | 24% lote
-    leg_w   = int(W * 0.30)
-    num_w   = int(W * 0.46)
+    # Nuevas Proporciones: 25% leyenda | 45% número | 30% lote (para evitar truncamiento del número y lote)
+    leg_w   = int(W * 0.25)
+    num_w   = int(W * 0.45)
     lot_w   = W - leg_w - num_w
     num_x   = leg_w
     lot_x   = leg_w + num_w
 
-    # Fuente pequeña reducida ligeramente para garantizar que "PROPAL" quepa sin saltar de línea
-    small_font = max(5, int(H * 0.17))
+    # Fuente pequeña reducida ligeramente para garantizar que la leyenda quepa
+    small_font = max(5, int(H * 0.16))
 
     # Fuente del número: ocupa hasta 90% del alto, ajustada para que entren 4 dígitos
     def fit_num(chars):
@@ -232,7 +232,7 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
         cmds.append(f"^FD{lote}^FS")
         return cmds
 
-    zpl = ["^XA", "^LH0,0"]
+    zpl = ["^XA", "^PW830", "^LL200", "^LH0,0"]  # Forzar ancho a 830 puntos (~10.3cm) y largo a 200 (~2.5cm)
     zpl += draw_single(0, left_num, num_font_left)
     zpl += draw_single(W + GAP, right_num, num_font_right)  # Aplicar el GAP de 3mm
     zpl.append("^XZ")
