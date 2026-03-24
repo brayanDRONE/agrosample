@@ -184,8 +184,9 @@ function SamplingResultView({ result, onNewInspection }) {
     yPos += 6;
     
     doc.text('Fecha', leftCol, yPos);
-    const fecha = new Date(inspection.fecha);
-    doc.text(`: ${fecha.toLocaleDateString('es-CL')}`, leftValCol, yPos);
+    const datePart = inspection.fecha ? inspection.fecha.split('T')[0] : '';
+    const fechaStr = datePart ? datePart.split('-').reverse().join('-') : '';
+    doc.text(`: ${fechaStr}`, leftValCol, yPos);
     yPos += 6;
     
     doc.text('Inspector', leftCol, yPos);
@@ -334,7 +335,7 @@ function SamplingResultView({ result, onNewInspection }) {
              pageWidth / 2, yPos, { align: 'center' });
     
     // Guardar PDF
-    const fileName = `Muestreo_${inspection.numero_lote}_${fecha.toISOString().split('T')[0]}.pdf`;
+    const fileName = `Muestreo_${inspection.numero_lote}_${datePart}.pdf`;
     doc.save(fileName);
   };
 
@@ -468,7 +469,7 @@ function SamplingResultView({ result, onNewInspection }) {
         <div className="info-bar-divider" />
         <div className="info-bar-item">
           <span className="info-bar-label">Fecha</span>
-          <span className="info-bar-value">{new Date(inspection.fecha).toLocaleDateString('es-CL')}</span>
+          <span className="info-bar-value">{inspection.fecha ? inspection.fecha.split('T')[0].split('-').reverse().join('-') : ''}</span>
         </div>
         <div className="info-bar-divider" />
         <div className="info-bar-item">
