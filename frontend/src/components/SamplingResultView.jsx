@@ -27,6 +27,7 @@ function SamplingResultView({ result, onNewInspection }) {
   const [editingNumber, setEditingNumber] = useState(null); // Controla qué número se está editando
   const [editValue, setEditValue] = useState(''); // Valor temporal mientras se edita
   const [showDiagrams, setShowDiagrams] = useState(false);
+  const [labelSize, setLabelSize] = useState('standard'); // 'standard' (5x5) o 'small_5x2'
   const resolveSampleLabel = (userData) => {
     return (
       userData?.establishment?.sample_label_text ||
@@ -420,7 +421,8 @@ function SamplingResultView({ result, onNewInspection }) {
           sample_text: effectiveLabelText,
           sample_label_text: effectiveLabelText,
           label_text: effectiveLabelText,
-          leyenda: effectiveLabelText
+          leyenda: effectiveLabelText,
+          label_size: labelSize,
         }),
       });
 
@@ -689,6 +691,59 @@ function SamplingResultView({ result, onNewInspection }) {
               ⚠️ {zebraError}
             </div>
           )}
+
+          {/* Selector de tamaño de adhesivo */}
+          <div style={{
+            padding: '12px 0 6px',
+            borderTop: '1px solid #e5e7eb',
+            marginBottom: '4px',
+          }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+              🏷️ Tamaño del adhesivo:
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setLabelSize('standard')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  border: labelSize === 'standard' ? '2px solid #10b981' : '2px solid #d1d5db',
+                  background: labelSize === 'standard' ? '#f0fdf4' : '#fff',
+                  color: labelSize === 'standard' ? '#065f46' : '#6b7280',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {labelSize === 'standard' && <span>✓</span>}
+                Estándar (5×5 cm) — doble
+              </button>
+              <button
+                onClick={() => setLabelSize('small_5x2')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  border: labelSize === 'small_5x2' ? '2px solid #10b981' : '2px solid #d1d5db',
+                  background: labelSize === 'small_5x2' ? '#f0fdf4' : '#fff',
+                  color: labelSize === 'small_5x2' ? '#065f46' : '#6b7280',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {labelSize === 'small_5x2' && <span>✓</span>}
+                Pequeño (5×2 cm) — doble
+              </button>
+            </div>
+          </div>
 
           {/* Acciones */}
           <div className="actions-section">

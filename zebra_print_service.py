@@ -13,9 +13,10 @@ DPI = 203
 def mm_to_dots(mm):
     return int(mm * DPI / 25.4)
 
-LABEL_MM = 50              # 5 cm
+LABEL_MM = 50              # 5 cm (ancho)
 LABEL_W = mm_to_dots(LABEL_MM)
-LABEL_H = mm_to_dots(LABEL_MM)
+LABEL_H = mm_to_dots(LABEL_MM)  # 5 cm (alto) - etiqueta estándar
+LABEL_H_SMALL = mm_to_dots(20)  # 2 cm (alto) - etiqueta 5x2
 SMALL_BOX_MM = 20          # 2 cm
 SMALL_W = mm_to_dots(SMALL_BOX_MM)
 SMALL_H = SMALL_W
@@ -147,8 +148,104 @@ def build_zpl_double_label(lote, left_num, right_num=None, sample_text='MUESTRA 
     zpl.append("^XZ")
     return "\n".join(zpl)
 
-def imprimir_etiquetas(lote, numeros_caja, printer_name="ZDesigner ZD230-203dpi ZPL", sample_text='MUESTRA USDA'):
-    """Imprime etiquetas Zebra con el lote y números de caja."""
+
+def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUESTRA USDA'):
+    """
+    Construye ZPL para una tira de DOS etiquetas 5x2 cm lado a lado.
+    El stock físico es 10cm ancho x 2cm alto (dos columnas de 5cm).
+    Proporciones de cada etiqueta:
+      [25% leyenda] | [50% número grande] | [25% lote]
+    """
+    W = LABEL_W          # 5 cm en dots (ancho de cada etiqueta física)
+    H = LABEL_H_SMALL    # 2 cm en dots (alto)
+    GAP = mm_to_dots(3)  # 3 mm de separación entre etiquetas
+    m = max(5, int(W * 0.015))  # margen interior ~1mm, deja que la caja ocupe el blanco sobrante
+
+    line1, line2 = split_sample_text(sample_text)
+    # Texto de leyenda combinado en una línea si cabe, sino solo line1
+    legend = f"{line1} {line2}".strip() if line2 else line1
+
+    # Nuevas Proporciones: 30% leyenda | 46% número | 24% lote
+    leg_w   = int(W * 0.30)
+    num_w   = int(W * 0.46)
+    lot_w   = W - leg_w - num_w
+    num_x   = leg_w
+    lot_x   = leg_w + num_w
+
+    # Fuente pequeña reducida ligeramente para garantizar que "PROPAL" quepa sin saltar de línea
+    small_font = max(5, int(H * 0.17))
+
+    # Fuente del número: ocupa hasta 90% del alto, ajustada para que entren 4 dígitos
+    def fit_num(chars):
+        max_h = int(H * 0.90)
+        # Factor 0.58 asegura que los 4 dígitos se dibujen de un tamaño cuyo ancho
+        # total no supere al de la caja 'num_w', evitando que se corten.
+        by_w = int((num_w * 0.95) / (max(1, chars) * 0.58))
+        return max(8, min(max_h, by_w))
+
+    num_font_left  = fit_num(len(str(left_num)))
+    num_font_right = fit_num(len(str(right_num))) if right_num is not None else fit_num(1)
+
+    # Centrado vertical para texto de leyenda (2 líneas si caben)
+    two_h = small_font * 2 + int(small_font * 0.2)
+    one_h = small_font
+    if two_h <= H - m * 2 and line2:
+        leg_y1 = max(m, (H - two_h) // 2)
+        leg_y2 = leg_y1 + small_font + int(small_font * 0.2)
+        show_two = True
+    else:
+        leg_y1 = max(m, (H - one_h) // 2)
+        show_two = False
+
+    lot_y1 = max(m, (H - two_h) // 2) if two_h <= H - m * 2 else max(m, (H - one_h) // 2)
+    lot_y2 = lot_y1 + small_font + int(small_font * 0.2)
+
+    def num_y(fh):
+        return max(m, (H - fh) // 2)
+
+    def draw_single(x0, num, num_fh):
+        cmds = []
+        # --- Leyenda (izq) ---
+        cmds.append(f"^CF0,{small_font}")
+        cmds.append(f"^FO{x0 + m},{leg_y1}^FB{leg_w - m * 2},1,0,C,0")
+        cmds.append(f"^FD{line1}^FS")
+        if show_two and line2:
+            cmds.append(f"^CF0,{small_font}")
+            cmds.append(f"^FO{x0 + m},{leg_y2}^FB{leg_w - m * 2},1,0,C,0")
+            cmds.append(f"^FD{line2}^FS")
+        # Divisor
+        cmds.append(f"^FO{x0 + num_x},{m}^GB1,{H - m * 2},2^FS")
+        # --- Número (centro) ---
+        ny = num_y(num_fh)
+        cmds.append(f"^CF0,{num_fh}")
+        cmds.append(f"^FO{x0 + num_x},{ny}^FB{num_w},1,0,C,0")
+        cmds.append(f"^FD{num if num is not None else ''}^FS")
+        # Divisor
+        cmds.append(f"^FO{x0 + lot_x},{m}^GB1,{H - m * 2},2^FS")
+        # --- Lote (der) ---
+        cmds.append(f"^CF0,{small_font}")
+        cmds.append(f"^FO{x0 + lot_x + m},{lot_y1}^FB{lot_w - m * 2},1,0,C,0")
+        cmds.append(f"^FDLT^FS")  # Usar LT para ganar espacio
+        cmds.append(f"^CF0,{small_font}")
+        cmds.append(f"^FO{x0 + lot_x + m},{lot_y2}^FB{lot_w - m * 2},1,0,C,0")
+        cmds.append(f"^FD{lote}^FS")
+        return cmds
+
+    zpl = ["^XA", "^LH0,0"]
+    zpl += draw_single(0, left_num, num_font_left)
+    zpl += draw_single(W + GAP, right_num, num_font_right)  # Aplicar el GAP de 3mm
+    zpl.append("^XZ")
+    return "\n".join(zpl)
+
+
+
+def imprimir_etiquetas(lote, numeros_caja, printer_name="ZDesigner ZD230-203dpi ZPL", sample_text='MUESTRA USDA', label_size='standard'):
+    """Imprime etiquetas Zebra con el lote y números de caja.
+    
+    label_size: 'standard'  -> doble etiqueta 5x5 cm por tira
+                'small_5x2' -> doble etiqueta 5x2 cm por tira (misma disposición, menor alto)
+    """
+
     if not numeros_caja:
         return {"success": False, "error": "No hay números de caja para imprimir"}
 
@@ -170,35 +267,61 @@ def imprimir_etiquetas(lote, numeros_caja, printer_name="ZDesigner ZD230-203dpi 
     hPrinter = None
     try:
         hPrinter = win32print.OpenPrinter(printer_name)
-        
-        # Imprimir en pares: (0,1), (2,3), ...
-        i = 0
-        strips_printed = 0
-        while i < len(numeros_caja):
-            left = str(numeros_caja[i])
-            right = str(numeros_caja[i+1]) if i+1 < len(numeros_caja) else None
-            etiqueta_zpl = build_zpl_double_label(lote, left, right, sample_text)
-            
-            # Log para debugging
-            print(f"\n{'='*60}")
-            print(f"Imprimiendo tira {strips_printed + 1}: Izq={left}, Der={right or 'vacío'}")
-            print(f"ZPL generado:")
-            print(etiqueta_zpl)
-            print(f"{'='*60}\n")
-            
-            win32print.StartDocPrinter(hPrinter, 1, ("Etiqueta AGROSAMPLE", None, "RAW"))
-            win32print.StartPagePrinter(hPrinter)
-            win32print.WritePrinter(hPrinter, etiqueta_zpl.encode('utf-8'))
-            win32print.EndPagePrinter(hPrinter)
-            win32print.EndDocPrinter(hPrinter)
-            
-            strips_printed += 1
-            i += 2
 
-        return {
-            "success": True,
-            "message": f"✅ Se imprimieron {strips_printed} tiras ({len(numeros_caja)} etiquetas) en '{printer_name}'"
-        }
+        if label_size == 'small_5x2':
+            # Mismo esquema por pares que el estándar, pero alto 2cm
+            i = 0
+            strips_printed = 0
+            while i < len(numeros_caja):
+                left = str(numeros_caja[i])
+                right = str(numeros_caja[i+1]) if i+1 < len(numeros_caja) else None
+                etiqueta_zpl = build_zpl_small_label_5x2(lote, left, right, sample_text)
+                print(f"\n{'='*60}")
+                print(f"Imprimiendo tira 5x2 #{strips_printed + 1}: Izq={left}, Der={right or 'vacío'}")
+                print(f"ZPL generado:")
+                print(etiqueta_zpl)
+                print(f"{'='*60}\n")
+                win32print.StartDocPrinter(hPrinter, 1, ("Etiqueta AGROSAMPLE", None, "RAW"))
+                win32print.StartPagePrinter(hPrinter)
+                win32print.WritePrinter(hPrinter, etiqueta_zpl.encode('utf-8'))
+                win32print.EndPagePrinter(hPrinter)
+                win32print.EndDocPrinter(hPrinter)
+                strips_printed += 1
+                i += 2
+
+            return {
+                "success": True,
+                "message": f"✅ Se imprimieron {strips_printed} tiras 5x2 ({len(numeros_caja)} etiquetas) en '{printer_name}'"
+            }
+        else:
+            # Modo estándar: imprimir en pares (tiras dobles 5x5)
+            i = 0
+            strips_printed = 0
+            while i < len(numeros_caja):
+                left = str(numeros_caja[i])
+                right = str(numeros_caja[i+1]) if i+1 < len(numeros_caja) else None
+                etiqueta_zpl = build_zpl_double_label(lote, left, right, sample_text)
+                
+                # Log para debugging
+                print(f"\n{'='*60}")
+                print(f"Imprimiendo tira {strips_printed + 1}: Izq={left}, Der={right or 'vacío'}")
+                print(f"ZPL generado:")
+                print(etiqueta_zpl)
+                print(f"{'='*60}\n")
+                
+                win32print.StartDocPrinter(hPrinter, 1, ("Etiqueta AGROSAMPLE", None, "RAW"))
+                win32print.StartPagePrinter(hPrinter)
+                win32print.WritePrinter(hPrinter, etiqueta_zpl.encode('utf-8'))
+                win32print.EndPagePrinter(hPrinter)
+                win32print.EndDocPrinter(hPrinter)
+                
+                strips_printed += 1
+                i += 2
+
+            return {
+                "success": True,
+                "message": f"✅ Se imprimieron {strips_printed} tiras ({len(numeros_caja)} etiquetas) en '{printer_name}'"
+            }
     
     except Exception as e:
         return {"success": False, "error": f"Error al imprimir: {str(e)}"}
@@ -280,6 +403,7 @@ class ZebraServiceHandler(BaseHTTPRequestHandler):
                 lote = data.get('lote', '')
                 numeros = data.get('numeros', [])
                 printer = data.get('printer', 'ZDesigner ZD230-203dpi ZPL')
+                label_size = data.get('label_size', 'standard')
                 sample_text = (
                     data.get('sample_text') or
                     data.get('sample_label_text') or
@@ -293,7 +417,7 @@ class ZebraServiceHandler(BaseHTTPRequestHandler):
                 if not numeros:
                     raise ValueError("Lista de números de caja requerida")
                 
-                result = imprimir_etiquetas(lote, numeros, printer, sample_text)
+                result = imprimir_etiquetas(lote, numeros, printer, sample_text, label_size)
                 
                 self.send_response(200 if result['success'] else 400)
                 self.send_header('Content-Type', 'application/json')
