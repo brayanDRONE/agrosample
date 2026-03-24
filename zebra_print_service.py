@@ -347,13 +347,14 @@ class ZebraServiceHandler(BaseHTTPRequestHandler):
             'http://localhost:5173',
             'http://127.0.0.1:5173',
             'https://*.vercel.app',  # Cualquier dominio Vercel
+            'https://*.onrender.com',
         ]
         
         # Si el origen está en la lista o es vercel.app, permitirlo
         if origin:
             if any(origin.startswith(allowed.replace('*', '')) or origin == allowed for allowed in allowed_origins):
                 self.send_header('Access-Control-Allow-Origin', origin)
-            elif 'vercel.app' in origin:
+            elif 'vercel.app' in origin or 'render.com' in origin:
                 self.send_header('Access-Control-Allow-Origin', origin)
             else:
                 self.send_header('Access-Control-Allow-Origin', '*')  # Fallback
@@ -361,14 +362,15 @@ class ZebraServiceHandler(BaseHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
             
         self.send_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Request-Private-Network')
         self.send_header('Access-Control-Allow-Credentials', 'true')
+        self.send_header('Access-Control-Allow-Private-Network', 'true')
         self.end_headers()
     
     def _set_cors_headers(self):
         """Configura headers CORS para respuestas."""
         origin = self.headers.get('Origin')
-        if origin and ('vercel.app' in origin or 'localhost' in origin or '127.0.0.1' in origin):
+        if origin and ('vercel.app' in origin or 'render.com' in origin or 'localhost' in origin or '127.0.0.1' in origin):
             self.send_header('Access-Control-Allow-Origin', origin)
         else:
             self.send_header('Access-Control-Allow-Origin', '*')
@@ -455,15 +457,15 @@ def run_service(port=5000):
         print("   Instalar con: pip install pywin32")
         sys.exit(1)
     
-    server_address = ('', port)
+    server_address = ('0.0.0.0', port)
     httpd = HTTPServer(server_address, ZebraServiceHandler)
     
     print("=" * 60)
     print("🖨️  SERVICIO DE IMPRESIÓN ZEBRA - SISTEMA USDA")
     print("=" * 60)
-    print(f"✅ Servicio iniciado en http://localhost:{port}")
-    print(f"   Health check: http://localhost:{port}/health")
-    print(f"   Endpoint: POST http://localhost:{port}/print")
+    print(f"✅ Servicio iniciado en http://127.0.0.1:{port}")
+    print(f"   Health check: http://127.0.0.1:{port}/health")
+    print(f"   Endpoint: POST http://127.0.0.1:{port}/print")
     print()
     
     printers = get_available_printers()

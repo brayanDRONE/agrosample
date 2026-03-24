@@ -366,7 +366,7 @@ function SamplingResultView({ result, onNewInspection }) {
       }
 
       // Verificar que el servicio esté disponible y obtener impresoras
-      const PRINT_SERVICE_URL = import.meta.env.VITE_PRINT_SERVICE_URL || 'http://localhost:5000';
+      const PRINT_SERVICE_URL = import.meta.env.VITE_PRINT_SERVICE_URL || 'http://127.0.0.1:5000';
       const healthResponse = await fetch(`${PRINT_SERVICE_URL}/health`);
       if (!healthResponse.ok) {
         throw new Error('Servicio de impresión no disponible');
@@ -436,7 +436,7 @@ function SamplingResultView({ result, onNewInspection }) {
       }
     } catch (error) {
       const errorMsg = error.message.includes('Failed to fetch') 
-        ? 'No se pudo conectar al servicio de impresión.\n\nAsegúrese de que:\n1. El servicio zebra_print_service.py esté ejecutándose\n2. Esté corriendo en http://localhost:5000\n3. La impresora Zebra esté conectada'
+        ? 'No se pudo conectar al servicio de impresión.\n\nAsegúrese de que:\n1. El servicio zebra_print_service.py esté ejecutándose\n2. Esté corriendo en http://127.0.0.1:5000\n3. La impresora Zebra esté conectada'
         : error.message;
       
       setZebraError(errorMsg);
