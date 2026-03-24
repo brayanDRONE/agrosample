@@ -75,7 +75,8 @@ def build_zpl_double_label(lote, left_num, right_num=None, sample_text='MUESTRA 
     extra_usda_down = int(LABEL_H * 0.05)
 
     # Posiciones:
-    top_text_y = int(MARGIN)
+    # Aumentamos el margen superior en 5mm para que no se corte la primera línea
+    top_text_y = int(MARGIN) + mm_to_dots(5)
     muestra_y = top_text_y
     usda_y = muestra_y + int(sub_font_h * 1.05) + extra_usda_down
 
