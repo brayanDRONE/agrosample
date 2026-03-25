@@ -153,88 +153,93 @@ def build_zpl_double_label(lote, left_num, right_num=None, sample_text='MUESTRA 
 def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUESTRA USDA'):
     """
     Construye ZPL para una tira de DOS etiquetas 5x2 cm lado a lado.
-    El stock físico es 10cm ancho x 2cm alto (dos columnas de 5cm).
-    Proporciones de cada etiqueta:
-      [25% leyenda] | [50% número grande] | [25% lote]
+    Se utiliza texto en orientación vertical para leyenda (izq) y lote (der)
+    así se optimiza al máximo el ancho de la franja central para que el número se vea enorme.
+    Proporciones: [15% leyenda] | [70% número grande] | [15% lote]
     """
-    W = LABEL_W          # 5 cm en dots (ancho de cada etiqueta física)
-    H = LABEL_H_SMALL    # 2 cm en dots (alto)
+    W = LABEL_W          # 5 cm en dots (~399)
+    H = LABEL_H_SMALL    # 2 cm en dots (~199)
     GAP = mm_to_dots(3)  # 3 mm de separación entre etiquetas
-    m = max(5, int(W * 0.015))  # margen interior ~1mm, deja que la caja ocupe el blanco sobrante
+    m = max(5, int(W * 0.015))
 
     line1, line2 = split_sample_text(sample_text)
-    # Texto de leyenda combinado en una línea si cabe, sino solo line1
-    legend = f"{line1} {line2}".strip() if line2 else line1
 
-    # Nuevas Proporciones: 25% leyenda | 45% número | 30% lote (para evitar truncamiento del número y lote)
-    leg_w   = int(W * 0.25)
-    num_w   = int(W * 0.45)
+    # Nuevas Proporciones que maximizan el número
+    leg_w   = int(W * 0.15)
+    num_w   = int(W * 0.70)
     lot_w   = W - leg_w - num_w
     num_x   = leg_w
     lot_x   = leg_w + num_w
 
-    # Fuente pequeña reducida ligeramente para garantizar que la leyenda quepa
-    small_font = max(5, int(H * 0.16))
+    def fit_vertical_font(text, is_double_line=False):
+        max_col_w = leg_w - 2 * m
+        max_col_l = H - 2 * m
+        
+        # Alto del caracter (equivale al grosor en X cuando está rotado)
+        max_h = (max_col_w // 2) - 2 if is_double_line else min(28, max_col_w)
+        h = max(10, max_h)
+        
+        # Ancho del caracter (equivale al largo en Y ocupado por la palabra)
+        chars = max(1, len(str(text)))
+        max_w = int(max_col_l / (chars * 0.65))
+        w = max(10, min(28, max_w))
+        
+        return min(h, w)
 
-    # Fuente del número: ocupa hasta 90% del alto, ajustada para que entren 4 dígitos
+    # Fuente del número central: ocupa hasta 92% del alto, gran ancho
     def fit_num(chars):
-        max_h = int(H * 0.90)
-        # Factor 0.58 asegura que los 4 dígitos se dibujen de un tamaño cuyo ancho
-        # total no supere al de la caja 'num_w', evitando que se corten.
+        max_h = int(H * 0.92)
         by_w = int((num_w * 0.95) / (max(1, chars) * 0.58))
         return max(8, min(max_h, by_w))
 
     num_font_left  = fit_num(len(str(left_num)))
     num_font_right = fit_num(len(str(right_num))) if right_num is not None else fit_num(1)
 
-    # Centrado vertical para texto de leyenda (2 líneas si caben)
-    two_h = small_font * 2 + int(small_font * 0.2)
-    one_h = small_font
-    if two_h <= H - m * 2 and line2:
-        leg_y1 = max(m, (H - two_h) // 2)
-        leg_y2 = leg_y1 + small_font + int(small_font * 0.2)
-        show_two = True
-    else:
-        leg_y1 = max(m, (H - one_h) // 2)
-        show_two = False
-
-    lot_y1 = max(m, (H - two_h) // 2) if two_h <= H - m * 2 else max(m, (H - one_h) // 2)
-    lot_y2 = lot_y1 + small_font + int(small_font * 0.2)
-
-    def num_y(fh):
-        return max(m, (H - fh) // 2)
-
     def draw_single(x0, num, num_fh):
         cmds = []
-        # --- Leyenda (izq) ---
-        cmds.append(f"^CF0,{small_font}")
-        cmds.append(f"^FO{x0 + m},{leg_y1}^FB{leg_w - m * 2},1,0,C,0")
-        cmds.append(f"^FD{line1}^FS")
-        if show_two and line2:
-            cmds.append(f"^CF0,{small_font}")
-            cmds.append(f"^FO{x0 + m},{leg_y2}^FB{leg_w - m * 2},1,0,C,0")
-            cmds.append(f"^FD{line2}^FS")
-        # Divisor
+        # --- Leyenda Vertical (izq) ---
+        has_2_lines = bool(line2)
+        longest_line = line1 if len(line1) > len(line2) else line2
+        v_font = fit_vertical_font(longest_line, has_2_lines)
+
+        if not has_2_lines:
+            leg_x1 = x0 + int(leg_w / 2) - int(v_font / 2)
+            cmds.append(f"^A0B,{v_font},{v_font}")
+            cmds.append(f"^FO{leg_x1},{H - m}^FD{line1}^FS")
+        else:
+            leg_x1 = x0 + int(leg_w * 0.20)
+            leg_x2 = x0 + int(leg_w * 0.60)
+            cmds.append(f"^A0B,{v_font},{v_font}")
+            cmds.append(f"^FO{leg_x1},{H - m}^FD{line1}^FS")
+            cmds.append(f"^A0B,{v_font},{v_font}")
+            cmds.append(f"^FO{leg_x2},{H - m}^FD{line2}^FS")
+        
+        # Divisor izquierdo
         cmds.append(f"^FO{x0 + num_x},{m}^GB1,{H - m * 2},2^FS")
+        
         # --- Número (centro) ---
-        ny = num_y(num_fh)
+        ny = max(m, (H - num_fh) // 2)
         cmds.append(f"^CF0,{num_fh}")
         cmds.append(f"^FO{x0 + num_x},{ny}^FB{num_w},1,0,C,0")
         cmds.append(f"^FD{num if num is not None else ''}^FS")
-        # Divisor
+        
+        # Divisor derecho
         cmds.append(f"^FO{x0 + lot_x},{m}^GB1,{H - m * 2},2^FS")
-        # --- Lote (der) ---
-        cmds.append(f"^CF0,{small_font}")
-        cmds.append(f"^FO{x0 + lot_x + m},{lot_y1}^FB{lot_w - m * 2},1,0,C,0")
-        cmds.append(f"^FDLT^FS")  # Usar LT para ganar espacio
-        cmds.append(f"^CF0,{small_font}")
-        cmds.append(f"^FO{x0 + lot_x + m},{lot_y2}^FB{lot_w - m * 2},1,0,C,0")
-        cmds.append(f"^FD{lote}^FS")
+        
+        # --- Lote Vertical (der) ---
+        lot_txt = f"LT {lote}" if len(str(lote)) < 6 else f"L{lote}"
+        v_font_lot = fit_vertical_font(lot_txt, False)
+        lot_mid_x = x0 + lot_x + int(lot_w / 2) - int(v_font_lot / 2)
+        cmds.append(f"^A0B,{v_font_lot},{v_font_lot}")
+        cmds.append(f"^FO{lot_mid_x},{H - m}^FD{lot_txt}^FS")
+        
         return cmds
 
-    zpl = ["^XA", "^PW830", "^LL200", "^LH0,0"]  # Forzar ancho a 830 puntos (~10.3cm) y largo a 200 (~2.5cm)
+    zpl = ["^XA", "^PW830", "^LL200", "^LH0,0"]
     zpl += draw_single(0, left_num, num_font_left)
-    zpl += draw_single(W + GAP, right_num, num_font_right)  # Aplicar el GAP de 3mm
+    if right_num is not None:
+        zpl += draw_single(W + GAP, right_num, num_font_right)
+    
     zpl.append("^XZ")
     return "\n".join(zpl)
 

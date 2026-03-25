@@ -18,6 +18,7 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [requiresConfiguration, setRequiresConfiguration] = useState(false);
   const [selectedPalletIndex, setSelectedPalletIndex] = useState(0); // Vista detallada
+  const [fourPerPage, setFourPerPage] = useState(false); // Opción 4 pallets por hoja
 
   const totalPallets = diagramData?.pallets?.length || 0;
   const detailPallets = diagramData?.pallets?.slice(selectedPalletIndex, selectedPalletIndex + 2) || [];
@@ -133,28 +134,54 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
       
       const { inspection: inspData, pallets } = diagramData;
 
-      // Procesar pallets de 2 en 2 (2 por página)
-      for (let i = 0; i < pallets.length; i += 2) {
-        // Nueva página (excepto para los primeros 2)
+      const perPage = fourPerPage ? 4 : 2;
+
+      // Procesar pallets según la configuración
+      for (let i = 0; i < pallets.length; i += perPage) {
+        // Nueva página (excepto para los primeros)
         if (i > 0) {
           doc.addPage();
         }
 
-        // Espacios
-        const spaceBetweenPallets = 8;
         const topMargin = 5;
         const bottomMargin = 15;
-        const maxHeightPerPallet = (pageHeight - topMargin - bottomMargin - spaceBetweenPallets) / 2;
+        const availableHeight = pageHeight - topMargin - bottomMargin;
+        
+        if (fourPerPage) {
+          // Layout 2x2
+          const spaceBetweenRows = 8;
+          const maxHeightPerPallet = (availableHeight - spaceBetweenRows) / 2;
+          const areaWidth = pageWidth / 2;
 
-        // PALLET 1 (ARRIBA)
-        const palletTop = pallets[i];
-        drawPalletOnPDF(doc, palletTop, inspData, pageWidth, topMargin, maxHeightPerPallet, true);
+          for (let j = 0; j < 4; j++) {
+            if (i + j < pallets.length) {
+              const palletIndex = i + j;
+              const isFirstOnPage = j === 0 || j === 1;
+              const row = Math.floor(j / 2);
+              const col = j % 2;
+              
+              const startY = topMargin + (row * (maxHeightPerPallet + spaceBetweenRows));
+              const offsetX = col * areaWidth;
+              
+              drawPalletOnPDF(doc, pallets[palletIndex], inspData, areaWidth, offsetX, startY, maxHeightPerPallet, isFirstOnPage);
+            }
+          }
+        } else {
+          // Layout 1x2 (Vertical stack)
+          const spaceBetweenPallets = 8;
+          const maxHeightPerPallet = (availableHeight - spaceBetweenPallets) / 2;
+          const areaWidth = pageWidth;
+          const offsetX = 0;
 
-        // PALLET 2 (ABAJO) - Si existe
-        if (i + 1 < pallets.length) {
-          const palletBottom = pallets[i + 1];
-          const startYBottom = topMargin + maxHeightPerPallet + spaceBetweenPallets;
-          drawPalletOnPDF(doc, palletBottom, inspData, pageWidth, startYBottom, maxHeightPerPallet, false);
+          for (let j = 0; j < 2; j++) {
+            if (i + j < pallets.length) {
+              const palletIndex = i + j;
+              const isFirstOnPage = j === 0;
+              const startY = topMargin + (j * (maxHeightPerPallet + spaceBetweenPallets));
+              
+              drawPalletOnPDF(doc, pallets[palletIndex], inspData, areaWidth, offsetX, startY, maxHeightPerPallet, isFirstOnPage);
+            }
+          }
         }
       }
 
@@ -170,14 +197,14 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
     }
   };
 
-  const drawPalletOnPDF = (doc, pallet, inspData, pageWidth, startY, maxHeight, isFirst) => {
+  const drawPalletOnPDF = (doc, pallet, inspData, areaWidth, offsetX, startY, maxHeight, isFirst) => {
     const { base, altura, cantidad_cajas, distribucion_caras = [] } = pallet;
 
     // Encabezado del pallet con más espacio si no es el primero
     const headerY = isFirst ? startY + 5 : startY + 8;
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Pallet ${pallet.numero_pallet}`, pageWidth / 2, headerY, { align: 'center' });
+    doc.text(`Pallet ${pallet.numero_pallet}`, offsetX + areaWidth / 2, headerY, { align: 'center' });
 
     // Información compacta
     doc.setFontSize(8);
@@ -185,11 +212,11 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
     let yPos = headerY + 7;
     
     if (isFirst) {
-      doc.text(`Lote: ${inspData.numero_lote} | Especie: ${inspData.especie}`, 15, yPos);
+      doc.text(`Lote: ${inspData.numero_lote} | Especie: ${inspData.especie}`, offsetX + 15, yPos);
       yPos += 5;
     }
     
-    doc.text(`Cajas: ${pallet.inicio_caja} - ${pallet.fin_caja} | Muestra: ${pallet.total_cajas_muestra}`, 15, yPos);
+    doc.text(`Cajas: ${pallet.inicio_caja} - ${pallet.fin_caja} | Muestra: ${pallet.total_cajas_muestra}`, offsetX + 15, yPos);
     yPos += 8;
 
     // Configuración de separadores entre caras
@@ -198,16 +225,17 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
     const totalSeparatorWidth = numSeparators * separatorWidth;
 
     // Calcular tamaño de celda para que quepa en el espacio disponible
-    const availableHeight = maxHeight - (yPos - startY) - 12;
+    // Se reserva 20 unidades abajo para dos líneas de leyenda (Normal/Muestra y la infoText)
+    const availableHeight = maxHeight - (yPos - startY) - 20;
     const cellSize = Math.min(
-      (pageWidth - 2 - totalSeparatorWidth) / base,
+      (areaWidth - 2 - totalSeparatorWidth) / base,
       availableHeight / altura,
       55
     );
 
     const gridWidth = base * cellSize + totalSeparatorWidth;
     const gridHeight = altura * cellSize;
-    const startX = (pageWidth - gridWidth) / 2;
+    const startX = offsetX + (areaWidth - gridWidth) / 2;
 
     // Función auxiliar para obtener info de cara y calcular X con separadores
     const getCaraXPosition = (col) => {
@@ -319,15 +347,15 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
     // Normal
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(209, 213, 219);
-    doc.rect(15, legendY, 5, 5, 'FD');
-    doc.text('Normal', 22, legendY + 4);
+    doc.rect(offsetX + 15, legendY, 5, 5, 'FD');
+    doc.text('Normal', offsetX + 22, legendY + 4);
 
     // Muestra
     doc.setFillColor(59, 130, 246);
-    doc.rect(45, legendY, 5, 5, 'FD');
-    doc.text('Muestra', 52, legendY + 4);
+    doc.rect(offsetX + 45, legendY, 5, 5, 'FD');
+    doc.text('Muestra', offsetX + 52, legendY + 4);
 
-    // Info adicional
+    // Info adicional en una SEGUNDA fila para evitar solapamientos
     doc.setFontSize(6);
     doc.setTextColor(107, 114, 128);
     let infoText = `Base: ${base} | Capas: ${altura} | Total: ${cantidad_cajas}`;
@@ -337,7 +365,8 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
       ).join(' + ');
       infoText += ` | Caras: ${distText}`;
     }
-    doc.text(infoText, pageWidth / 2, legendY + 4, { align: 'center' });
+    const infoY = legendY + 10;
+    doc.text(infoText, offsetX + areaWidth / 2, infoY, { align: 'center' });
   };
 
   if (loading) {
@@ -366,11 +395,27 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
     );
   }
 
-  // Si requiere configuración, mostrar modal de configuración
+  const getInspectionForConfig = () => {
+    if (diagramData && diagramData.pallets) {
+      return {
+        ...inspection,
+        pallet_configurations: diagramData.pallets.map(p => ({
+          numero_pallet: p.numero_pallet,
+          base: p.base,
+          cantidad_cajas: p.cantidad_cajas,
+          distribucion_caras: p.distribucion_caras,
+          // Mantenemos personalizada como true si no estamos seguros para que no se sobreescriba accidentalmente
+          distribucion_personalizada: true 
+        }))
+      };
+    }
+    return inspection;
+  };
+
   if (requiresConfiguration) {
     return (
       <ConfiguracionDiagramaView
-        inspection={inspection}
+        inspection={getInspectionForConfig()}
         onClose={onClose}
         onConfigured={handleConfigurationCompleted}
       />
@@ -395,6 +440,23 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
 
         {/* Botones de acción */}
         <div className="diagramas-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={() => setRequiresConfiguration(true)}
+          >
+            ✏️ Editar Configuración
+          </button>
+          
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', marginRight: '16px', fontSize: '0.9em', color: '#4b5563', userSelect: 'none', cursor: 'pointer' }}>
+            <input 
+              type="checkbox" 
+              checked={fourPerPage} 
+              onChange={(e) => setFourPerPage(e.target.checked)} 
+              style={{ width: '16px', height: '16px', cursor: 'pointer', margin: 0 }}
+            />
+            <b>4 Pallets</b> por hoja
+          </label>
+
           <button
             className="btn btn-success"
             onClick={generatePDF}
