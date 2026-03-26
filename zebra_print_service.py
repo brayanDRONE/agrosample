@@ -204,15 +204,22 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
 
         if not has_2_lines:
             leg_x1 = x0 + int(leg_w / 2) - int(v_font / 2)
+            # Aproximar el largo total del texto para centrar verticalmente
+            text_len_y = int(len(line1) * v_font * 0.75)
+            leg_y = max(m, (H - text_len_y) // 2)
             cmds.append(f"^A0B,{v_font},{v_font}")
-            cmds.append(f"^FO{leg_x1},{H - m}^FD{line1}^FS")
+            cmds.append(f"^FO{leg_x1},{leg_y}^FD{line1}^FS")
         else:
-            leg_x1 = x0 + int(leg_w * 0.20)
-            leg_x2 = x0 + int(leg_w * 0.60)
+            leg_x1 = x0 + int(leg_w * 0.25) - int(v_font / 2)
+            leg_x2 = x0 + int(leg_w * 0.75) - int(v_font / 2)
+            text_len_y1 = int(len(line1) * v_font * 0.75)
+            text_len_y2 = int(len(line2) * v_font * 0.75)
+            leg_y1 = max(m, (H - text_len_y1) // 2)
+            leg_y2 = max(m, (H - text_len_y2) // 2)
             cmds.append(f"^A0B,{v_font},{v_font}")
-            cmds.append(f"^FO{leg_x1},{H - m}^FD{line1}^FS")
+            cmds.append(f"^FO{leg_x1},{leg_y1}^FD{line1}^FS")
             cmds.append(f"^A0B,{v_font},{v_font}")
-            cmds.append(f"^FO{leg_x2},{H - m}^FD{line2}^FS")
+            cmds.append(f"^FO{leg_x2},{leg_y2}^FD{line2}^FS")
         
         # Divisor izquierdo
         cmds.append(f"^FO{x0 + num_x},{m}^GB1,{H - m * 2},2^FS")
@@ -230,8 +237,10 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
         lot_txt = f"LT {lote}" if len(str(lote)) < 6 else f"L{lote}"
         v_font_lot = fit_vertical_font(lot_txt, False)
         lot_mid_x = x0 + lot_x + int(lot_w / 2) - int(v_font_lot / 2)
+        text_len_lot_y = int(len(lot_txt) * v_font_lot * 0.75)
+        lot_y = max(m, (H - text_len_lot_y) // 2)
         cmds.append(f"^A0B,{v_font_lot},{v_font_lot}")
-        cmds.append(f"^FO{lot_mid_x},{H - m}^FD{lot_txt}^FS")
+        cmds.append(f"^FO{lot_mid_x},{lot_y}^FD{lot_txt}^FS")
         
         return cmds
 
