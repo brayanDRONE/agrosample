@@ -82,7 +82,7 @@ Write-Host "  ✅ Archivo .spec creado" -ForegroundColor Green
 Write-Host ""
 Write-Host "[4/6] Compilando a ejecutable..." -ForegroundColor Yellow
 Write-Host "  (Esto puede tomar varios minutos)" -ForegroundColor Gray
-pyinstaller --clean zebra_service.spec
+python -m PyInstaller --clean zebra_service.spec
 
 if (Test-Path "dist\ServicioImpresionZebra.exe") {
     Write-Host "  ✅ Ejecutable creado exitosamente" -ForegroundColor Green
