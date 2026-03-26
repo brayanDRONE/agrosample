@@ -197,6 +197,9 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
 
     def draw_single(x0, num, num_fh):
         cmds = []
+        # --- Número (centro) ---
+        ny = max(m, (H - num_fh) // 2)
+
         # --- Leyenda Vertical (izq) ---
         has_2_lines = bool(line2)
         longest_line = line1 if len(line1) > len(line2) else line2
@@ -204,28 +207,33 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
 
         if not has_2_lines:
             leg_x1 = x0 + int(leg_w / 2) - int(v_font / 2)
-            # Aproximar el largo total del texto para centrar verticalmente
-            text_len_y = int(len(line1) * v_font * 0.75)
-            leg_y = max(m, (H - text_len_y) // 2)
+            # Alineamos el texto a la altura superior del numero (o un poco mas abajo si es muy pequeño)
+            text_len_y = int(len(line1) * v_font * 0.85)
+            ideal_y = ny + max(0, (num_fh - text_len_y) // 2)
+            leg_y = max(m, ideal_y) - 10 # Subimos un poco mas como solicitó el cliente
+            
             cmds.append(f"^A0B,{v_font},{v_font}")
-            cmds.append(f"^FO{leg_x1},{leg_y}^FD{line1}^FS")
+            cmds.append(f"^FO{leg_x1},{max(m, leg_y)}^FD{line1}^FS")
         else:
             leg_x1 = x0 + int(leg_w * 0.25) - int(v_font / 2)
             leg_x2 = x0 + int(leg_w * 0.75) - int(v_font / 2)
-            text_len_y1 = int(len(line1) * v_font * 0.75)
-            text_len_y2 = int(len(line2) * v_font * 0.75)
-            leg_y1 = max(m, (H - text_len_y1) // 2)
-            leg_y2 = max(m, (H - text_len_y2) // 2)
+            text_len_y1 = int(len(line1) * v_font * 0.85)
+            text_len_y2 = int(len(line2) * v_font * 0.85)
+            ideal_y1 = ny + max(0, (num_fh - text_len_y1) // 2)
+            ideal_y2 = ny + max(0, (num_fh - text_len_y2) // 2)
+            
+            leg_y1 = max(m, ideal_y1) - 10
+            leg_y2 = max(m, ideal_y2) - 10
+            
             cmds.append(f"^A0B,{v_font},{v_font}")
-            cmds.append(f"^FO{leg_x1},{leg_y1}^FD{line1}^FS")
+            cmds.append(f"^FO{leg_x1},{max(m, leg_y1)}^FD{line1}^FS")
             cmds.append(f"^A0B,{v_font},{v_font}")
-            cmds.append(f"^FO{leg_x2},{leg_y2}^FD{line2}^FS")
+            cmds.append(f"^FO{leg_x2},{max(m, leg_y2)}^FD{line2}^FS")
         
         # Divisor izquierdo
         cmds.append(f"^FO{x0 + num_x},{m}^GB1,{H - m * 2},2^FS")
         
-        # --- Número (centro) ---
-        ny = max(m, (H - num_fh) // 2)
+        # --- Número (centro) ya calculado ---
         cmds.append(f"^CF0,{num_fh}")
         cmds.append(f"^FO{x0 + num_x},{ny}^FB{num_w},1,0,C,0")
         cmds.append(f"^FD{num if num is not None else ''}^FS")
@@ -237,10 +245,11 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
         lot_txt = f"LT {lote}" if len(str(lote)) < 6 else f"L{lote}"
         v_font_lot = fit_vertical_font(lot_txt, False)
         lot_mid_x = x0 + lot_x + int(lot_w / 2) - int(v_font_lot / 2)
-        text_len_lot_y = int(len(lot_txt) * v_font_lot * 0.75)
-        lot_y = max(m, (H - text_len_lot_y) // 2)
+        text_len_lot_y = int(len(lot_txt) * v_font_lot * 0.85)
+        ideal_lot_y = ny + max(0, (num_fh - text_len_lot_y) // 2)
+        lot_y = max(m, ideal_lot_y) - 10 # Subimos un poco
         cmds.append(f"^A0B,{v_font_lot},{v_font_lot}")
-        cmds.append(f"^FO{lot_mid_x},{lot_y}^FD{lot_txt}^FS")
+        cmds.append(f"^FO{lot_mid_x},{max(m, lot_y)}^FD{lot_txt}^FS")
         
         return cmds
 
