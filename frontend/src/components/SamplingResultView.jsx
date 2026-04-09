@@ -60,7 +60,7 @@ function SamplingResultView({ result, onNewInspection }) {
       setZebraError('Ingresa un número válido (mayor a 0)');
       return;
     }
-    
+
     if (manualNumbers.includes(num)) {
       setZebraError(`El número ${num} ya existe`);
       return;
@@ -85,12 +85,12 @@ function SamplingResultView({ result, onNewInspection }) {
   // Guardar cambio del número editado
   const saveEditedNumber = (oldNum) => {
     const parsed = parseInt(editValue.trim(), 10);
-    
+
     if (isNaN(parsed) || parsed <= 0) {
       setZebraError('Ingresa un número válido (mayor a 0)');
       return;
     }
-    
+
     if (parsed !== oldNum && manualNumbers.includes(parsed)) {
       setZebraError(`El número ${parsed} ya existe`);
       return;
@@ -117,7 +117,7 @@ function SamplingResultView({ result, onNewInspection }) {
   const generatePDF = async () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
-    
+
     // ==================== HEADER SECTION - LOGOS ====================
     // Función auxiliar para cargar imagen
     const loadImage = (src) => {
@@ -140,71 +140,71 @@ function SamplingResultView({ result, onNewInspection }) {
       ctx1.drawImage(usdaImg, 0, 0, 150, 90);
       const usdaData = canvas1.toDataURL('image/png');
       doc.addImage(usdaData, 'PNG', 10, 8, 30, 18);
-      
+
       // Logo Chile (superior derecha)
       doc.addImage(chileLogoImg, 'PNG', pageWidth - 45, 8, 35, 20);
-      
+
       // Logo MINSAL (debajo del logo Chile)
       doc.addImage(minsalLogoImg, 'JPEG', pageWidth - 45, 30, 35, 15);
     } catch (error) {
       console.warn('Error al cargar logos:', error);
       // Continuar sin logos si hay error
     }
-    
+
     // Título centrado
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('AGROSAMPLE - Muestreo de Lote', pageWidth / 2, 15, { align: 'center' });
     doc.text(`Despacho: ${inspection.tipo_despacho || 'N/A'}`, pageWidth / 2, 20, { align: 'center' });
-    
+
     // ==================== NRO LOTE Y PRODUCTO (HORIZONTAL CENTRADO) ====================
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    
+
     // Posición inicial después de los logos (MINSAL termina en Y=45)
     let yPos = 50;
-    
+
     // COLUMNA IZQUIERDA
     const leftCol = 15;
     const leftValCol = 60;
-    
+
     // COLUMNA DERECHA
     const rightCol = 110;
     const rightValCol = 160;
-    
+
     // Nro. de Lote (alineado con columna izquierda) y Producto (alineado con columna derecha)
     doc.text(`Nro. de Lote : ${inspection.numero_lote || ''}`, leftCol, yPos);
     doc.text(`Producto : ${inspection.especie || ''}`, rightCol, yPos);
-    
+
     // ==================== SECCIÓN DE DATOS EN DOS COLUMNAS ====================
     yPos = 58; // Iniciar las columnas más abajo
-    
+
     doc.text('Exportador', leftCol, yPos);
     doc.text(': ' + (inspection.exportador || ''), leftValCol, yPos);
     yPos += 6;
-    
+
     doc.text('Fecha', leftCol, yPos);
     const datePart = inspection.fecha ? inspection.fecha.split('T')[0] : '';
     const fechaStr = datePart ? datePart.split('-').reverse().join('-') : '';
     doc.text(`: ${fechaStr}`, leftValCol, yPos);
     yPos += 6;
-    
+
     doc.text('Inspector', leftCol, yPos);
     doc.text(': ' + (inspection.inspector_sag || ''), leftValCol, yPos);
     yPos += 6;
-    
+
     doc.text('Responsable', leftCol, yPos);
     doc.text(': ' + (inspection.contraparte_sag || ''), leftValCol, yPos);
     yPos += 6;
-    
+
     doc.text('Tamaño de la Partida', leftCol, yPos);
     doc.text(': ' + (inspection.tamano_lote || ''), leftValCol, yPos);
     yPos += 6;
-    
+
     doc.text('Tipo de Muestreo', leftCol, yPos);
     doc.text(': ' + (inspection.tipo_muestreo === 'NORMAL' ? 'Normal' : 'Por Etapa'), leftValCol, yPos);
     yPos += 6;
-    
+
     // Para muestreo por etapa, mostrar pallets seleccionados
     if (inspection.tipo_muestreo === 'POR_ETAPA' && result.stage_sampling) {
       doc.text('Pallets Seleccionados', leftCol, yPos);
@@ -216,43 +216,43 @@ function SamplingResultView({ result, onNewInspection }) {
       doc.text(': (No zanja).', leftValCol, yPos);
       yPos += 6;
     }
-    
+
     // COLUMNA DERECHA
     yPos = 58; // Reset a la misma altura que columna izquierda
-    
+
     doc.text('Planta', rightCol, yPos);
     doc.text(': ' + (inspection.establecimiento_nombre || inspection.establishment_name || ''), rightValCol, yPos);
     yPos += 6;
-    
+
     doc.text('Hora', rightCol, yPos);
     // Formatear hora para mostrar solo HH:MM:SS sin microsegundos
     const horaFormateada = inspection.hora ? inspection.hora.split('.')[0] : '';
     doc.text(': ' + horaFormateada, rightValCol, yPos);
     yPos += 6;
-    
+
     // Espacio (saltar responsable planta de la derecha)
     yPos += 6;
-    
+
     doc.text(`Tabla de Muestreo: ${sampling_result.nombre_tabla || 'Hipergeométrica del 6%'}`, rightCol, yPos);
     yPos += 6;
-    
+
     doc.text('Tamaño de la Muestra', rightCol, yPos);
     doc.text(': ' + (sampling_result.tamano_muestra || ''), rightValCol, yPos);
     yPos += 6;
-    
+
     doc.text('Nro. de Pallets', rightCol, yPos);
     doc.text(': ' + (inspection.cantidad_pallets || ''), rightValCol, yPos);
-    
+
     // ==================== TABLA DE NÚMEROS DE CAJAS MUESTRA ====================
     yPos = 104; // Ajustado para el nuevo espaciado
     doc.setFont('helvetica', 'bold');
     doc.text('Números de Cajas Muestra:', pageWidth / 2, yPos, { align: 'center' });
-    
+
     // Preparar datos para tabla de 10 columnas
     const cajas = sampling_result.cajas_seleccionadas;
     const itemsPerRow = 10;
     const cajasData = [];
-    
+
     for (let i = 0; i < cajas.length; i += itemsPerRow) {
       const row = cajas.slice(i, i + itemsPerRow);
       // Rellenar con vacíos si la fila no está completa
@@ -261,14 +261,14 @@ function SamplingResultView({ result, onNewInspection }) {
       }
       cajasData.push(row);
     }
-    
+
     // Generar tabla con autoTable (sin encabezados)
     // Crear columnStyles dinámicamente para 10 columnas
     const columnStyles = {};
     for (let i = 0; i < 10; i++) {
       columnStyles[i] = { cellWidth: 18 }; // Columnas más estrechas para caber 10
     }
-    
+
     autoTable(doc, {
       startY: yPos + 5,
       body: cajasData,
@@ -284,56 +284,56 @@ function SamplingResultView({ result, onNewInspection }) {
       tableWidth: 'auto',
       columnStyles: columnStyles,
     });
-    
+
     // ==================== CERTIFICADO DE PRE-MUESTREO ====================
     // Posicionar siempre al final de la página (independiente de la cantidad de números)
     const pageHeight = doc.internal.pageSize.height;
     const certificateHeight = 65; // Altura aproximada del certificado
     yPos = pageHeight - certificateHeight - 15; // 15mm de margen inferior
-    
+
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.text('Certificado de Muestreo', pageWidth / 2, yPos, { align: 'center' });
     yPos += 5;
     doc.text(`Detalle del Lote Nro    : ${inspection.numero_lote}`, pageWidth / 2, yPos, { align: 'center' });
     yPos += 10;
-    
+
     // Campos del certificado
     doc.setFont('helvetica', 'normal');
     const certLeftCol = 25;
-    
+
     doc.text(`${labelText} :`, certLeftCol, yPos);
     doc.text('DE', certLeftCol + 30, yPos);
     doc.rect(certLeftCol + 40, yPos - 4, 40, 6); // Campo vacío
     doc.text('A', certLeftCol + 85, yPos);
     doc.rect(certLeftCol + 92, yPos - 4, 40, 6); // Campo vacío
     yPos += 10;
-    
+
     doc.text('LOTE           :', certLeftCol, yPos);
     doc.text('DE', certLeftCol + 30, yPos);
     doc.rect(certLeftCol + 40, yPos - 4, 40, 6); // Campo vacío
     doc.text('A', certLeftCol + 85, yPos);
     doc.rect(certLeftCol + 92, yPos - 4, 40, 6); // Campo vacío
     yPos += 10;
-    
+
     doc.text('                     ', certLeftCol, yPos);
     doc.text('DE', certLeftCol + 30, yPos);
     doc.rect(certLeftCol + 40, yPos - 4, 40, 6); // Campo vacío
     doc.text('A', certLeftCol + 85, yPos);
     doc.rect(certLeftCol + 92, yPos - 4, 40, 6); // Campo vacío
     yPos += 10;
-    
+
     doc.text('Remanentes   :', certLeftCol, yPos);
     doc.rect(certLeftCol + 40, yPos - 4, 40, 6); // Campo vacío
     doc.text('Cajas', certLeftCol + 85, yPos);
-    
+
     // ==================== NOTA AL PIE ====================
     yPos = doc.internal.pageSize.height - 15;
     doc.setFontSize(8);
     doc.setFont('helvetica', 'italic');
-    doc.text('Señor Inspector: Verifique los Números del Listado con los de las Cajas Muestras.', 
-             pageWidth / 2, yPos, { align: 'center' });
-    
+    doc.text('Señor Inspector: Verifique los Números del Listado con los de las Cajas Muestras.',
+      pageWidth / 2, yPos, { align: 'center' });
+
     // Guardar PDF
     const fileName = `Muestreo_${inspection.numero_lote}_${datePart}.pdf`;
     doc.save(fileName);
@@ -342,7 +342,7 @@ function SamplingResultView({ result, onNewInspection }) {
   const printZebraLabels = async () => {
     // Usar números del estado
     const parsedNumbers = parseManualNumbers();
-    
+
     if (parsedNumbers.length === 0) {
       setZebraError('Ingresa al menos un número de caja válido');
       return;
@@ -382,30 +382,30 @@ function SamplingResultView({ result, onNewInspection }) {
 
       // Mostrar diálogo para seleccionar impresora
       let printerOptions = printers.map((p, i) => `${i + 1}. ${p}`).join('\n');
-      
+
       // Buscar impresora Zebra por defecto
-      let defaultIndex = printers.findIndex(p => 
+      let defaultIndex = printers.findIndex(p =>
         p.toLowerCase().includes('zebra') || p.toLowerCase().includes('zdesigner')
       );
-      
+
       if (defaultIndex === -1) defaultIndex = 0;
-      
+
       const mensaje = `Seleccione la impresora:\n\n${printerOptions}\n\n` +
         `Ingrese el número (por defecto: ${defaultIndex + 1} - ${printers[defaultIndex]})`;
-      
+
       const seleccion = prompt(mensaje, (defaultIndex + 1).toString());
-      
+
       if (seleccion === null) {
         // Usuario canceló
         setPrintingZebra(false);
         return;
       }
-      
+
       const printerIndex = parseInt(seleccion) - 1;
       if (isNaN(printerIndex) || printerIndex < 0 || printerIndex >= printers.length) {
         throw new Error('Selección de impresora inválida');
       }
-      
+
       const selectedPrinter = printers[printerIndex];
 
       // Enviar datos de impresión con los números parseados
@@ -435,10 +435,10 @@ function SamplingResultView({ result, onNewInspection }) {
         throw new Error(result.error || 'Error desconocido al imprimir');
       }
     } catch (error) {
-      const errorMsg = error.message.includes('Failed to fetch') 
+      const errorMsg = error.message.includes('Failed to fetch')
         ? 'No se pudo conectar al servicio de impresión.\n\nAsegúrese de que:\n1. El servicio zebra_print_service.py esté ejecutándose\n2. Esté corriendo en http://127.0.0.1:5000\n3. La impresora Zebra esté conectada'
         : error.message;
-      
+
       setZebraError(errorMsg);
       alert('❌ Error de impresión:\n\n' + errorMsg);
     } finally {
@@ -490,7 +490,7 @@ function SamplingResultView({ result, onNewInspection }) {
             <label htmlFor="manual-number-input" className="input-label">
               Ingreso de Números de Cajas
             </label>
-            
+
             {/* Input + Agregar + Subir Imagen — mismo renglón */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
               <input
@@ -768,7 +768,7 @@ function SamplingResultView({ result, onNewInspection }) {
 
           {/* Acciones */}
           <div className="actions-section">
-            <button 
+            <button
               className="btn btn-upload"
               onClick={printZebraLabels}
               disabled={printingZebra}
@@ -776,10 +776,10 @@ function SamplingResultView({ result, onNewInspection }) {
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clipRule="evenodd" />
               </svg>
-              {printingZebra ? 'Imprimiendo...' : 'Etiquetas Zebra'}
+              {printingZebra ? 'Imprimiendo...' : 'Imprimir Adhesivos'}
             </button>
 
-            <button 
+            <button
               className="btn btn-upload"
               onClick={() => setShowDiagrams(true)}
               title="Configurar y ver diagramas de pallets"
@@ -790,7 +790,7 @@ function SamplingResultView({ result, onNewInspection }) {
               Diagrama Pallets
             </button>
 
-            <button 
+            <button
               className="btn btn-upload"
               onClick={onNewInspection}
             >
