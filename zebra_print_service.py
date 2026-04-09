@@ -22,6 +22,12 @@ SMALL_W = mm_to_dots(SMALL_BOX_MM)
 SMALL_H = SMALL_W
 MARGIN = mm_to_dots(2)     # margen pequeño
 
+# Bixolon SLP-TX400: etiqueta doble 5x4 cm con gap 3.5 mm
+BIXOLON_W = mm_to_dots(50)    # 5 cm de ancho (igual al estándar)
+BIXOLON_H = mm_to_dots(40)    # 4 cm de alto
+BIXOLON_GAP = mm_to_dots(3.5) # 3.5 mm de separación entre etiquetas
+BIXOLON_TOTAL_W = BIXOLON_W * 2 + BIXOLON_GAP  # ancho total de la tira en dots
+
 def get_available_printers():
     """Obtiene lista de impresoras disponibles en el sistema."""
     flags = win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS
@@ -164,9 +170,9 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
 
     line1, line2 = split_sample_text(sample_text)
 
-    # Nuevas Proporciones que maximizan el número
-    leg_w   = int(W * 0.15)
-    num_w   = int(W * 0.70)
+    # Ajuste visual: reducir un poco número central y dar más ancho al lote
+    leg_w   = int(W * 0.14)
+    num_w   = int(W * 0.66)
     lot_w   = W - leg_w - num_w
     num_x   = leg_w
     lot_x   = leg_w + num_w
@@ -187,10 +193,10 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
         
         return min(h, w)
 
-    # Fuente del número central: ocupa hasta 92% del alto, gran ancho
+    # Fuente del número central: un poco más contenida para balancear con lote
     def fit_num(chars):
-        max_h = int(H * 0.92)
-        by_w = int((num_w * 0.95) / (max(1, chars) * 0.58))
+        max_h = int(H * 0.84)
+        by_w = int((num_w * 0.88) / (max(1, chars) * 0.60))
         return max(8, min(max_h, by_w))
 
     num_font_left  = fit_num(len(str(left_num)))
@@ -271,6 +277,95 @@ def build_zpl_small_label_5x2(lote, left_num, right_num=None, sample_text='MUEST
     return "\n".join(zpl)
 
 
+def build_zpl_bixolon_4x5(lote, left_num, right_num=None, sample_text='MUESTRA USDA'):
+    """
+    Construye ZPL para una tira con dos etiquetas Bixolon de 5x4 cm lado a lado.
+    Gap de 3.5 mm entre etiquetas. Diseño: leyenda arriba, número grande centrado,
+    LOTE debajo. Similar al estándar pero con alto reducido a 4 cm.
+    """
+    W = BIXOLON_W      # 5 cm en dots (~399)
+    H = BIXOLON_H      # 4 cm en dots (~319)
+    GAP = BIXOLON_GAP  # 3.5 mm en dots (~28)
+
+    left_x = 0
+    right_x = W + GAP
+
+    SCALE = 1.2
+    max_big_by_height = max(1, int(H * 0.6 * SCALE))
+    sub_font_h = max(10, int(H * 0.09 * SCALE))
+
+    def fit_number_font_height(text, max_height, max_width):
+        if not text:
+            return max_height
+        chars = max(1, len(str(text)))
+        usable_width = int(max_width * 0.85)
+        approx_h = int(usable_width / (chars * 0.6))
+        return max(10, min(max_height, approx_h))
+
+    extra_down = int(H * 0.04)
+    top_text_y = int(MARGIN) + mm_to_dots(3)
+    muestra_y = top_text_y
+    usda_y = muestra_y + int(sub_font_h * 1.05) + extra_down
+
+    reserved_top = usda_y + sub_font_h
+    reserved_bottom = sub_font_h + int(sub_font_h * 0.5)
+    available_for_number = H - reserved_top - reserved_bottom
+
+    number_block_h = min(max_big_by_height, available_for_number)
+    number_y_base = reserved_top + int((available_for_number - number_block_h) / 2)
+    lote_y = number_y_base + number_block_h + int(sub_font_h * 0.2)
+
+    left_big_h  = fit_number_font_height(left_num, number_block_h, W)
+    right_big_h = fit_number_font_height(right_num if right_num is not None else "", number_block_h, W)
+
+    left_number_y  = number_y_base + int((number_block_h - left_big_h)  / 2)
+    right_number_y = number_y_base + int((number_block_h - right_big_h) / 2)
+
+    line1, line2 = split_sample_text(sample_text)
+
+    zpl = []
+    zpl.append("^XA")
+    zpl.append(f"^PW{BIXOLON_TOTAL_W}")
+    zpl.append(f"^LL{H}")
+    zpl.append("^LH0,0")
+
+    # --- IZQUIERDA ---
+    zpl.append(f"^CF0,{sub_font_h}")
+    zpl.append(f"^FO{left_x},{muestra_y}^FB{W},1,0,C,0")
+    zpl.append(f"^FD{line1}^FS")
+    zpl.append(f"^CF0,{sub_font_h}")
+    zpl.append(f"^FO{left_x},{usda_y}^FB{W},1,0,C,0")
+    zpl.append(f"^FD{line2}^FS")
+
+    zpl.append(f"^CF0,{left_big_h}")
+    zpl.append(f"^FO{left_x},{left_number_y}")
+    zpl.append(f"^FB{W},1,0,C,0")
+    zpl.append(f"^FD{left_num}^FS")
+
+    zpl.append(f"^CF0,{sub_font_h}")
+    zpl.append(f"^FO{left_x},{lote_y}^FB{W},1,0,C,0")
+    zpl.append(f"^FDLOTE: {lote}^FS")
+
+    # --- DERECHA ---
+    zpl.append(f"^CF0,{sub_font_h}")
+    zpl.append(f"^FO{right_x},{muestra_y}^FB{W},1,0,C,0")
+    zpl.append(f"^FD{line1}^FS")
+    zpl.append(f"^CF0,{sub_font_h}")
+    zpl.append(f"^FO{right_x},{usda_y}^FB{W},1,0,C,0")
+    zpl.append(f"^FD{line2}^FS")
+
+    zpl.append(f"^CF0,{right_big_h}")
+    zpl.append(f"^FO{right_x},{right_number_y}")
+    zpl.append(f"^FB{W},1,0,C,0")
+    zpl.append(f"^FD{right_num if right_num is not None else ''}^FS")
+
+    zpl.append(f"^CF0,{sub_font_h}")
+    zpl.append(f"^FO{right_x},{lote_y}^FB{W},1,0,C,0")
+    zpl.append(f"^FDLOTE: {lote}^FS")
+
+    zpl.append("^XZ")
+    return "\n".join(zpl)
+
 
 def imprimir_etiquetas(lote, numeros_caja, printer_name="ZDesigner ZD230-203dpi ZPL", sample_text='MUESTRA USDA', label_size='standard'):
     """Imprime etiquetas Zebra con el lote y números de caja.
@@ -287,8 +382,8 @@ def imprimir_etiquetas(lote, numeros_caja, printer_name="ZDesigner ZD230-203dpi 
 
     available = get_available_printers()
     if printer_name not in available:
-        # Buscar impresora Zebra alternativa
-        zebra_printers = [p for p in available if 'zebra' in p.lower() or 'zdesigner' in p.lower()]
+        # Buscar impresora Zebra o Bixolon alternativa
+        zebra_printers = [p for p in available if 'zebra' in p.lower() or 'zdesigner' in p.lower() or 'bixolon' in p.lower()]
         if zebra_printers:
             printer_name = zebra_printers[0]
         else:
@@ -301,7 +396,33 @@ def imprimir_etiquetas(lote, numeros_caja, printer_name="ZDesigner ZD230-203dpi 
     try:
         hPrinter = win32print.OpenPrinter(printer_name)
 
-        if label_size == 'small_5x2':
+        if label_size == 'bixolon_4x5':
+            # Etiqueta doble Bixolon SLP-TX400: 5x4 cm con gap 3.5 mm
+            i = 0
+            strips_printed = 0
+            while i < len(numeros_caja):
+                left  = str(numeros_caja[i])
+                right = str(numeros_caja[i+1]) if i+1 < len(numeros_caja) else None
+                etiqueta_zpl = build_zpl_bixolon_4x5(lote, left, right, sample_text)
+                print(f"\n{'='*60}")
+                print(f"Imprimiendo tira Bixolon 5x4 #{strips_printed + 1}: Izq={left}, Der={right or 'vacío'}")
+                print(f"ZPL generado:")
+                print(etiqueta_zpl)
+                print(f"{'='*60}\n")
+                win32print.StartDocPrinter(hPrinter, 1, ("Etiqueta AGROSAMPLE", None, "RAW"))
+                win32print.StartPagePrinter(hPrinter)
+                win32print.WritePrinter(hPrinter, etiqueta_zpl.encode('utf-8'))
+                win32print.EndPagePrinter(hPrinter)
+                win32print.EndDocPrinter(hPrinter)
+                strips_printed += 1
+                i += 2
+
+            return {
+                "success": True,
+                "message": f"✅ Se imprimieron {strips_printed} tiras Bixolon 5x4 ({len(numeros_caja)} etiquetas) en '{printer_name}'"
+            }
+
+        elif label_size == 'small_5x2':
             # Mismo esquema por pares que el estándar, pero alto 2cm
             i = 0
             strips_printed = 0
@@ -501,14 +622,14 @@ def run_service(port=5000):
     print()
     
     printers = get_available_printers()
-    zebra_printers = [p for p in printers if 'zebra' in p.lower() or 'zdesigner' in p.lower()]
+    zebra_printers = [p for p in printers if 'zebra' in p.lower() or 'zdesigner' in p.lower() or 'bixolon' in p.lower()]
     
     if zebra_printers:
-        print(f"✅ Impresoras Zebra detectadas:")
+        print(f"✅ Impresoras Zebra/Bixolon detectadas:")
         for p in zebra_printers:
             print(f"   - {p}")
     else:
-        print("⚠️  No se detectaron impresoras Zebra")
+        print("⚠️  No se detectaron impresoras Zebra/Bixolon")
         print(f"   Impresoras disponibles: {', '.join(printers) if printers else 'Ninguna'}")
     
     print()

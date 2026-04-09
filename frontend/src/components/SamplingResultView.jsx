@@ -724,6 +724,26 @@ function SamplingResultView({ result, onNewInspection }) {
                 Estándar (5×5 cm) — doble
               </button>
               <button
+                onClick={() => setLabelSize('bixolon_4x5')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 14px',
+                  borderRadius: '8px',
+                  border: labelSize === 'bixolon_4x5' ? '2px solid #10b981' : '2px solid #d1d5db',
+                  background: labelSize === 'bixolon_4x5' ? '#f0fdf4' : '#fff',
+                  color: labelSize === 'bixolon_4x5' ? '#065f46' : '#6b7280',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {labelSize === 'bixolon_4x5' && <span>✓</span>}
+                Bixolon (5×4 cm) — doble
+              </button>
+              <button
                 onClick={() => setLabelSize('small_5x2')}
                 style={{
                   display: 'inline-flex',
