@@ -109,6 +109,37 @@
   height: 18px;
 }
 
+.btn-back-home {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.btn-back-home:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-back-home:active {
+  transform: translateY(0);
+}
+
+.btn-back-home svg {
+  width: 18px;
+  height: 18px;
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;

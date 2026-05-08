@@ -20,6 +20,10 @@ function Header() {
     navigate('/');
   };
 
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <header className="header">
       <div className="header-content">
@@ -33,6 +37,12 @@ function Header() {
         <div className="header-actions">
           {user ? (
             <>
+              <button onClick={handleBackToDashboard} className="btn-back-home" title="Volver al Menú">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.5 1.5H3.75A2.25 2.25 0 001.5 3.75v12.5A2.25 2.25 0 003.75 18.5h12.5a2.25 2.25 0 002.25-2.25V9.5M18.5 1.5l-7 7M18.5 1.5h-5M18.5 1.5v5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span>Menú</span>
+              </button>
               <div className="user-info">
                 <div className="user-avatar">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">

@@ -9,7 +9,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './components/admin/AdminDashboard';
 import EstablishmentManagement from './components/admin/EstablishmentManagement';
 import ThemeEditor from './components/admin/ThemeEditor';
+import DashboardOptions from './components/DashboardOptions';
 import InspectionApp from './components/InspectionApp';
+import BatchDescriptionApp from './components/BatchDescriptionApp';
 import LandingPage from './pages/LandingPage';
 import MaintenanceMode from './components/MaintenanceMode';
 import './App.css';
@@ -39,7 +41,7 @@ function AppRoutes() {
         path="/login" 
         element={
           user ? (
-            <Navigate to={isSuperAdmin() ? '/admin' : '/muestreo'} replace />
+            <Navigate to={isSuperAdmin() ? '/admin' : '/dashboard'} replace />
           ) : !allowLogin ? (
             <Navigate to="/" replace />
           ) : (
@@ -74,12 +76,32 @@ function AppRoutes() {
         }
       />
 
-      {/* Ruta protegida para la aplicación */}
+      {/* Dashboard - Selector de opciones post-login */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardOptions />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Ruta protegida para la aplicación de muestreo */}
       <Route
         path="/muestreo"
         element={
           <ProtectedRoute>
             <InspectionApp />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Ruta protegida para planilla de descripción de lote */}
+      <Route
+        path="/planilla-descripcion"
+        element={
+          <ProtectedRoute>
+            <BatchDescriptionApp />
           </ProtectedRoute>
         }
       />

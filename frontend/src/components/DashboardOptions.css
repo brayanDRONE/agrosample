@@ -1,0 +1,218 @@
+/**
+ * DashboardOptions.css - Estilos para la pantalla de opciones post-login
+ */
+
+.dashboard-container {
+  padding: var(--spacing-lg) var(--spacing-md);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  animation: slideDown 0.5s ease-out;
+}
+
+.dashboard-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  background: var(--theme-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.dashboard-header p {
+  font-size: 1.125rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+/* Grid de opciones */
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-lg);
+  padding: var(--spacing);
+}
+
+/* Card de opción */
+.option-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+  padding: var(--spacing-md);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--gray-200);
+  cursor: pointer;
+  transition: all var(--transition-slow);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  position: relative;
+}
+
+.option-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--theme-gradient);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition);
+}
+
+.option-card:hover {
+  border-color: var(--theme-primary);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.02) 0%, rgba(var(--theme-secondary-rgb), 0.02) 100%);
+}
+
+.option-card:hover::before {
+  transform: scaleX(1);
+}
+
+.option-card:focus {
+  outline: none;
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb), 0.1), var(--shadow-lg);
+}
+
+/* Estructura interna */
+.option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.1), rgba(var(--theme-secondary-rgb), 0.1));
+  color: var(--theme-primary);
+  transition: all var(--transition);
+}
+
+.option-card:hover .option-icon {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, rgba(var(--theme-primary-rgb), 0.15), rgba(var(--theme-secondary-rgb), 0.15));
+}
+
+.muestreo-icon {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  color: #667eea;
+}
+
+.planilla-icon {
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.1), rgba(244, 63, 94, 0.1));
+  color: #f56565;
+}
+
+.option-card:hover .muestreo-icon {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+}
+
+.option-card:hover .planilla-icon {
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(244, 63, 94, 0.2));
+}
+
+/* Contenido de la card */
+.option-content {
+  flex: 1;
+}
+
+.option-content h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: var(--spacing-sm);
+}
+
+.option-content p {
+  font-size: 0.95rem;
+  color: var(--gray-600);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Flecha indicadora */
+.option-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: var(--theme-primary);
+  opacity: 0.6;
+  transition: all var(--transition);
+  margin-top: var(--spacing-sm);
+}
+
+.option-card:hover .option-arrow {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+/* Animaciones */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .dashboard-header p {
+    font-size: 1rem;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing);
+    padding: var(--spacing-sm);
+  }
+
+  .option-card {
+    padding: var(--spacing);
+  }
+
+  .option-content h2 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: var(--spacing) var(--spacing-sm);
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .options-grid {
+    gap: var(--spacing-sm);
+  }
+
+  .option-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .option-icon svg {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}

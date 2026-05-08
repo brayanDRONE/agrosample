@@ -9,6 +9,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('inspections.urls')),
+    path('api/batch-description/', include('inspections.batch_description_urls')),
 ]
 
 # Servir archivos media en desarrollo
