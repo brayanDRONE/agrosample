@@ -9,7 +9,7 @@ import BatchDescriptionForm from './BatchDescriptionForm';
 import './BatchDescriptionApp.css';
 
 function BatchDescriptionAppContent() {
-  const [currentStep, setCurrentStep] = useState('upload'); // upload, type-select, data-entry, export
+  const [currentStep, setCurrentStep] = useState('upload'); // upload, type-select, folio-order, data-entry, export
   const [fileData, setFileData] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
 
@@ -20,7 +20,23 @@ function BatchDescriptionAppContent() {
 
   const handleTypeSelected = (type) => {
     setSelectedType(type);
+    // ETAPA requiere el paso de ordenamiento de folios
+    if (type === 'ETAPA') {
+      setCurrentStep('folio-order');
+    } else {
+      setCurrentStep('data-entry');
+    }
+  };
+
+  // Al confirmar el orden de folios para ETAPA, reordenar los pallets en fileData
+  const handleFolioOrderConfirmed = (reorderedPallets) => {
+    setFileData((prev) => ({ ...prev, pallets: reorderedPallets }));
     setCurrentStep('data-entry');
+  };
+
+  const handleGoToTypeSelect = () => {
+    setSelectedType(null);
+    setCurrentStep('type-select');
   };
 
   const handleNewBatch = () => {
@@ -41,6 +57,8 @@ function BatchDescriptionAppContent() {
             selectedType={selectedType}
             onFileLoaded={handleFileLoaded}
             onTypeSelected={handleTypeSelected}
+            onFolioOrderConfirmed={handleFolioOrderConfirmed}
+            onGoToTypeSelect={handleGoToTypeSelect}
             onNewBatch={handleNewBatch}
           />
         </div>

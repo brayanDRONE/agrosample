@@ -1,0 +1,508 @@
+/* ═══════════════════════════════════════════════════════════════
+   FolioOrderPanel.css — Estilos para el panel de ordenamiento
+   de folios en muestreo Por Etapa
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Contenedor principal ── */
+.folio-order-panel {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 28px 32px;
+  max-width: 960px;
+  margin: 0 auto;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Encabezado ── */
+.fop-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.fop-header-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.fop-header h2 {
+  margin: 0 0 6px 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.fop-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* ── Instrucciones ── */
+.fop-instructions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.fop-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.fop-hint-key {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fop-hint-key.left-click {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.fop-hint-key.right-click {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.fop-hint-key.drag {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+/* ── Barra de progreso ── */
+.fop-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.fop-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.fop-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 99px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.fop-progress-fill.complete {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.fop-progress-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+/* ── Cuerpo dividido en dos paneles ── */
+.fop-body {
+  display: grid;
+  grid-template-columns: 1fr 36px 1fr;
+  gap: 0;
+  min-height: 360px;
+  margin-bottom: 20px;
+}
+
+/* ── Secciones ── */
+.fop-section {
+  display: flex;
+  flex-direction: column;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.fop-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.available-section .fop-section-header {
+  background: #f0fdf4;
+}
+
+.ordered-section .fop-section-header {
+  background: #eff6ff;
+}
+
+.fop-section-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fop-section-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.available-dot { background: #10b981; }
+.ordered-dot   { background: #3b82f6; }
+
+.fop-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.fop-count-badge.ordered {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* ── Botones de acción rápida ── */
+.fop-action-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.fop-action-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.fop-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fop-action-btn.danger {
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.fop-action-btn.danger:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+/* ── Grid de chips disponibles ── */
+.fop-chips-grid {
+  flex: 1;
+  padding: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 360px;
+}
+
+.fop-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.available-chip {
+  background: #f0fdf4;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+.available-chip:hover {
+  background: #d1fae5;
+  border-color: #34d399;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.2);
+}
+
+.fop-chip-icon  { font-size: 1rem; }
+.fop-chip-folio { font-family: 'Courier New', monospace; letter-spacing: 0.5px; }
+.fop-chip-arrow { color: #9ca3af; font-size: 0.8rem; }
+
+/* ── Divisor central ── */
+.fop-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.fop-divider-line {
+  flex: 1;
+  width: 1px;
+  background: #e5e7eb;
+}
+
+.fop-divider-icon {
+  font-size: 1.1rem;
+  color: #9ca3af;
+  user-select: none;
+}
+
+/* ── Lista ordenada ── */
+.fop-ordered-list {
+  flex: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 360px;
+}
+
+.fop-ordered-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #fff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  cursor: grab;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.fop-ordered-item:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.12);
+}
+
+.fop-ordered-item.dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+  border-style: dashed;
+}
+
+.fop-ordered-item:active {
+  cursor: grabbing;
+}
+
+.fop-position-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fop-drag-handle {
+  color: #9ca3af;
+  font-size: 1.1rem;
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.fop-ordered-folio {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e40af;
+  letter-spacing: 0.5px;
+}
+
+.fop-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.fop-remove-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Estados vacíos ── */
+.fop-empty-state {
+  width: 100%;
+  padding: 28px 16px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.88rem;
+  font-style: italic;
+}
+
+/* ── Mensajes de validación ── */
+.fop-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.fop-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1px solid #6ee7b7;
+  border-radius: 8px;
+  color: #065f46;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+/* ── Acciones inferiores ── */
+.fop-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.fop-btn-back {
+  padding: 10px 20px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.fop-btn-back:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.fop-btn-confirm {
+  padding: 11px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fop-btn-confirm.enabled {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.fop-btn-confirm.enabled:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+}
+
+.fop-btn-confirm.disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .folio-order-panel {
+    padding: 18px 16px;
+  }
+
+  .fop-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 36px auto;
+  }
+
+  .fop-divider {
+    flex-direction: row;
+    height: 36px;
+  }
+
+  .fop-divider-line {
+    flex: 1;
+    width: auto;
+    height: 1px;
+  }
+
+  .fop-instructions {
+    flex-direction: column;
+  }
+}

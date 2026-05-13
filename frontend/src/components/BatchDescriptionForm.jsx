@@ -5,6 +5,7 @@
 import { useEffect, useState, useRef } from 'react';
 import batchDescriptionService from '../services/batchDescriptionService';
 import PalletDataTable from './PalletDataTable';
+import FolioOrderPanel from './FolioOrderPanel';
 import './BatchDescriptionForm.css';
 
 function BatchDescriptionForm({
@@ -13,6 +14,8 @@ function BatchDescriptionForm({
   selectedType,
   onFileLoaded,
   onTypeSelected,
+  onFolioOrderConfirmed,
+  onGoToTypeSelect,
   onNewBatch
 }) {
   const fileInputRef = useRef(null);
@@ -206,6 +209,35 @@ function BatchDescriptionForm({
           <button className="btn-back" onClick={onNewBatch}>
             Cargar otro archivo
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // STEP 2.5: Folio Order (solo para ETAPA)
+  if (currentStep === 'folio-order' && fileData) {
+    return (
+      <div className="batch-description-container">
+        <div className="folio-order-step">
+          <div className="step-header" style={{ marginBottom: '24px' }}>
+            <p style={{ margin: 0, color: '#6b7280', fontSize: '0.9rem' }}>
+              Paso 2 (ETAPA): Ordenar folios según posición en cámara de frío
+            </p>
+          </div>
+          <FolioOrderPanel
+            pallets={fileData.pallets}
+            onConfirm={onFolioOrderConfirmed}
+            onBack={onGoToTypeSelect || onNewBatch}
+          />
+          <div style={{ marginTop: '16px' }}>
+            <button
+              className="btn-back"
+              onClick={onNewBatch}
+              style={{ fontSize: '0.85rem', opacity: 0.7 }}
+            >
+              ← Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     );
