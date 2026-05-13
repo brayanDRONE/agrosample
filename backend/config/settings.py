@@ -39,6 +39,9 @@ CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173')
 if render_external_hostname:
     add_unique(CSRF_TRUSTED_ORIGINS, f'https://{render_external_hostname}')
 
+# Reconocer el proxy (ej. Render) para generar URLs con https en lugar de http
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 
 # Application definition
 
