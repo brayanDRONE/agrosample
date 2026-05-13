@@ -505,9 +505,9 @@ def save_batch_description(request):
                     'FOLIO PALLET\nNº',
                     'Nº\nCajas',
                     'Nº CAJAS\nACUMULADO',
-                    'Certificado\nPremuestreo',
+                    'Certificado de\npre muestreo',
                     'Nº\nCajas',
-                    'Certificado\nInspección',
+                    'Certificado de\ninspección',
                     'Nº\nCajas'
                 ]
             ]

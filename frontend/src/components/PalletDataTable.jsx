@@ -108,18 +108,8 @@ function PalletDataTable({ pallets = [], onDataChange, selectedType = 'NORMAL' }
             <tr>
               <th className="col-folio">Folio Pallet</th>
               <th className="col-cajas">Cajas</th>
-              {selectedType === 'NORMAL' && (
-                <>
-                  <th className="col-certif-pre">Certificado Pre-Muestreo</th>
-                  <th className="col-certif-insp">Certificado Inspección</th>
-                </>
-              )}
-              {selectedType === 'ETAPA' && (
-                <>
-                  <th className="col-etapa-pre">Verif. Etapa Pre-Muestreo</th>
-                  <th className="col-etapa-insp">Verif. Etapa Inspección</th>
-                </>
-              )}
+              <th className="col-certif-pre">Certificado de pre muestreo</th>
+              <th className="col-certif-insp">Certificado de inspección</th>
             </tr>
           </thead>
           <tbody>
