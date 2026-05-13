@@ -3,6 +3,7 @@
  */
 
 import axios from 'axios';
+import { apiService } from './api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/batch-description`
@@ -21,6 +22,11 @@ const batchDescriptionService = {
     formData.append('file', file);
 
     try {
+      const isTokenValid = await apiService.ensureValidToken();
+      if (!isTokenValid) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
+
       const token = localStorage.getItem('access_token');
       const headers = {};
       if (token) {
@@ -51,6 +57,11 @@ const batchDescriptionService = {
    */
   generateBatchDescription: async (data) => {
     try {
+      const isTokenValid = await apiService.ensureValidToken();
+      if (!isTokenValid) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
+
       const token = localStorage.getItem('access_token');
       const headers = {
         'Content-Type': 'application/json'
@@ -82,6 +93,11 @@ const batchDescriptionService = {
    */
   exportBatchDescription: async (data) => {
     try {
+      const isTokenValid = await apiService.ensureValidToken();
+      if (!isTokenValid) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
+
       const token = localStorage.getItem('access_token');
       const headers = {
         'Content-Type': 'application/json'
@@ -116,6 +132,11 @@ const batchDescriptionService = {
    */
   saveBatchDescription: async (data) => {
     try {
+      const isTokenValid = await apiService.ensureValidToken();
+      if (!isTokenValid) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
+
       const token = localStorage.getItem('access_token');
       const headers = {
         'Content-Type': 'application/json'
