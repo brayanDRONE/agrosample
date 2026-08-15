@@ -502,6 +502,7 @@ def save_batch_description(request):
             # Tabla de pallets - Formato USDA
             pallet_data = [
                 [
+                    'Nº',
                     'FOLIO PALLET\nNº',
                     'Nº\nCajas',
                     'Nº CAJAS\nACUMULADO',
@@ -517,6 +518,7 @@ def save_batch_description(request):
             for idx, pallet in enumerate(pallets, 1):
                 cajas_acumuladas += pallet.get('cajas', 0)
                 pallet_data.append([
+                    str(idx),
                     str(pallet.get('folio_pallet', '')),
                     str(pallet.get('cajas', '')),
                     str(cajas_acumuladas),
@@ -526,7 +528,7 @@ def save_batch_description(request):
                     str(pallet.get('cajas', ''))
                 ])
             
-            pallet_table = Table(pallet_data, colWidths=[1.1*inch, 0.6*inch, 1.0*inch, 1.1*inch, 0.6*inch, 1.1*inch, 0.6*inch])
+            pallet_table = Table(pallet_data, colWidths=[0.35*inch, 1.1*inch, 0.6*inch, 1.0*inch, 1.1*inch, 0.6*inch, 1.1*inch, 0.6*inch])
             pallet_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -534,6 +536,8 @@ def save_batch_description(request):
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 8),
                 ('FONTSIZE', (0, 1), (-1, -1), 7),
+                # Columna Nº (índice 0): fuente más pequeña para acomodar hasta 3 dígitos
+                ('FONTSIZE', (0, 1), (0, -1), 7),
                 ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
                 ('TOPPADDING', (0, 0), (-1, -1), 3),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#333333')),
