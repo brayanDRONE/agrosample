@@ -12,6 +12,7 @@ import ThemeEditor from './components/admin/ThemeEditor';
 import DashboardOptions from './components/DashboardOptions';
 import InspectionApp from './components/InspectionApp';
 import BatchDescriptionApp from './components/BatchDescriptionApp';
+import SdpValidationApp from './components/SdpValidationApp';
 import LandingPage from './pages/LandingPage';
 import MaintenanceMode from './components/MaintenanceMode';
 import './App.css';
@@ -102,6 +103,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <BatchDescriptionApp />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Ruta protegida para validación de SDP */}
+      <Route
+        path="/validacion-sdp"
+        element={
+          <ProtectedRoute>
+            <SdpValidationApp />
           </ProtectedRoute>
         }
       />

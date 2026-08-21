@@ -113,12 +113,21 @@
   color: #f56565;
 }
 
+.sdp-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 148, 162, 0.1));
+  color: #059669;
+}
+
 .option-card:hover .muestreo-icon {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
 }
 
 .option-card:hover .planilla-icon {
   background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(244, 63, 94, 0.2));
+}
+
+.option-card:hover .sdp-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 148, 162, 0.2));
 }
 
 /* Contenido de la card */

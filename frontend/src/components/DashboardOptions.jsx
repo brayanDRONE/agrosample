@@ -20,6 +20,10 @@ function DashboardOptionsContent() {
     navigate('/planilla-descripcion');
   };
 
+  const handleValidacionSdp = () => {
+    navigate('/validacion-sdp');
+  };
+
   return (
     <div className="app">
       <Header />
@@ -73,6 +77,31 @@ function DashboardOptionsContent() {
                 <div className="option-content">
                   <h2>Generar Planilla de Descripción de Lote</h2>
                   <p>Cargue archivo de lote (.INS) y genere la planilla de descripción con certificados</p>
+                </div>
+                <div className="option-arrow">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Opción: Validación de SDP */}
+              <div
+                className="option-card sdp-card"
+                onClick={handleValidacionSdp}
+                role="button"
+                tabIndex="0"
+                onKeyPress={(e) => e.key === 'Enter' && handleValidacionSdp()}
+              >
+                <div className="option-icon sdp-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 5h16v14H4z" />
+                    <path d="M8 9h8M8 13h5M8 17h3" />
+                  </svg>
+                </div>
+                <div className="option-content">
+                  <h2>Validación de SDP</h2>
+                  <p>Revise y valide la información de los documentos SDP</p>
                 </div>
                 <div className="option-arrow">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
