@@ -16,9 +16,14 @@ function FolioOrderPanel({ pallets = [], onConfirm, onBack }) {
 
   // Estado: folios en cola de orden definido por el usuario
   const [orderedFolios, setOrderedFolios] = useState([]);
+  const [folioSearch, setFolioSearch] = useState('');
 
   // Folios que aún no han sido ordenados
   const availableFolios = allFolios.filter((f) => !orderedFolios.includes(f));
+  const normalizedSearch = folioSearch.replace(/\D/g, '').slice(0, 4);
+  const matchingFolios = normalizedSearch.length >= 3
+    ? availableFolios.filter((folio) => String(folio).replace(/\D/g, '').endsWith(normalizedSearch))
+    : [];
 
   // ─── Drag & drop dentro de la lista ordenada ──────────────────────────────
   const dragIndex = useRef(null);
@@ -58,6 +63,14 @@ function FolioOrderPanel({ pallets = [], onConfirm, onBack }) {
   // ─── Agregar folio al orden (click izquierdo en disponible) ───────────────
   const handleAddFolio = (folio) => {
     setOrderedFolios((prev) => [...prev, folio]);
+    setFolioSearch('');
+  };
+
+  const handleFolioSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && matchingFolios.length === 1) {
+      e.preventDefault();
+      handleAddFolio(matchingFolios[0]);
+    }
   };
 
   // ─── Quitar folio del orden (click derecho en ordenado) ───────────────────
@@ -153,11 +166,59 @@ function FolioOrderPanel({ pallets = [], onConfirm, onBack }) {
             </button>
           </div>
 
+          <div className="fop-search">
+            <label htmlFor="folio-search">Buscar folio</label>
+            <div className="fop-search-input-wrap">
+              <input
+                id="folio-search"
+                type="text"
+                inputMode="numeric"
+                maxLength="4"
+                value={folioSearch}
+                onChange={(e) => setFolioSearch(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                onKeyDown={handleFolioSearchKeyDown}
+                placeholder="Últimos 3 o 4 dígitos"
+                aria-describedby="folio-search-help"
+              />
+              {folioSearch && (
+                <button
+                  type="button"
+                  className="fop-search-clear"
+                  onClick={() => setFolioSearch('')}
+                  aria-label="Limpiar búsqueda"
+                  title="Limpiar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <span id="folio-search-help" className="fop-search-help">
+              Escriba los últimos 3 o 4 dígitos
+            </span>
+          </div>
+
           <div className="fop-chips-grid">
             {availableFolios.length === 0 ? (
               <div className="fop-empty-state">
                 <span>✓ Todos los folios han sido ordenados</span>
               </div>
+            ) : normalizedSearch.length >= 3 && matchingFolios.length === 0 ? (
+              <div className="fop-empty-state">
+                <span>No se encontró un folio con esos dígitos</span>
+              </div>
+            ) : normalizedSearch.length >= 3 ? (
+              matchingFolios.map((folio) => (
+                <button
+                  key={folio}
+                  className="fop-chip available-chip fop-search-result"
+                  onClick={() => handleAddFolio(folio)}
+                  title="Click para agregar al orden"
+                >
+                  <span className="fop-chip-icon">📦</span>
+                  <span className="fop-chip-folio">{folio}</span>
+                  <span className="fop-chip-arrow">→</span>
+                </button>
+              ))
             ) : (
               availableFolios.map((folio) => (
                 <button

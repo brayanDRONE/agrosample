@@ -10,7 +10,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useOcrImageUpload, parseOcrNumbers } from './useOcrImageUpload';
 
-function OcrImageUpload({ existingNumbers = [], onConfirm }) {
+function OcrImageUpload({ existingNumbers = [], onConfirm, pasteTargetRef }) {
   const fileInputRef = useRef(null);
 
   const {
@@ -47,6 +47,27 @@ function OcrImageUpload({ existingNumbers = [], onConfirm }) {
     // Resetear el input para permitir subir el mismo archivo de nuevo
     e.target.value = '';
   };
+
+  useEffect(() => {
+    const target = pasteTargetRef?.current;
+    if (!target) return undefined;
+
+    const handlePaste = (e) => {
+      const imageItem = Array.from(e.clipboardData?.items || [])
+        .find((item) => item.type.startsWith('image/'));
+      const imageFile = imageItem?.getAsFile() || Array.from(e.clipboardData?.files || [])
+        .find((file) => file.type.startsWith('image/'));
+
+      if (imageFile) {
+        e.preventDefault();
+        clearError();
+        processImage(imageFile);
+      }
+    };
+
+    target.addEventListener('paste', handlePaste);
+    return () => target.removeEventListener('paste', handlePaste);
+  }, [pasteTargetRef, clearError, processImage]);
 
   const handleConfirm = () => {
     // Parsear el texto editado como lista de números (uno por línea o separados)

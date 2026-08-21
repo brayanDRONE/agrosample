@@ -30,14 +30,14 @@ function BatchDescriptionForm({
   });
 
   useEffect(() => {
-    if (currentStep === 'data-entry' && fileData?.header) {
-      setEditableData((current) => ({
-        especie: current.especie || fileData.header.especie || '',
-        tipo_seleccion: current.tipo_seleccion || 'X',
-        tipo_despacho: current.tipo_despacho || 'X'
-      }));
+    if (currentStep === 'data-entry') {
+      setEditableData({
+        especie: '',
+        tipo_seleccion: selectedType === 'ETAPA' ? 'POR ETAPA' : selectedType || '',
+        tipo_despacho: ''
+      });
     }
-  }, [currentStep, fileData]);
+  }, [currentStep, selectedType]);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -397,9 +397,9 @@ function BatchDescriptionForm({
                   <input
                     id="tipo_seleccion"
                     type="text"
-                    placeholder="Ingrese el código de selección"
+                    placeholder="Tipo de muestreo"
                     value={editableData.tipo_seleccion}
-                    onChange={(e) => setEditableData({ ...editableData, tipo_seleccion: e.target.value })}
+                    readOnly
                     className="input-field"
                   />
                 </div>
@@ -408,7 +408,7 @@ function BatchDescriptionForm({
                   <input
                     id="tipo_despacho"
                     type="text"
-                    placeholder="Ingrese el código de despacho"
+                    placeholder="Ingrese tipo de despacho"
                     value={editableData.tipo_despacho}
                     onChange={(e) => setEditableData({ ...editableData, tipo_despacho: e.target.value })}
                     className="input-field"

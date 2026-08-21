@@ -2,7 +2,7 @@
  * SamplingResultView - Vista de resultados del muestreo
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -24,6 +24,7 @@ function SamplingResultView({ result, onNewInspection }) {
   const [zebraError, setZebraError] = useState(null);
   const [manualNumbersInput, setManualNumbersInput] = useState('');
   const [manualNumbers, setManualNumbers] = useState([]);
+  const manualNumberInputRef = useRef(null);
   const [editingNumber, setEditingNumber] = useState(null); // Controla qué número se está editando
   const [editValue, setEditValue] = useState(''); // Valor temporal mientras se edita
   const [showDiagrams, setShowDiagrams] = useState(false);
@@ -494,6 +495,7 @@ function SamplingResultView({ result, onNewInspection }) {
             {/* Input + Agregar + Subir Imagen — mismo renglón */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
               <input
+                ref={manualNumberInputRef}
                 id="manual-number-input"
                 type="text"
                 className="manual-input-textarea"
@@ -524,6 +526,7 @@ function SamplingResultView({ result, onNewInspection }) {
               </button>
               <OcrImageUpload
                 existingNumbers={manualNumbers}
+                pasteTargetRef={manualNumberInputRef}
                 onConfirm={(merged) => {
                   setManualNumbers(merged);
                   setZebraError(null);
@@ -532,7 +535,7 @@ function SamplingResultView({ result, onNewInspection }) {
             </div>
 
             <small style={{ color: '#4b5563', display: 'block', marginBottom: '12px' }}>
-              Presiona Enter o click en "+ Agregar" · o sube una imagen con los números
+              Presiona Enter o click en "+ Agregar" · pega una captura con Ctrl+V o sube una imagen
             </small>
 
 

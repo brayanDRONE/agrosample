@@ -130,7 +130,8 @@
   display: grid;
   grid-template-columns: 1fr 36px 1fr;
   gap: 0;
-  min-height: 360px;
+  height: 520px;
+  min-height: 520px;
   margin-bottom: 20px;
 }
 
@@ -231,9 +232,87 @@
   background: #fee2e2;
 }
 
+/* ── Búsqueda rápida por sufijo de folio ── */
+.fop-search {
+  padding: 10px 14px 0;
+}
+
+.fop-search label {
+  display: block;
+  margin-bottom: 5px;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.fop-search-input-wrap {
+  position: relative;
+}
+
+.fop-search input {
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 8px 34px 8px 10px;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #065f46;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.fop-search input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.fop-search input::placeholder {
+  color: #9ca3af;
+  font-family: inherit;
+}
+
+.fop-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.fop-search-clear:hover {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.fop-search-help {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 0.7rem;
+}
+
+.fop-search-result {
+  animation: fop-search-result-in 0.15s ease-out;
+}
+
+@keyframes fop-search-result-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Grid de chips disponibles ── */
 .fop-chips-grid {
   flex: 1;
+  min-height: 0;
   padding: 14px;
   display: flex;
   flex-wrap: wrap;
@@ -489,6 +568,8 @@
   .fop-body {
     grid-template-columns: 1fr;
     grid-template-rows: auto 36px auto;
+    height: auto;
+    min-height: 0;
   }
 
   .fop-divider {

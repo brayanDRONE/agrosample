@@ -433,7 +433,7 @@
   border: 1px solid #e5e7eb;
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: 0;
 }
 
 .editable-fields-section h3 {
@@ -448,12 +448,16 @@
 .section-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, #cbd5e1, transparent);
-  margin: 0 0 var(--spacing-xl) 0;
+  margin: 0;
 }
 
 .pallet-table-section {
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-md);
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.pallet-table-section .pallet-data-table {
+  margin-top: 0;
 }
 
 .form-row {
