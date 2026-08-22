@@ -116,8 +116,13 @@ def _build_summary_pdf(results, filename, numero_lote):
     )
     styles = getSampleStyleSheet()
     body_style = styles['BodyText'].clone('SdpBody')
-    body_style.fontSize = 7
-    body_style.leading = 8
+    body_style.fontSize = 8.5
+    body_style.leading = 10
+    header_style = styles['BodyText'].clone('SdpHeader')
+    header_style.fontName = 'Helvetica-Bold'
+    header_style.fontSize = 8.5
+    header_style.leading = 10
+    header_style.textColor = colors.black
     title_style = styles['Title'].clone('SdpTitle')
     title_style.fontSize = 15
 
@@ -128,29 +133,35 @@ def _build_summary_pdf(results, filename, numero_lote):
         body_style,
     ))
     elements.append(Spacer(1, 0.12 * inch))
-    headers = ['CSG', 'SDP', 'Provincia Excel', 'Comuna Excel', 'Variedad Comercial', 'Productor', 'Estado', 'Observaciones']
-    table_data = [headers]
+    headers = ['CSG', 'SDP', 'Provincia Excel', 'Comuna Excel', 'Variedad Comercial', 'Productor', 'Estado']
+    table_data = [[Paragraph(header, header_style) for header in headers]]
     for result in results:
         sag = result.get('datos_sag') or {}
         table_data.append([
             result['csg'], result['sdp'], result['provincia'], result['comuna'], result['variedad_comercial'],
             sag.get('productor', ''), 'CUMPLE' if result['cumple'] else 'NO CUMPLE',
-            '; '.join(result['diferencias']) or 'Sin diferencias',
         ])
 
-    widths = [0.9, 0.7, 1.0, 1.05, 1.35, 1.8, 0.8, 3.25]
-    wrapped_data = [[Paragraph(str(cell), body_style) for cell in row] for row in table_data]
+    widths = [0.85, 0.75, 1.2, 1.15, 1.45, 3.0, 1.0]
+    wrapped_data = [table_data[0]] + [
+        [Paragraph(str(cell), body_style) for cell in row]
+        for row in table_data[1:]
+    ]
     table = Table(wrapped_data, colWidths=[width * inch for width in widths], repeatRows=1)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#14532d')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e5e7eb')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 7),
-        ('LEADING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#94a3b8')),
+        ('FONTSIZE', (0, 0), (-1, -1), 8.5),
+        ('LEADING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 7),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 0.6, colors.black),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
-        ('TEXTCOLOR', (6, 1), (6, -1), colors.HexColor('#166534')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f3f4f6')]),
+        ('TEXTCOLOR', (6, 1), (6, -1), colors.black),
     ]))
     elements.append(table)
     document.build(elements)
