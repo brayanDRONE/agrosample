@@ -50,7 +50,7 @@
 .sdp-report-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 .sdp-report-heading h2 { font-size: 1.4rem; }
 .sdp-report-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.sdp-new-validation { padding: 9px 14px; border: 1px solid #94a3b8; border-radius: 6px; background: #fff; color: #334e68; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.sdp-new-validation { display: inline-flex; align-items: center; justify-content: center; height: 46px; box-sizing: border-box; padding: 10px 14px; border: 1px solid #94a3b8; border-radius: 6px; background: #fff; color: #334e68; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .sdp-new-validation:hover { border-color: #047857; color: #047857; background: #f0fdf4; }
 .sdp-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
 .sdp-summary-grid div { padding: 14px; border: 1px solid #d9e2ec; border-radius: 7px; background: #f8fafc; }
