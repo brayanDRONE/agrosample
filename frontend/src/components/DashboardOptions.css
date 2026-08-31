@@ -118,6 +118,11 @@
   color: #059669;
 }
 
+.despacho-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(5, 150, 105, 0.12));
+  color: #059669;
+}
+
 .option-card:hover .muestreo-icon {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
 }
@@ -128,6 +133,10 @@
 
 .option-card:hover .sdp-icon {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 148, 162, 0.2));
+}
+
+.option-card:hover .despacho-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
 }
 
 /* Contenido de la card */

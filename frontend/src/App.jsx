@@ -13,6 +13,8 @@ import DashboardOptions from './components/DashboardOptions';
 import InspectionApp from './components/InspectionApp';
 import BatchDescriptionApp from './components/BatchDescriptionApp';
 import SdpValidationApp from './components/SdpValidationApp';
+import DispatchFlatFileApp from './components/DispatchFlatFileApp';
+import DispatchPdfUploadApp from './components/DispatchPdfUploadApp';
 import LandingPage from './pages/LandingPage';
 import MaintenanceMode from './components/MaintenanceMode';
 import './App.css';
@@ -113,6 +115,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SdpValidationApp />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Ruta protegida para el módulo de despacho con carga de PDF */}
+      <Route
+        path="/plano-despacho"
+        element={
+          <ProtectedRoute>
+            <DispatchPdfUploadApp />
           </ProtectedRoute>
         }
       />

@@ -24,6 +24,10 @@ function DashboardOptionsContent() {
     navigate('/validacion-sdp');
   };
 
+  const handlePlanoDespacho = () => {
+    navigate('/plano-despacho');
+  };
+
   return (
     <div className="app">
       <Header />
@@ -102,6 +106,30 @@ function DashboardOptionsContent() {
                 <div className="option-content">
                   <h2>Validación de SDP</h2>
                   <p>Revise y valide la información de los documentos SDP</p>
+                </div>
+                <div className="option-arrow">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Opción: Plano de Despacho */}
+              <div 
+                className="option-card despacho-card"
+                onClick={handlePlanoDespacho}
+                role="button"
+                tabIndex="0"
+                onKeyPress={(e) => e.key === 'Enter' && handlePlanoDespacho()}
+              >
+                <div className="option-icon despacho-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 7h18M3 12h18M3 17h18M7 3v18M17 3v18" />
+                  </svg>
+                </div>
+                <div className="option-content">
+                  <h2>Generar Plano de Despacho</h2>
+                  <p>Espacio reservado para el futuro flujo de despacho</p>
                 </div>
                 <div className="option-arrow">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

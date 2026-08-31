@@ -1,0 +1,11 @@
+{
+  "name": "usda-sag-observer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "observe": "node observer.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

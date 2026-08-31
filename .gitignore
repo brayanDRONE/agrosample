@@ -69,3 +69,10 @@ ZebraServiceInstaller.zip
 *.spec
 build/
 dist/
+
+# Temp debug and response files
+response_*.txt
+*.txt.bak
+backend/output_*.txt
+backend/match_output*.txt
+

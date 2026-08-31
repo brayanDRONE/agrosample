@@ -6,6 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import Establishment, Inspection, SamplingResult
 from .utils import calcular_muestreo, generar_cajas_aleatorias, validar_datos_inspeccion
+from .dispatch_flatfile import build_dispatch_flat_file
 import json
 
 
@@ -127,6 +128,132 @@ class InspectionModelTest(TestCase):
         self.assertEqual(inspection.tamano_lote, 1000)
         self.assertIsNotNone(inspection.fecha)
         self.assertIsNotNone(inspection.hora)
+
+
+class DispatchFlatFileTest(TestCase):
+    """Tests para la generación del archivo plano de despacho Multipuerto (42 campos)"""
+
+    def test_build_dispatch_flat_file_multipuerto_42_fields(self):
+        """Test building a Multipuerto flat file with 42 fields."""
+        payload = {
+            'planilla_id': '90388',
+            'plantacion_id': '1666',
+            'codigo_destino': '56',
+            'codigo_especie': '107',
+            'codigo_variedad': '5',
+            'tipo_produccion': '3',
+            'codigo_certificacion': 'FTVC60',
+            'numero_puerto': '0064794',
+            'fecha_despacho': '2026-05-29',
+            'numero_contenedor': '123',
+            'cantidad_kg': '1968.0000',
+            'codigo_zona_clima': '4',
+            'codigo_cosecha': '4',
+            'codigo_establecimiento': '1378',
+            'num_lote': 'HLBU970121-7',
+            'codigo_tratamiento': '1',
+            'codigo_insecticida': '07,03,08',
+            'concentracion': '',
+            'duracion': '',
+            'temperatura': '',
+            'res_muestreo_1': '',
+            'res_muestreo_2': '',
+            'res_muestreo_3': '',
+            'res_muestreo_4': '2',
+            'res_muestreo_5': '12',
+            'codigo_envase': '10207,1',
+            'codigo_transporte': '1',
+            'cantidad_cajas': '',
+            'numero_factura': '49',
+            'num_documento': '',
+            'codigo_importador': '',
+            'nombre_contacto': '1',
+            'codigo_comision': '1',
+            'codigo_fundo': 'PTXT92',
+            'numero_precinto': '',
+            'codigo_tipo_despacho': '0',
+            'codigo_phyto_cert': '',
+            'num_dias_transito': '1378',
+            'reservado': 'DELEGADO',
+            'codigo_pais_destino': '23',
+            'tipo_representante': '120877',
+            'codigo_exportador': '90388',
+        }
+
+        filename, content = build_dispatch_flat_file(payload)
+
+        # Verify filename format
+        self.assertIn('Multipuerto_90388_', filename)
+        self.assertTrue(filename.endswith('.txt'))
+        
+        # Verify content is a single line with 42 fields separated by semicolon
+        fields = content.split(';')
+        self.assertEqual(len(fields), 42, f'Expected 42 fields, got {len(fields)}')
+        
+        # Verify key field values
+        self.assertEqual(fields[0], '90388')  # planilla_id
+        self.assertEqual(fields[1], '1666')   # plantacion_id
+        self.assertEqual(fields[8], '2026-05-29')  # fecha_despacho
+        self.assertEqual(fields[14], 'HLBU970121-7')  # num_lote
+        self.assertEqual(fields[38], 'DELEGADO')  # reservado
+        self.assertEqual(fields[41], '90388')  # codigo_exportador
+
+    def test_build_dispatch_flat_file_special_chars(self):
+        """Test that special characters are properly escaped."""
+        payload = {
+            'planilla_id': 'TEST123',
+            'plantacion_id': '1',
+            'codigo_destino': '1',
+            'codigo_especie': '1',
+            'codigo_variedad': '1',
+            'tipo_produccion': '1',
+            'codigo_certificacion': 'CERT;TEST',  # contains semicolon
+            'numero_puerto': '1',
+            'fecha_despacho': '2026-06-02',
+            'numero_contenedor': '1',
+            'cantidad_kg': '100',
+            'codigo_zona_clima': '1',
+            'codigo_cosecha': '1',
+            'codigo_establecimiento': '1',
+            'num_lote': 'LOT-001',
+            'codigo_tratamiento': '1',
+            'codigo_insecticida': '1',
+            'concentracion': '',
+            'duracion': '',
+            'temperatura': '',
+            'res_muestreo_1': '',
+            'res_muestreo_2': '',
+            'res_muestreo_3': '',
+            'res_muestreo_4': '',
+            'res_muestreo_5': '',
+            'codigo_envase': '1',
+            'codigo_transporte': '1',
+            'cantidad_cajas': '',
+            'numero_factura': '1',
+            'num_documento': '',
+            'codigo_importador': '',
+            'nombre_contacto': '',
+            'codigo_comision': '1',
+            'codigo_fundo': 'FUND001',
+            'numero_precinto': '',
+            'codigo_tipo_despacho': '1',
+            'codigo_phyto_cert': '',
+            'num_dias_transito': '5',
+            'reservado': 'DELEGADO',
+            'codigo_pais_destino': '1',
+            'tipo_representante': '1',
+            'codigo_exportador': '1',
+        }
+
+        filename, content = build_dispatch_flat_file(payload)
+        
+        # Semicolon should be replaced with comma
+        self.assertIn('CERT,TEST', content)
+        self.assertNotIn('CERT;TEST', content)
+        
+        # Verify it still has 42 fields
+        fields = content.split(';')
+        self.assertEqual(len(fields), 42)
 
 
 class ValidationTest(TestCase):

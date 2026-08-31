@@ -1,0 +1,232 @@
+﻿[
+    {
+        "sequence":  197,
+        "url":  "https://sitiosusda.sag.gob.cl/Home/Login",
+        "postData":  {
+                         "__RequestVerificationToken":  "TOKEN_PRESENTE = true"
+                     }
+    },
+    {
+        "sequence":  512,
+        "url":  "https://sitiosusda.sag.gob.cl/Home/ObtenerSancionAlerta",
+        "postData":  null
+    },
+    {
+        "sequence":  704,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudServicio_Read",
+        "postData":  {
+                         "idSolicitud":  "",
+                         "fechaInicio":  "",
+                         "fechaTermino":  "",
+                         "idSitio":  "",
+                         "idEstado":  "",
+                         "idEmpresa":  "2911",
+                         "idTipoEmpresa":  "3"
+                     }
+    },
+    {
+        "sequence":  705,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudServicio_Read",
+        "postData":  {
+                         "idSolicitud":  "",
+                         "fechaInicio":  "",
+                         "fechaTermino":  "",
+                         "idSitio":  "",
+                         "idEstado":  "",
+                         "idEmpresa":  "2911",
+                         "idTipoEmpresa":  "3"
+                     }
+    },
+    {
+        "sequence":  711,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudServicio",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "tipoAccion":  "",
+                         "__RequestVerificationToken":  "TOKEN_PRESENTE = true"
+                     }
+    },
+    {
+        "sequence":  896,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudLote",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "tipoDespacho":  "0",
+                         "tipoAgendamiento":  "1"
+                     }
+    },
+    {
+        "sequence":  901,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/Lote_Read",
+        "postData":  {
+                         "numeroLote":  "",
+                         "idPlanta":  "2911",
+                         "idExportador":  "",
+                         "idEspecie":  "",
+                         "idEstado":  "4"
+                     }
+    },
+    {
+        "sequence":  902,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/Lote_Read",
+        "postData":  {
+                         "numeroLote":  "",
+                         "idPlanta":  "2911",
+                         "idExportador":  "",
+                         "idEspecie":  "",
+                         "idEstado":  "4"
+                     }
+    },
+    {
+        "sequence":  903,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/LoteSeleccionado_Read",
+        "postData":  null
+    },
+    {
+        "sequence":  904,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/LoteSeleccionado_Read",
+        "postData":  null
+    },
+    {
+        "sequence":  912,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SeleccionarLotes",
+        "postData":  {
+                         "loteSel[]":  "151318",
+                         "opcion":  "1"
+                     }
+    },
+    {
+        "sequence":  913,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudServicio",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "__RequestVerificationToken":  "TOKEN_PRESENTE = true"
+                     }
+    },
+    {
+        "sequence":  1101,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudLote",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "tipoDespacho":  "0",
+                         "tipoAgendamiento":  "1"
+                     }
+    },
+    {
+        "sequence":  1104,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/Lote_Read",
+        "postData":  {
+                         "numeroLote":  "",
+                         "idPlanta":  "2911",
+                         "idExportador":  "",
+                         "idEspecie":  "",
+                         "idEstado":  "4"
+                     }
+    },
+    {
+        "sequence":  1105,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/Lote_Read",
+        "postData":  {
+                         "numeroLote":  "",
+                         "idPlanta":  "2911",
+                         "idExportador":  "",
+                         "idEspecie":  "",
+                         "idEstado":  "4"
+                     }
+    },
+    {
+        "sequence":  1106,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/LoteSeleccionado_Read",
+        "postData":  null
+    },
+    {
+        "sequence":  1107,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/LoteSeleccionado_Read",
+        "postData":  null
+    },
+    {
+        "sequence":  1120,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudAgendar",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "tipoDespacho":  "3",
+                         "tipoAgendamiento":  "2"
+                     }
+    },
+    {
+        "sequence":  1121,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/LoteSeleccionado_Read",
+        "postData":  null
+    },
+    {
+        "sequence":  1125,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SitioInspeccion",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "tipoDespacho":  "3",
+                         "fechaInspeccion":  "25-08-2026",
+                         "loteSel[]":  "151318",
+                         "esSinHora":  "False"
+                     }
+    },
+    {
+        "sequence":  1129,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/AreaInspeccionHorario",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "idSitio":  "156",
+                         "fechaInspeccion":  "25-08-2026",
+                         "loteSel[]":  "151318",
+                         "esSinHora":  "False"
+                     }
+    },
+    {
+        "sequence":  1136,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/AgendarServicio",
+        "postData":  {
+                         "idSolicitudServicio":  "0",
+                         "idTipoDespacho":  "3",
+                         "cod_Sitio":  "156",
+                         "Cod_Area":  "2",
+                         "Cod_Hora_In":  "166974",
+                         "fechaInspeccion":  "25-08-2026",
+                         "loteSel[]":  "151318"
+                     }
+    },
+    {
+        "sequence":  1137,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/LoteSeleccionado_Read",
+        "postData":  null
+    },
+    {
+        "sequence":  1138,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/LoteSeleccionado_Read",
+        "postData":  null
+    },
+    {
+        "sequence":  1332,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudServicio_Read",
+        "postData":  {
+                         "idSolicitud":  "",
+                         "fechaInicio":  "",
+                         "fechaTermino":  "",
+                         "idSitio":  "",
+                         "idEstado":  "",
+                         "idEmpresa":  "2911",
+                         "idTipoEmpresa":  "3"
+                     }
+    },
+    {
+        "sequence":  1333,
+        "url":  "https://sitiosusda.sag.gob.cl/SolicitudServicio/SolicitudServicio_Read",
+        "postData":  {
+                         "idSolicitud":  "",
+                         "fechaInicio":  "",
+                         "fechaTermino":  "",
+                         "idSitio":  "",
+                         "idEstado":  "",
+                         "idEmpresa":  "2911",
+                         "idTipoEmpresa":  "3"
+                     }
+    }
+]

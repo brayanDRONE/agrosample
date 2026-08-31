@@ -9,7 +9,8 @@ from .views import (
     InspectionViewSet,
     SamplingResultViewSet,
     MuestreoViewSet,
-    ThemeViewSet
+    ThemeViewSet,
+    DispatchFlatFileViewSet
 )
 from .views_admin import (
     CustomTokenObtainPairView,
@@ -25,6 +26,7 @@ router.register(r'inspections', InspectionViewSet, basename='inspection')
 router.register(r'sampling-results', SamplingResultViewSet, basename='samplingresult')
 router.register(r'muestreo', MuestreoViewSet, basename='muestreo')
 router.register(r'themes', ThemeViewSet, basename='theme')
+router.register(r'dispatch-flatfile', DispatchFlatFileViewSet, basename='dispatch-flatfile')
 
 # Rutas de administración
 router.register(r'admin/dashboard', AdminDashboardViewSet, basename='admin-dashboard')

@@ -2,8 +2,10 @@
 Vistas para la API REST.
 """
 import json
+from django.http import HttpResponse
 from rest_framework import viewsets, status, serializers, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
@@ -22,6 +24,8 @@ from .utils import (
     distribute_samples_proportionally,
     generate_stage_sampling_numbers
 )
+from .dispatch_flatfile import build_dispatch_flat_file
+from .planilla_parser import parse_planilla_pdf, map_planilla_to_multipuerto
 
 
 def parse_manual_sample_numbers(raw_numbers):
@@ -83,6 +87,107 @@ class InspectionViewSet(viewsets.ModelViewSet):
     queryset = Inspection.objects.all()
     serializer_class = InspectionSerializer
     permission_classes = [AllowAnyReadPermission]
+
+
+class DispatchFlatFileViewSet(viewsets.ViewSet):
+    """
+    ViewSet independiente para generar archivo plano de despacho.
+    """
+    permission_classes = [AllowAnyReadPermission]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    @action(detail=False, methods=['post'], url_path='generate')
+    def generate(self, request):
+        try:
+            filename, content = build_dispatch_flat_file(request.data)
+        except ValueError as exc:
+            return Response(
+                {
+                    'success': False,
+                    'message': str(exc),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response = HttpResponse(content, content_type='text/plain; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['X-File-Name'] = filename
+        return response
+    
+    @action(detail=False, methods=['post'], url_path='generate-from-pdf')
+    def generate_from_pdf(self, request):
+        """
+        Upload a SAG dispatch planilla PDF and generate a Multipuerto flat file.
+        
+        Request: multipart/form-data with 'pdf_file' field
+        Response: TXT file (Multipuerto format) or error
+        """
+        if 'pdf_file' not in request.FILES:
+            return Response(
+                {'success': False, 'message': 'No se recibió ningún archivo PDF. Asegúrate de seleccionar un archivo PDF válido.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        pdf_file = request.FILES['pdf_file']
+        
+        # Validate it's actually a PDF
+        if not pdf_file.name.lower().endswith('.pdf') and pdf_file.content_type != 'application/pdf':
+            return Response(
+                {'success': False, 'message': f'El archivo "{pdf_file.name}" no es un PDF válido.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save uploaded file temporarily
+        import tempfile
+        import os
+        
+        try:
+            # Write to temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+                for chunk in pdf_file.chunks():
+                    tmp.write(chunk)
+                tmp_path = tmp.name
+            
+            # Parse the PDF
+            try:
+                planilla_data = parse_planilla_pdf(tmp_path)
+            except ValueError as parse_err:
+                os.unlink(tmp_path)
+                return Response(
+                    {'success': False, 'message': f'No se pudo leer el PDF: {str(parse_err)}. Verifica que sea una Planilla SAG válida con texto seleccionable (no escaneada).'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Map to Multipuerto format
+            multipuerto_payload = map_planilla_to_multipuerto(planilla_data)
+            
+            # Generate flat file
+            filename, content = build_dispatch_flat_file(multipuerto_payload)
+            
+            # Clean up temp file
+            os.unlink(tmp_path)
+            
+            # Return the generated file
+            response = HttpResponse(content, content_type='text/plain; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            response['X-File-Name'] = filename
+            response['X-Planilla-Data'] = json.dumps(planilla_data, ensure_ascii=False, default=str)
+            return response
+            
+        except Exception as e:
+            # Clean up on error
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
+            
+            return Response(
+                {
+                    'success': False,
+                    'message': f'Error inesperado al procesar el PDF: {str(e)}'
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
 
 
