@@ -11,6 +11,7 @@ import './SdpValidationApp.css';
 function SdpValidationAppContent() {
   const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
+  const [includeBoxDate, setIncludeBoxDate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [report, setReport] = useState(null);
@@ -42,7 +43,7 @@ function SdpValidationAppContent() {
     setLoading(true);
     setError(null);
     try {
-      setReport(await validateSdpExcel(file));
+      setReport(await validateSdpExcel(file, includeBoxDate));
     } catch (requestError) {
       setError(requestError.message || 'No se pudo procesar el archivo Excel');
     } finally {
@@ -82,6 +83,17 @@ function SdpValidationAppContent() {
                 </button>
               </div>
               <span className="sdp-file-name">{file ? file.name : 'Formatos aceptados: .xlsx y .xlsm'}</span>
+
+              <div className="sdp-options-row">
+                <label className="sdp-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={includeBoxDate}
+                    onChange={(e) => setIncludeBoxDate(e.target.checked)}
+                  />
+                  <span>Caja y fecha</span>
+                </label>
+              </div>
             </form>
 
             {error && <div className="sdp-error" role="alert">{error}</div>}
@@ -111,19 +123,36 @@ function SdpValidationAppContent() {
                 <div className="sdp-table-wrap">
                   <table>
                     <thead>
-                      <tr><th>CSG</th><th>SDP</th><th>Provincia Excel</th><th>Comuna Excel</th><th>Variedad Comercial</th><th>Productor</th><th>Estado</th><th>Observaciones</th></tr>
+                      <tr>
+                        <th>CSG</th>
+                        <th>SDP</th>
+                        <th>Provincia Excel</th>
+                        <th>Comuna Excel</th>
+                        <th>Variedad Comercial</th>
+                        <th>Productor</th>
+                        <th>Estado</th>
+                        {report.include_box_date && <th>Fecha</th>}
+                        {report.include_box_date && <th>Cajas</th>}
+                        <th>Observaciones</th>
+                      </tr>
                     </thead>
                     <tbody>
-                      {report.results.map((result) => (
-                        <tr key={result.sdp}>
+                      {report.results.map((result, index) => (
+                        <tr key={`${result.sdp}-${result.fecha || ''}-${index}`}>
                           <td>{result.csg}</td>
                           <td>{result.sdp}</td>
                           <td>{result.provincia}</td>
                           <td>{result.comuna}</td>
                           <td>{result.variedad_comercial}</td>
                           <td>{result.datos_sag?.productor || '-'}</td>
-                          <td><span className={`sdp-status ${result.cumple ? 'valid' : 'invalid'}`}>{result.cumple ? 'CUMPLE' : 'NO CUMPLE'}</span></td>
-                          <td>{result.diferencias.join('; ') || 'Sin diferencias'}</td>
+                          <td>
+                            <span className={`sdp-status ${result.cumple ? 'valid' : 'invalid'}`}>
+                              {result.cumple ? 'CUMPLE' : 'NO CUMPLE'}
+                            </span>
+                          </td>
+                          {report.include_box_date && <td>{result.fecha || '-'}</td>}
+                          {report.include_box_date && <td>{result.cajas ?? '-'}</td>}
+                          <td>{result.diferencias?.join('; ') || 'Sin diferencias'}</td>
                         </tr>
                       ))}
                     </tbody>
