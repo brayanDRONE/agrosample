@@ -31,25 +31,39 @@ def _normalize_compact(value):
     return re.sub(r'[^A-Z0-9]', '', _normalize_text(value))
 
 
-def _merge_excel_rows(rows):
-    """Consolida los registros del Excel dejando una fila por SDP."""
+def _csg_sort_key(item):
+    """Clave de ordenamiento por CSG (numérico ascendente si aplica, luego alfabético)."""
+    csg_str = str(item.get('csg', '')).strip()
+    digits = re.findall(r'\d+', csg_str)
+    num = int(digits[0]) if digits else float('inf')
+    return (num, csg_str, str(item.get('sdp', '')), str(item.get('fecha', '')))
+
+
+def _merge_excel_rows(rows, include_box_date=False):
+    """Consolida los registros del Excel dejando una fila por SDP (o por SDP y fecha)."""
     grouped = {}
     for row in rows:
-        grouped.setdefault(row['sdp'], []).append(row)
+        key = (row['sdp'], row.get('fecha', '')) if include_box_date else row['sdp']
+        grouped.setdefault(key, []).append(row)
 
     consolidated = []
-    for sdp, sdp_rows in grouped.items():
+    for key, group_rows in grouped.items():
         def unique_values(field):
-            return list(dict.fromkeys(row[field] for row in sdp_rows if row[field]))
+            return list(dict.fromkeys(str(r[field]) for r in group_rows if r.get(field)))
 
-        consolidated.append({
+        sdp_val = group_rows[0]['sdp']
+        item = {
             'csg': ', '.join(unique_values('csg')),
             'provincia': ', '.join(unique_values('provincia')),
             'comuna': ', '.join(unique_values('comuna')),
             'variedad_comercial': ', '.join(unique_values('variedad_rotulada')),
-            'sdp': sdp,
-            'registros_excel': len(sdp_rows),
-        })
+            'sdp': sdp_val,
+            'registros_excel': len(group_rows),
+        }
+        if include_box_date:
+            item['fecha'] = group_rows[0].get('fecha', '') or '-'
+            item['cajas'] = sum(int(r.get('cajas', 0) or 0) for r in group_rows)
+        consolidated.append(item)
     return consolidated
 
 
@@ -98,7 +112,7 @@ def _compare_row(row, sag_result):
     }
 
 
-def _build_summary_pdf(results, filename, numero_lote):
+def _build_summary_pdf(results, filename, numero_lote, include_box_date=False):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import landscape, letter
     from reportlab.lib.styles import getSampleStyleSheet
@@ -133,36 +147,54 @@ def _build_summary_pdf(results, filename, numero_lote):
         body_style,
     ))
     elements.append(Spacer(1, 0.12 * inch))
-    headers = ['CSG', 'SDP', 'Provincia Excel', 'Comuna Excel', 'Variedad Comercial', 'Productor', 'Estado']
+
+    if include_box_date:
+        headers = ['CSG', 'SDP', 'Provincia Excel', 'Comuna Excel', 'Variedad Comercial', 'Productor', 'Estado', 'Fecha', 'Cajas']
+        widths = [0.85, 0.75, 1.1, 1.1, 1.35, 2.7, 0.85, 0.9, 0.8]
+    else:
+        headers = ['CSG', 'SDP', 'Provincia Excel', 'Comuna Excel', 'Variedad Comercial', 'Productor', 'Estado']
+        widths = [0.85, 0.75, 1.2, 1.15, 1.45, 3.0, 1.0]
+
     table_data = [[Paragraph(header, header_style) for header in headers]]
     for result in results:
         sag = result.get('datos_sag') or {}
-        table_data.append([
-            result['csg'], result['sdp'], result['provincia'], result['comuna'], result['variedad_comercial'],
-            sag.get('productor', ''), 'CUMPLE' if result['cumple'] else 'NO CUMPLE',
-        ])
+        row = [
+            result['csg'],
+            result['sdp'],
+            result['provincia'],
+            result['comuna'],
+            result['variedad_comercial'],
+            sag.get('productor', ''),
+            'CUMPLE' if result['cumple'] else 'NO CUMPLE',
+        ]
+        if include_box_date:
+            row.extend([
+                result.get('fecha', '') or '-',
+                str(result.get('cajas', 0)),
+            ])
+        table_data.append(row)
 
-    widths = [0.85, 0.75, 1.2, 1.15, 1.45, 3.0, 1.0]
     wrapped_data = [table_data[0]] + [
         [Paragraph(str(cell), body_style) for cell in row]
         for row in table_data[1:]
     ]
     table = Table(wrapped_data, colWidths=[width * inch for width in widths], repeatRows=1)
-    table.setStyle(TableStyle([
+    table_style_commands = [
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#e5e7eb')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, -1), 8.5),
         ('LEADING', (0, 0), (-1, -1), 10),
-        ('TOPPADDING', (0, 0), (-1, -1), 7),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
         ('GRID', (0, 0), (-1, -1), 0.6, colors.black),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f3f4f6')]),
         ('TEXTCOLOR', (6, 1), (6, -1), colors.black),
-    ]))
+    ]
+    table.setStyle(TableStyle(table_style_commands))
     elements.append(table)
     document.build(elements)
     buffer.seek(0)
@@ -183,6 +215,8 @@ def validate_sdp_excel(request):
     if not uploaded_file.name.lower().endswith(('.xlsx', '.xlsm')):
         return Response({'success': False, 'message': 'El archivo debe ser .xlsx o .xlsm'}, status=status.HTTP_400_BAD_REQUEST)
 
+    include_box_date = str(request.POST.get('incluir_caja_fecha', '')).lower() in ('true', '1', 'yes')
+
     try:
         parsed = parse_sdp_workbook(uploaded_file)
         if parsed['errors']:
@@ -190,14 +224,17 @@ def validate_sdp_excel(request):
 
         service = SagSdpService()
         sag_cache = {sdp: service.query(sdp) for sdp in parsed['unique_sdps']}
-        consolidated_rows = _merge_excel_rows(parsed['rows'])
+        consolidated_rows = _merge_excel_rows(parsed['rows'], include_box_date=include_box_date)
         results = [_compare_row(row, sag_cache[row['sdp']]) for row in consolidated_rows]
+        results.sort(key=_csg_sort_key)
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'validacion_sdp_{timestamp}.pdf'
         pdf_path, pdf_size = _build_summary_pdf(
             results,
             filename,
             parsed['metadata'].get('numero_lote', ''),
+            include_box_date=include_box_date,
         )
         counts = {
             'total': len(results),
@@ -211,6 +248,7 @@ def validate_sdp_excel(request):
             'sheets': parsed['sheets'],
             'numero_lote': parsed['metadata'].get('numero_lote', ''),
             'fecha_generacion': datetime.now().strftime('%d/%m/%Y'),
+            'include_box_date': include_box_date,
             'summary': counts,
             'results': results,
             'pdf_url': request.build_absolute_uri(f'{settings.MEDIA_URL}sdp_validation/{filename}'),

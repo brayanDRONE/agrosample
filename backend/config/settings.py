@@ -100,7 +100,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 if os.environ.get('DATABASE_URL'):
-    # Production: Use PostgreSQL from Railway/Render
+    # Production: Use PostgreSQL from Render/Railway
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
@@ -108,8 +108,14 @@ if os.environ.get('DATABASE_URL'):
             conn_health_checks=True,
         )
     }
+elif os.environ.get('RENDER') == 'true':
+    raise RuntimeError(
+        'DATABASE_URL no está configurada en Render. '
+        'Crea la base de datos PostgreSQL y conecta la variable DATABASE_URL '
+        'al servicio del backend antes del deploy.'
+    )
 else:
-    # Development: Use SQLite
+    # Development: Use SQLite only for local environments.
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
