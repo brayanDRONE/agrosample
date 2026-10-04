@@ -1,7 +1,5 @@
 import logging
-from datetime import datetime
 
-from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
 
@@ -46,11 +44,7 @@ def process_report(report_id):
         report.results = results
         report.sources = sources
         pdf_bytes = build_validation_pdf(report, results, sources)
-        report.pdf_file.save(
-            f'validacion_cereza_china_{report.pk}_{datetime.now():%Y%m%d_%H%M%S}.pdf',
-            ContentFile(pdf_bytes),
-            save=False,
-        )
+        report.pdf_data = pdf_bytes
         report.status = 'COMPLETED'
         report.completed_at = timezone.now()
         report.save()

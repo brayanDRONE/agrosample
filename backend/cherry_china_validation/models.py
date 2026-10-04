@@ -47,6 +47,7 @@ class CherryChinaReport(models.Model):
     results = models.JSONField(default=dict, blank=True)
     sources = models.JSONField(default=list, blank=True)
     pdf_file = models.FileField(upload_to='cherry_china/reports/', blank=True)
+    pdf_data = models.BinaryField(blank=True, null=True, editable=False)
     error_message = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)

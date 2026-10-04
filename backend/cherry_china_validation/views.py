@@ -1,4 +1,5 @@
 import re
+from io import BytesIO
 
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
@@ -8,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import CherryChinaReport
+from .pdf import build_validation_pdf
 from .quota import ReportQuotaExceeded, get_account_quota, reserve_report
 CODE_PATTERN = re.compile(r'^\d{3,12}$')
 
@@ -105,15 +107,37 @@ def report_status(request, report_id):
 @permission_classes([IsAuthenticated])
 def download_report(request, report_id):
     report = get_object_or_404(CherryChinaReport, pk=report_id, user=request.user)
-    if report.status != 'COMPLETED' or not report.pdf_file:
+    if report.status != 'COMPLETED':
         return Response(
             {'success': False, 'message': 'El informe PDF no está disponible.'},
             status=status.HTTP_404_NOT_FOUND,
         )
-    filename = report.pdf_file.name.rsplit('/', 1)[-1]
+
+    if report.pdf_data:
+        pdf_stream = BytesIO(bytes(report.pdf_data))
+    elif report.pdf_file:
+        try:
+            pdf_stream = report.pdf_file.open('rb')
+        except (FileNotFoundError, OSError):
+            pdf_stream = None
+    else:
+        pdf_stream = None
+
+    if pdf_stream is None and report.results and report.sources:
+        pdf_bytes = build_validation_pdf(report, report.results, report.sources)
+        report.pdf_data = pdf_bytes
+        report.save(update_fields=['pdf_data'])
+        pdf_stream = BytesIO(pdf_bytes)
+
+    if pdf_stream is None:
+        return Response(
+            {'success': False, 'message': 'El informe PDF no está disponible.'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
     return FileResponse(
-        report.pdf_file.open('rb'),
+        pdf_stream,
         content_type='application/pdf',
         as_attachment=True,
-        filename=filename,
+        filename=f'validacion_cereza_china_{report.pk}.pdf',
     )

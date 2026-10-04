@@ -339,6 +339,24 @@ class CherryChinaApiTests(TestCase):
         response = self.client.post('/api/cherry-china/validate/', {'csg': '176264'}, format='json')
         self.assertEqual(response.status_code, 401)
 
+    @patch('cherry_china_validation.views.build_validation_pdf', return_value=b'%PDF-regenerated')
+    def test_pdf_download_regenerates_missing_worker_file_from_saved_results(self, build_pdf):
+        report = CherryChinaReport.objects.create(
+            user=self.user,
+            status='COMPLETED',
+            results={'csg': {'code': '176264'}},
+            sources=[{'name': 'SRA', 'status': 'ok'}],
+        )
+        self.client.force_authenticate(self.user)
+
+        response = self.client.get(f'/api/cherry-china/reports/{report.pk}/pdf/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b''.join(response.streaming_content), b'%PDF-regenerated')
+        build_pdf.assert_called_once()
+        report.refresh_from_db()
+        self.assertEqual(bytes(report.pdf_data), b'%PDF-regenerated')
+
     def test_invalid_code_is_rejected_before_creating_report(self):
         self.client.force_authenticate(self.user)
         response = self.client.post('/api/cherry-china/validate/', {'csg': '17626A'}, format='json')
@@ -451,6 +469,8 @@ class CherryChinaApiTests(TestCase):
                 self.assertEqual(claim_next_report(), report.pk)
                 report = process_report(report.pk)
                 self.assertEqual(report.status, 'COMPLETED')
+                self.assertTrue(bytes(report.pdf_data).startswith(b'%PDF'))
+                self.assertFalse(report.pdf_file)
                 run_checks.assert_called_once()
                 status_response = self.client.get(f'/api/cherry-china/reports/{report.pk}/status/')
                 self.assertEqual(status_response.data['status'], 'COMPLETED')
