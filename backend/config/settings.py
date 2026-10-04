@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     
     # Local apps
     'inspections',
+    'cherry_china_validation.apps.CherryChinaValidationConfig',
 ]
 
 MIDDLEWARE = [

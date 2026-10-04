@@ -12,6 +12,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('inspections.urls')),
     path('api/batch-description/', include('inspections.batch_description_urls')),
+    path('api/cherry-china/', include('cherry_china_validation.urls')),
 ]
 
 # Servir archivos media tanto en desarrollo como en producción (Render)

@@ -24,6 +24,10 @@ function DashboardOptionsContent() {
     navigate('/validacion-sdp');
   };
 
+  const handleValidacionCerezaChina = () => {
+    navigate('/validacion-cereza-china');
+  };
+
   const handlePlanoDespacho = () => {
     navigate('/plano-despacho');
   };
@@ -106,6 +110,31 @@ function DashboardOptionsContent() {
                 <div className="option-content">
                   <h2>Validación de SDP</h2>
                   <p>Revise y valide la información de los documentos SDP</p>
+                </div>
+                <div className="option-arrow">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Opción: Validación de Cereza para China */}
+              <div
+                className="option-card china-card"
+                onClick={handleValidacionCerezaChina}
+                role="button"
+                tabIndex="0"
+                onKeyPress={(e) => e.key === 'Enter' && handleValidacionCerezaChina()}
+              >
+                <div className="option-icon china-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 3c2.2 2.1 4.1 2.8 7 2.8v5.1c0 4.3-2.9 7.9-7 9.1-4.1-1.2-7-4.8-7-9.1V5.8c2.9 0 4.8-.7 7-2.8z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                </div>
+                <div className="option-content">
+                  <h2>Validar Cereza para China</h2>
+                  <p>Consulte CSG y CSP en los listados oficiales y genere un informe PDF</p>
                 </div>
                 <div className="option-arrow">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

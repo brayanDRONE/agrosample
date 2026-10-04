@@ -1,0 +1,1 @@
+"""Módulo de validación de cerezas para China."""

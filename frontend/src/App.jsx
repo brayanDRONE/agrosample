@@ -13,6 +13,7 @@ import DashboardOptions from './components/DashboardOptions';
 import InspectionApp from './components/InspectionApp';
 import BatchDescriptionApp from './components/BatchDescriptionApp';
 import SdpValidationApp from './components/SdpValidationApp';
+import CherryChinaValidationApp from './components/CherryChinaValidationApp';
 import DispatchFlatFileApp from './components/DispatchFlatFileApp';
 import DispatchPdfUploadApp from './components/DispatchPdfUploadApp';
 import LandingPage from './pages/LandingPage';
@@ -115,6 +116,16 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <SdpValidationApp />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Ruta protegida para validación de cerezas para China */}
+      <Route
+        path="/validacion-cereza-china"
+        element={
+          <ProtectedRoute>
+            <CherryChinaValidationApp />
           </ProtectedRoute>
         }
       />

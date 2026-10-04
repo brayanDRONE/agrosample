@@ -9,6 +9,7 @@ cd backend
 echo "Instalando dependencias..."
 pip install --upgrade pip
 pip install -r requirements.txt
+python -m playwright install --with-deps chromium
 
 echo "Creando directorio de archivos estáticos..."
 mkdir -p staticfiles
