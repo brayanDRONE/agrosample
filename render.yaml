@@ -5,7 +5,7 @@ services:
     runtime: python
     rootDir: backend
     plan: free
-    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python -m playwright install --with-deps chromium && python manage.py collectstatic --no-input --clear"
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python -m playwright install chromium && python manage.py collectstatic --no-input --clear"
     startCommand: "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: SECRET_KEY
@@ -33,7 +33,7 @@ services:
     runtime: python
     rootDir: backend
     plan: starter
-    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python -m playwright install --with-deps chromium"
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python -m playwright install chromium"
     startCommand: "python manage.py process_cherry_china_reports"
     envVars:
       - key: SECRET_KEY
