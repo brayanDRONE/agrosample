@@ -21,9 +21,7 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         sync: false
       - key: DATABASE_URL
-        fromDatabase:
-          name: agrosample-db
-          property: connectionString
+        sync: false
       - key: DESCOLGADOS_USERNAME
         sync: false
       - key: DESCOLGADOS_PASSWORD
@@ -48,28 +46,8 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: DATABASE_URL
-        fromDatabase:
-          name: agrosample-db
-          property: connectionString
+        sync: false
       - key: DESCOLGADOS_USERNAME
         sync: false
       - key: DESCOLGADOS_PASSWORD
         sync: false
-
-  # Frontend Vite
-  - type: web
-    name: agrosample-frontend
-    runtime: node
-    rootDir: frontend
-    plan: free
-    buildCommand: "npm install && npm run build"
-    startCommand: "npm install -g serve && serve -s dist -l 3000"
-    envVars:
-      - key: VITE_API_URL
-        sync: false
-
-databases:
-  - name: agrosample-db
-    plan: free
-    databaseName: agrosample_production
-    user: agrosample_user
