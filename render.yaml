@@ -32,7 +32,7 @@ services:
     name: agrosample-cherry-china-worker
     runtime: python
     rootDir: backend
-    plan: starter
+    plan: 1c-2g
     buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && PLAYWRIGHT_BROWSERS_PATH=0 python -m playwright install chromium"
     startCommand: "python manage.py process_cherry_china_reports"
     envVars:
