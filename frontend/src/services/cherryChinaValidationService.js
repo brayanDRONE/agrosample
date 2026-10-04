@@ -1,8 +1,15 @@
+import { apiService } from './api';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/cherry-china`
   : (import.meta.env.DEV ? 'http://localhost:8000/api/cherry-china' : '/api/cherry-china');
 
-function authHeaders(json = false) {
+async function authHeaders(json = false) {
+  const tokenIsValid = await apiService.ensureValidToken();
+  if (!tokenIsValid) {
+    throw new Error('Tu sesión venció. Inicia sesión nuevamente para continuar.');
+  }
+
   const token = localStorage.getItem('access_token');
   return {
     ...(json ? { 'Content-Type': 'application/json' } : {}),
@@ -11,7 +18,7 @@ function authHeaders(json = false) {
 }
 
 export async function getCherryChinaQuota() {
-  const response = await fetch(`${API_BASE_URL}/account/`, { headers: authHeaders() });
+  const response = await fetch(`${API_BASE_URL}/account/`, { headers: await authHeaders() });
   const data = await response.json();
   if (!response.ok || !data.success) {
     throw new Error(data.message || 'No se pudo consultar el cupo disponible.');
@@ -22,7 +29,7 @@ export async function getCherryChinaQuota() {
 export async function validateCherryChina(csgs, csps) {
   const response = await fetch(`${API_BASE_URL}/validate/`, {
     method: 'POST',
-    headers: authHeaders(true),
+    headers: await authHeaders(true),
     body: JSON.stringify({ csgs, csps }),
   });
 
@@ -37,7 +44,7 @@ export async function validateCherryChina(csgs, csps) {
 
 export async function getCherryChinaReportStatus(reportId) {
   const response = await fetch(`${API_BASE_URL}/reports/${reportId}/status/`, {
-    headers: authHeaders(),
+    headers: await authHeaders(),
   });
   const data = await response.json();
   if (!response.ok || !data.success) {
@@ -47,9 +54,9 @@ export async function getCherryChinaReportStatus(reportId) {
 }
 
 export async function downloadCherryChinaPdf(reportId) {
-  const token = localStorage.getItem('access_token');
+  const headers = await authHeaders();
   const response = await fetch(`${API_BASE_URL}/reports/${reportId}/pdf/`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers,
   });
   if (!response.ok) {
     throw new Error('No se pudo descargar el PDF.');
