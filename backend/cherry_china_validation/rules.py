@@ -27,10 +27,10 @@ def summarize_campaign_rows(rows):
             normalize_text(row.get('current')),
         ).strip()
         current = current_text in {'SI', 'YES', 'TRUE', '1'}
-        if not current:
+        country = str(row.get('country') or '').strip()
+        if not current or not includes_china(country):
             continue
         campaign = str(row.get('campaign') or '').strip()
-        country = str(row.get('country') or '').strip()
         key = (normalize_text(campaign), normalize_text(country))
         if key not in seen:
             seen.add(key)

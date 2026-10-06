@@ -341,8 +341,14 @@ class CherryChinaSourceRuleTests(TestCase):
 
         self.assertTrue(result['found'])
         self.assertTrue(result['current'])
-        self.assertEqual(len(result['campaigns']), 2)
-        self.assertEqual(result['campaigns'][0], {'campaign': 'Carén', 'country': 'China'})
+        self.assertEqual(result['campaigns'], [{'campaign': 'Carén', 'country': 'China'}])
+
+    def test_current_campaign_in_other_countries_is_not_current_for_china(self):
+        result = summarize_campaign_rows([{'campaign': 'Carén', 'country': 'Perú', 'current': 'SI'}])
+
+        self.assertTrue(result['found'])
+        self.assertFalse(result['current'])
+        self.assertEqual(result['campaigns'], [])
 
     def test_campaign_status_ignores_powerbi_conditional_formatting_suffix(self):
         result = summarize_campaign_rows([
