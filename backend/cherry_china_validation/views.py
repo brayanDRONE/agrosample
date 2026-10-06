@@ -8,7 +8,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import CherryChinaReport
+from django.contrib.auth.models import User
+from inspections.views_admin import IsSuperAdmin
+
+from .models import CherryChinaPlan, CherryChinaReport
 from .pdf import build_validation_pdf
 from .quota import ReportQuotaExceeded, get_account_quota, reserve_report
 CODE_PATTERN = re.compile(r'^\d{3,12}$')
@@ -18,6 +21,75 @@ CODE_PATTERN = re.compile(r'^\d{3,12}$')
 @permission_classes([IsAuthenticated])
 def account_quota(request):
     return Response({'success': True, 'quota': get_account_quota(request.user)})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsSuperAdmin])
+def admin_user_quotas(request):
+    users = User.objects.exclude(
+        profile__role='SUPERADMIN',
+    ).exclude(
+        is_superuser=True,
+    ).order_by('username')
+    return Response({
+        'success': True,
+        'users': [
+            {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'quota': get_account_quota(user),
+            }
+            for user in users
+        ],
+    })
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated, IsSuperAdmin])
+def admin_user_quota(request, user_id):
+    try:
+        user = User.objects.exclude(
+            profile__role='SUPERADMIN',
+        ).exclude(
+            is_superuser=True,
+        ).get(pk=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {'success': False, 'message': 'No se encontró el usuario.'},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    unlimited = request.data.get('unlimited')
+    if not isinstance(unlimited, bool):
+        return Response(
+            {'success': False, 'message': 'Indique si el acceso será ilimitado.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if unlimited:
+        monthly_limit = None
+    else:
+        monthly_limit = request.data.get('monthly_limit')
+        if isinstance(monthly_limit, bool) or not isinstance(monthly_limit, int) or monthly_limit < 0:
+            return Response(
+                {'success': False, 'message': 'El límite mensual debe ser un número entero igual o mayor que cero.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    plan, _ = CherryChinaPlan.objects.get_or_create(user=user)
+    plan.unlimited = unlimited
+    plan.monthly_report_limit = monthly_limit
+    plan.save(update_fields=['unlimited', 'monthly_report_limit', 'updated_at'])
+
+    return Response({
+        'success': True,
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'quota': get_account_quota(user),
+        },
+    })
 
 
 @api_view(['POST'])
@@ -61,12 +133,17 @@ def validate_cherry_china(request):
         csg = csgs[0] if csgs else ''
         report = reserve_report(request.user, csg, csp, csgs=csgs, csps=csps)
     except ReportQuotaExceeded:
+        quota = get_account_quota(request.user)
         return Response(
             {
                 'success': False,
                 'code': 'FREE_QUOTA_EXCEEDED',
-                'message': 'Agotaste los 5 informes gratuitos de este mes.',
-                'quota': get_account_quota(request.user),
+                'message': (
+                    f'Alcanzaste el límite de {quota["limit"]} informes de este mes.'
+                    if quota['plan'] == 'CUSTOM'
+                    else 'Agotaste los 5 informes gratuitos de este mes.'
+                ),
+                'quota': quota,
             },
             status=status.HTTP_429_TOO_MANY_REQUESTS,
         )

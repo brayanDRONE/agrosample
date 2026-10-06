@@ -25,13 +25,20 @@ def _month_usage(user):
 def get_account_quota(user):
     plan, _ = CherryChinaPlan.objects.get_or_create(user=user)
     unlimited = plan.has_unlimited_usage()
+    limit = (
+        None if unlimited else
+        plan.monthly_report_limit if plan.monthly_report_limit is not None else
+        FREE_REPORT_LIMIT
+    )
     used = _month_usage(user)
     return {
-        'plan': 'PAID' if unlimited else 'FREE',
+        'plan': 'PAID' if unlimited and plan.monthly_report_limit is None else (
+            'CUSTOM' if plan.monthly_report_limit is not None else 'FREE'
+        ),
         'unlimited': unlimited,
-        'limit': None if unlimited else FREE_REPORT_LIMIT,
+        'limit': limit,
         'used': used,
-        'remaining': None if unlimited else max(FREE_REPORT_LIMIT - used, 0),
+        'remaining': None if unlimited else max(limit - used, 0),
     }
 
 
@@ -40,7 +47,12 @@ def reserve_report(user, csg, csp, csgs=None, csps=None):
     CherryChinaPlan.objects.get_or_create(user=user)
     plan = CherryChinaPlan.objects.select_for_update().get(user=user)
     used = _month_usage(user)
-    if not plan.has_unlimited_usage() and used >= FREE_REPORT_LIMIT:
+    limit = (
+        plan.monthly_report_limit
+        if plan.monthly_report_limit is not None
+        else FREE_REPORT_LIMIT
+    )
+    if not plan.has_unlimited_usage() and used >= limit:
         raise ReportQuotaExceeded
     return CherryChinaReport.objects.create(
         user=user,

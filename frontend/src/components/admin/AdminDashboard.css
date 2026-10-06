@@ -503,6 +503,92 @@
   transform: translateY(-2px);
 }
 
+.user-quotas-section {
+  margin-top: 32px;
+  padding: 24px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.user-quotas-section .section-header {
+  margin-bottom: 16px;
+}
+
+.user-quotas-section .section-header h3 {
+  margin: 0 0 6px;
+  color: #1a202c;
+  font-size: 18px;
+}
+
+.user-quotas-section .section-header p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.user-quotas-table-wrapper {
+  overflow-x: auto;
+}
+
+.user-quotas-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-quotas-table th,
+.user-quotas-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.user-quotas-table th {
+  color: #4a5568;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.user-quotas-table td {
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.user-quotas-table select,
+.user-quotas-table input {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background: white;
+  color: #2d3748;
+  font: inherit;
+}
+
+.user-quotas-table input {
+  width: 110px;
+}
+
+.quota-user-email {
+  display: block;
+  margin-top: 3px;
+  color: #718096;
+  font-size: 12px;
+}
+
+.quota-unlimited-label {
+  color: #16845b;
+  font-weight: 600;
+}
+
+.quota-empty-state {
+  margin: 0;
+  padding: 18px 0;
+  color: #718096;
+}
+
 .card-icon {
   font-size: 32px;
   flex-shrink: 0;

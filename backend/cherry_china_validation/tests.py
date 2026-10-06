@@ -10,6 +10,8 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from inspections.models import UserProfile
+
 from .models import CherryChinaPlan, CherryChinaReport
 from .pdf import build_validation_pdf
 from .quota import FREE_REPORT_LIMIT, ReportQuotaExceeded, get_account_quota, reserve_report
@@ -58,6 +60,70 @@ class CherryChinaQuotaTests(TestCase):
         report = reserve_report(self.user, '176264', '')
         self.assertEqual(report.status, 'QUEUED')
         self.assertTrue(get_account_quota(self.user)['unlimited'])
+
+    def test_custom_monthly_limit_is_enforced(self):
+        CherryChinaPlan.objects.create(user=self.user, monthly_report_limit=2)
+        CherryChinaReport.objects.create(user=self.user, status='COMPLETED')
+
+        quota = get_account_quota(self.user)
+        self.assertEqual(quota['plan'], 'CUSTOM')
+        self.assertEqual(quota['limit'], 2)
+        self.assertEqual(quota['remaining'], 1)
+        reserve_report(self.user, '176264', '')
+
+        with self.assertRaises(ReportQuotaExceeded):
+            reserve_report(self.user, '176264', '')
+
+    def test_custom_zero_limit_blocks_reports(self):
+        CherryChinaPlan.objects.create(user=self.user, monthly_report_limit=0)
+
+        with self.assertRaises(ReportQuotaExceeded):
+            reserve_report(self.user, '176264', '')
+
+    def test_admin_can_set_user_limit_or_unlimited_access(self):
+        admin_user = User.objects.create_user(username='quota-admin', password='test-password')
+        UserProfile.objects.create(user=admin_user, role='SUPERADMIN')
+        client = APIClient()
+        client.force_authenticate(admin_user)
+
+        response = client.patch(
+            f'/api/cherry-china/admin/users/{self.user.pk}/',
+            {'unlimited': False, 'monthly_limit': 12},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['user']['quota']['limit'], 12)
+        self.assertEqual(response.data['user']['quota']['plan'], 'CUSTOM')
+
+        response = client.patch(
+            f'/api/cherry-china/admin/users/{self.user.pk}/',
+            {'unlimited': True},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['user']['quota']['unlimited'])
+
+    def test_regular_user_cannot_manage_user_quotas(self):
+        client = APIClient()
+        client.force_authenticate(self.user)
+
+        response = client.get('/api/cherry-china/admin/users/')
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_cannot_assign_negative_limit(self):
+        admin_user = User.objects.create_user(username='quota-admin', password='test-password')
+        UserProfile.objects.create(user=admin_user, role='SUPERADMIN')
+        client = APIClient()
+        client.force_authenticate(admin_user)
+
+        response = client.patch(
+            f'/api/cherry-china/admin/users/{self.user.pk}/',
+            {'unlimited': False, 'monthly_limit': -1},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
 
 
 class CherryChinaSourceRuleTests(TestCase):

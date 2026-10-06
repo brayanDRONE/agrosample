@@ -14,6 +14,11 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [establishments, setEstablishments] = useState([]);
+  const [userQuotas, setUserQuotas] = useState([]);
+  const [quotaDrafts, setQuotaDrafts] = useState({});
+  const [quotaLoading, setQuotaLoading] = useState(true);
+  const [quotaError, setQuotaError] = useState('');
+  const [savingQuotaUserId, setSavingQuotaUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('management');
@@ -26,6 +31,7 @@ function AdminDashboard() {
     }
     loadDashboardData();
     loadEstablishments();
+    loadUserQuotas();
     
     // Recargar stats cada 30 segundos
     const interval = setInterval(() => {
@@ -56,6 +62,66 @@ function AdminDashboard() {
       console.error('Error loading establishments:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserQuotas = async () => {
+    try {
+      setQuotaError('');
+      const users = await apiService.getCherryChinaAdminUserQuotas();
+      setUserQuotas(users);
+      setQuotaDrafts(Object.fromEntries(users.map(({ id, quota }) => [
+        id,
+        {
+          unlimited: quota.unlimited,
+          monthlyLimit: String(quota.limit ?? 5),
+        },
+      ])));
+    } catch (err) {
+      console.error('Error loading report quotas:', err);
+      setQuotaError('No se pudieron cargar los cupos de informes.');
+    } finally {
+      setQuotaLoading(false);
+    }
+  };
+
+  const updateQuotaDraft = (userId, changes) => {
+    setQuotaDrafts((current) => ({
+      ...current,
+      [userId]: { ...current[userId], ...changes },
+    }));
+  };
+
+  const saveUserQuota = async (userId) => {
+    const draft = quotaDrafts[userId];
+    const monthlyLimit = Number(draft.monthlyLimit);
+    if (!draft.unlimited && (!Number.isInteger(monthlyLimit) || monthlyLimit < 0)) {
+      setQuotaError('El límite mensual debe ser un número entero igual o mayor que cero.');
+      return;
+    }
+
+    setSavingQuotaUserId(userId);
+    setQuotaError('');
+    try {
+      const updatedUser = await apiService.updateCherryChinaAdminUserQuota(userId, {
+        unlimited: draft.unlimited,
+        ...(draft.unlimited ? {} : { monthly_limit: monthlyLimit }),
+      });
+      setUserQuotas((current) => current.map((item) => (
+        item.id === userId ? updatedUser : item
+      )));
+      setQuotaDrafts((current) => ({
+        ...current,
+        [userId]: {
+          unlimited: updatedUser.quota.unlimited,
+          monthlyLimit: String(updatedUser.quota.limit ?? 5),
+        },
+      }));
+    } catch (err) {
+      console.error('Error updating report quota:', err);
+      setQuotaError(err.response?.data?.message || 'No se pudo guardar el cupo del usuario.');
+    } finally {
+      setSavingQuotaUserId(null);
     }
   };
 
@@ -140,7 +206,11 @@ function AdminDashboard() {
                   </div>
                 </button>
                 <button 
-                  onClick={loadDashboardData}
+                  onClick={() => {
+                    loadDashboardData();
+                    loadEstablishments();
+                    loadUserQuotas();
+                  }}
                   className="management-card"
                 >
                   <div className="card-icon">🔄</div>
@@ -193,6 +263,90 @@ function AdminDashboard() {
                   </div>
                 )}
               </div>
+
+              <section className="user-quotas-section">
+                <div className="section-header">
+                  <div>
+                    <h3>Cupos de informes de validación China</h3>
+                    <p>Asigna un máximo mensual de informes o habilita el acceso ilimitado.</p>
+                  </div>
+                </div>
+                {quotaError && <div className="alert alert-error" role="alert">{quotaError}</div>}
+                {quotaLoading ? (
+                  <p className="quota-empty-state">Cargando usuarios...</p>
+                ) : userQuotas.length ? (
+                  <div className="user-quotas-table-wrapper">
+                    <table className="user-quotas-table">
+                      <thead>
+                        <tr>
+                          <th>Usuario</th>
+                          <th>Uso este mes</th>
+                          <th>Acceso</th>
+                          <th>Asignación mensual</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userQuotas.map(({ id, username, email, quota }) => {
+                          const draft = quotaDrafts[id] || {
+                            unlimited: quota.unlimited,
+                            monthlyLimit: String(quota.limit ?? 5),
+                          };
+                          return (
+                            <tr key={id}>
+                              <td>
+                                <strong>{username}</strong>
+                                {email && <span className="quota-user-email">{email}</span>}
+                              </td>
+                              <td>{quota.used} {quota.unlimited ? 'informes' : `de ${quota.limit}`}</td>
+                              <td>
+                                <select
+                                  aria-label={`Acceso de informes para ${username}`}
+                                  value={draft.unlimited ? 'unlimited' : 'limited'}
+                                  onChange={(event) => updateQuotaDraft(id, {
+                                    unlimited: event.target.value === 'unlimited',
+                                  })}
+                                >
+                                  <option value="limited">Límite mensual</option>
+                                  <option value="unlimited">Ilimitado</option>
+                                </select>
+                              </td>
+                              <td>
+                                {draft.unlimited ? (
+                                  <span className="quota-unlimited-label">Sin límite</span>
+                                ) : (
+                                  <input
+                                    aria-label={`Cantidad mensual para ${username}`}
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value={draft.monthlyLimit}
+                                    onChange={(event) => updateQuotaDraft(id, {
+                                      monthlyLimit: event.target.value,
+                                    })}
+                                  />
+                                )}
+                              </td>
+                              <td>
+                                <button
+                                  className="btn btn-primary btn-sm"
+                                  type="button"
+                                  disabled={savingQuotaUserId === id}
+                                  onClick={() => saveUserQuota(id)}
+                                >
+                                  {savingQuotaUserId === id ? 'Guardando...' : 'Guardar'}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="quota-empty-state">No hay usuarios disponibles para asignar cupos.</p>
+                )}
+              </section>
             </div>
         </div>
       </main>

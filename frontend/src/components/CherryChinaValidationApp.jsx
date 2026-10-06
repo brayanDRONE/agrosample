@@ -260,8 +260,8 @@ function CherryChinaValidationContent() {
             {quota && (
               <p className="china-quota" aria-live="polite">
                 {quota.unlimited
-                  ? 'Plan pagado · consultas sin límite mensual'
-                  : `Plan gratuito · ${quota.remaining} de ${quota.limit} informes disponibles este mes`}
+                  ? 'Acceso ilimitado · consultas sin límite mensual'
+                  : `${quota.plan === 'CUSTOM' ? 'Cupo asignado' : 'Plan gratuito'} · ${quota.remaining} de ${quota.limit} informes disponibles este mes`}
               </p>
             )}
 

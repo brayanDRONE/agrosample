@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -10,6 +11,12 @@ class CherryChinaPlan(models.Model):
         related_name='cherry_china_plan',
     )
     paid_until = models.DateField(null=True, blank=True)
+    monthly_report_limit = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+    )
+    unlimited = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -17,7 +24,11 @@ class CherryChinaPlan(models.Model):
         verbose_name_plural = 'Planes de Validación Cereza China'
 
     def has_unlimited_usage(self):
-        return bool(self.paid_until and self.paid_until >= timezone.now().date())
+        if self.unlimited:
+            return True
+        return self.monthly_report_limit is None and bool(
+            self.paid_until and self.paid_until >= timezone.now().date()
+        )
 
     def __str__(self):
         plan_type = 'Pagado' if self.has_unlimited_usage() else 'Gratuito'

@@ -5,9 +5,9 @@ from .models import CherryChinaPlan, CherryChinaReport
 
 @admin.register(CherryChinaPlan)
 class CherryChinaPlanAdmin(admin.ModelAdmin):
-    list_display = ['user', 'paid_until', 'updated_at']
+    list_display = ['user', 'monthly_report_limit', 'unlimited', 'paid_until', 'updated_at']
     search_fields = ['user__username', 'user__email']
-    list_filter = ['paid_until']
+    list_filter = ['unlimited', 'paid_until']
 
 
 @admin.register(CherryChinaReport)

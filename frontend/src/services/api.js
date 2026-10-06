@@ -191,6 +191,16 @@ export const apiService = {
     return response.data;
   },
 
+  async getCherryChinaAdminUserQuotas() {
+    const response = await api.get('/cherry-china/admin/users/');
+    return response.data.users;
+  },
+
+  async updateCherryChinaAdminUserQuota(userId, data) {
+    const response = await api.patch(`/cherry-china/admin/users/${userId}/`, data);
+    return response.data.user;
+  },
+
   async getRecentActivity() {
     const response = await api.get('/admin/dashboard/recent_activity/');
     return response.data;
