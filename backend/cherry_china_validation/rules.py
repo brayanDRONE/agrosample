@@ -21,7 +21,8 @@ def summarize_campaign_rows(rows):
     campaigns = []
     seen = set()
     for row in rows:
-        current = normalize_text(row.get('current')) in {'SI', 'YES', 'TRUE', '1'}
+        current_text = re.sub(r'ADDITIONAL CONDITIONAL FORMATTING.*$', '', normalize_text(row.get('current'))).strip()
+        current = current_text in {'SI', 'YES', 'TRUE', '1'}
         if not current:
             continue
         campaign = str(row.get('campaign') or '').strip()
