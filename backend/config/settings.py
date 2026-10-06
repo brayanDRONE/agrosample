@@ -216,6 +216,10 @@ CORS_ALLOWED_ORIGINS = env_csv(
     'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177'
 )
 
+# Mantener permitidos los dominios oficiales aunque la variable de Render no los incluya.
+add_unique(CORS_ALLOWED_ORIGINS, 'https://agrosample.cl')
+add_unique(CORS_ALLOWED_ORIGINS, 'https://www.agrosample.cl')
+
 # Frontend URL opcional para producción (ej: https://mi-frontend.onrender.com)
 frontend_url = os.environ.get('FRONTEND_URL', '').strip()
 add_unique(CORS_ALLOWED_ORIGINS, frontend_url)
