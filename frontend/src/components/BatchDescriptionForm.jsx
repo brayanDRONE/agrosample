@@ -251,18 +251,7 @@ function BatchDescriptionForm({
         return;
       }
 
-      // Validar que todos los certificados estén completos
-      const incompleteRows = editedPallets.filter(
-        p => !p.certificado_premuestreo || !p.certificado_inspeccion
-      );
-
-      if (incompleteRows.length > 0) {
-        setError(
-          `${incompleteRows.length} fila(s) sin completar. Por favor complete todos los certificados.`
-        );
-        return;
-      }
-
+// Los certificados son opcionales (hay muestreos sin certificados)
       setLoading(true);
       setError(null);
 

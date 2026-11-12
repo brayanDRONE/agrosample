@@ -327,14 +327,22 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
       doc.rect(x, y, cellSize, cellSize, 'FD');
 
       // Número
-      const fontSize = Math.max(8, Math.min(cellSize * 0.28, 16));
-      doc.setFontSize(fontSize);
+      const label = caja.numero.toString();
       doc.setFont('helvetica', 'bold');
+      // Ajustar la fuente para que el número completo quepa en la celda
+      let fontSize = Math.min(cellSize * 1.2, 16);
+      doc.setFontSize(fontSize);
+      const maxTextWidth = cellSize * 0.88;
+      const textWidth = doc.getTextWidth(label);
+      if (textWidth > maxTextWidth) {
+        fontSize = Math.max(3, fontSize * (maxTextWidth / textWidth));
+        doc.setFontSize(fontSize);
+      }
       doc.text(
-        caja.numero.toString(),
+        label,
         x + cellSize / 2,
-        y + cellSize / 2 + fontSize / 3.5,
-        { align: 'center' }
+        y + cellSize / 2,
+        { align: 'center', baseline: 'middle' }
       );
     });
 
