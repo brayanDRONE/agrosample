@@ -330,9 +330,9 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
       const label = caja.numero.toString();
       doc.setFont('helvetica', 'bold');
       // Ajustar la fuente para que el número completo quepa en la celda
-      let fontSize = Math.min(cellSize * 1.2, 16);
+      let fontSize = Math.min(cellSize * 1.7, 16);
       doc.setFontSize(fontSize);
-      const maxTextWidth = cellSize * 0.88;
+      const maxTextWidth = cellSize * 0.8;
       const textWidth = doc.getTextWidth(label);
       if (textWidth > maxTextWidth) {
         fontSize = Math.max(3, fontSize * (maxTextWidth / textWidth));
