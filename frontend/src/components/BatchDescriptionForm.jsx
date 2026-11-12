@@ -246,12 +246,20 @@ function BatchDescriptionForm({
   // STEP 3: Data Entry
   if (currentStep === 'data-entry' && fileData && selectedType) {
     const handleSaveData = async () => {
-      if (!editedPallets || editedPallets.length === 0) {
+      // Los certificados son opcionales: si no se editó nada, se usan los pallets del archivo
+      const palletsToSave = (editedPallets && editedPallets.length > 0)
+        ? editedPallets
+        : (fileData.pallets || []).map(p => ({
+            ...p,
+            certificado_premuestreo: '',
+            certificado_inspeccion: ''
+          }));
+
+      if (palletsToSave.length === 0) {
         setError('No hay datos de pallets para guardar');
         return;
       }
 
-// Los certificados son opcionales (hay muestreos sin certificados)
       setLoading(true);
       setError(null);
 
@@ -260,7 +268,7 @@ function BatchDescriptionForm({
         console.log('[SAVE] Datos a enviar:', {
           header: fileData.header,
           type: selectedType,
-          pallet_count: editedPallets.length,
+          pallet_count: palletsToSave.length,
           especie: editableData.especie,
           tipo_seleccion: editableData.tipo_seleccion,
           tipo_despacho: editableData.tipo_despacho
@@ -269,7 +277,7 @@ function BatchDescriptionForm({
         // Enviar datos al backend para generar PDF
         const response = await batchDescriptionService.saveBatchDescription({
           header: fileData.header,
-          pallets: editedPallets,
+          pallets: palletsToSave,
           type: selectedType,
           especie: editableData.especie,
           tipo_seleccion: editableData.tipo_seleccion,
