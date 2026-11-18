@@ -20,7 +20,7 @@ function HeroSection() {
         <div className="hero-content">
           <h1 className="hero-title">
             <span>Digitaliza y simplifica</span>
-            tus procesos de inspección agroexportadora
+            tus procesos de inspección fitosanitaria
           </h1>
           <p className="hero-subtitle">
             Automatiza el muestreo, genera tus documentos y valida información del SAG de forma rápida, segura y confiable.

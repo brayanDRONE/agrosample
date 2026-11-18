@@ -4,7 +4,7 @@
  * y extraer números de caja automáticamente.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createWorker } from 'tesseract.js';
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
@@ -42,6 +42,15 @@ export function parseOcrNumbers(rawText) {
 
   // Ordenar de menor a mayor
   return numbers.sort((a, b) => a - b);
+}
+
+export function compareOcrReadings(primary, alternative) {
+  const primarySet = new Set(primary);
+  const alternativeSet = new Set(alternative);
+  return {
+    primaryOnly: primary.filter((number) => !alternativeSet.has(number)),
+    alternativeOnly: alternative.filter((number) => !primarySet.has(number)),
+  };
 }
 
 /**
@@ -85,20 +94,20 @@ function removeTableLines(ctx, x0, y0, w, h, margin) {
 
 /**
  * Preprocesa una imagen en un canvas para mejorar la precisión del OCR:
- * - Escala al triple (Tesseract rinde mejor con imágenes más grandes)
+ * - Escala la imagen (Tesseract rinde mejor con imágenes más grandes)
  * - Convierte a escala de grises
  * - Maximiza el contraste (negro/blanco)
  * @param {File} imageFile
  * @returns {Promise<Blob>} Imagen procesada como Blob PNG
  */
-export function preprocessImageToCanvas(imageFile) {
+export function preprocessImageToCanvas(imageFile, scale = 3) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(imageFile);
 
     img.onload = () => {
-      // Escala 3x (cae a menos si la imagen es muy grande, para no saturar memoria)
-      const SCALE = Math.max(1, Math.min(3, Math.sqrt(25e6 / (img.width * img.height))));
+      // Limitar la escala para evitar distorsionar los dígitos y saturar la memoria.
+      const SCALE = Math.max(1, Math.min(scale, Math.sqrt(25e6 / (img.width * img.height))));
       const PAD = 80;
       const w = Math.round(img.width * SCALE);
       const h = Math.round(img.height * SCALE);
@@ -121,7 +130,7 @@ export function preprocessImageToCanvas(imageFile) {
 
       // Borrar las líneas de borde de tablas/celdas: se fusionan con el primer dígito
       // y hacen que el OCR lo pierda (ej. "62" -> "2", "44" -> "4").
-      removeTableLines(ctx, PAD, PAD, w, h, Math.round(SCALE * 1.7));
+      removeTableLines(ctx, PAD, PAD, w, h, Math.round(SCALE * 2.7));
 
       URL.revokeObjectURL(url);
       canvas.toBlob((blob) => {
@@ -143,22 +152,14 @@ export function preprocessImageToCanvas(imageFile) {
  * Ejecuta OCR sobre un File/Blob de imagen.
  * @param {File} imageFile
  * @param {(progress: number) => void} onProgress  – Callback 0-100
- * @returns {Promise<string>} Texto extraído
+ * @returns {Promise<string[]>} Textos extraídos en las dos lecturas
  */
 export async function runOcr(imageFile, onProgress) {
-  // Preprocesar la imagen antes de pasarla a Tesseract
-  let imageSource;
-  try {
-    imageSource = await preprocessImageToCanvas(imageFile);
-  } catch {
-    // Si falla el preprocesamiento, usar la imagen original
-    imageSource = imageFile;
-  }
-
+  let readingIndex = 0;
   const worker = await createWorker('eng', 1, {
     logger: (m) => {
       if (m.status === 'recognizing text' && typeof onProgress === 'function') {
-        onProgress(Math.round(m.progress * 100));
+        onProgress(Math.round((readingIndex + m.progress) * 50));
       }
     },
   });
@@ -171,8 +172,14 @@ export async function runOcr(imageFile, onProgress) {
       // El whitelist forzado puede causar que el motor distorsione caracteres.
     });
 
-    const { data: { text } } = await worker.recognize(imageSource);
-    return text;
+    const readings = [];
+    for (const scale of [3, 3.5]) {
+      const imageSource = await preprocessImageToCanvas(imageFile, scale);
+      const { data: { text } } = await worker.recognize(imageSource);
+      readings.push(text);
+      readingIndex++;
+    }
+    return readings;
   } finally {
     await worker.terminate();
   }
@@ -186,7 +193,13 @@ export function useOcrImageUpload() {
   const [ocrError, setOcrError] = useState(null);
   // Números extraídos pendientes de confirmación
   const [previewNumbers, setPreviewNumbers] = useState([]);
+  const [alternativeNumbers, setAlternativeNumbers] = useState([]);
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => () => {
+    if (previewImageUrl) URL.revokeObjectURL(previewImageUrl);
+  }, [previewImageUrl]);
 
   /**
    * Procesa una imagen con OCR y carga el resultado en el preview.
@@ -205,11 +218,15 @@ export function useOcrImageUpload() {
     setOcrError(null);
     setOcrProgress(0);
     setPreviewNumbers([]);
+    setAlternativeNumbers([]);
+    setPreviewImageUrl(null);
     setShowPreview(false);
 
     try {
-      const rawText = await runOcr(file, setOcrProgress);
-      const numbers = parseOcrNumbers(rawText);
+      const [primaryText, alternativeText] = await runOcr(file, setOcrProgress);
+      const primary = parseOcrNumbers(primaryText);
+      const alternative = parseOcrNumbers(alternativeText);
+      const numbers = primary.length ? primary : alternative;
 
       if (numbers.length === 0) {
         setOcrError('No se detectaron números en la imagen. Intenta con una imagen más clara.');
@@ -217,6 +234,8 @@ export function useOcrImageUpload() {
       }
 
       setPreviewNumbers(numbers);
+      setAlternativeNumbers(primary.length ? alternative : primary);
+      setPreviewImageUrl(URL.createObjectURL(file));
       setShowPreview(true);
     } catch (err) {
       console.error('OCR error:', err);
@@ -250,12 +269,16 @@ export function useOcrImageUpload() {
     onConfirm(merged);
     setShowPreview(false);
     setPreviewNumbers([]);
+    setAlternativeNumbers([]);
+    setPreviewImageUrl(null);
     setOcrError(null);
   }, []);
 
   const cancelPreview = useCallback(() => {
     setShowPreview(false);
     setPreviewNumbers([]);
+    setAlternativeNumbers([]);
+    setPreviewImageUrl(null);
     setOcrError(null);
   }, []);
 
@@ -266,6 +289,8 @@ export function useOcrImageUpload() {
     ocrProgress,
     ocrError,
     previewNumbers,
+    alternativeNumbers,
+    previewImageUrl,
     setPreviewNumbers,
     showPreview,
     processImage,

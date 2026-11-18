@@ -8,7 +8,7 @@
  */
 
 import { useRef, useState, useEffect } from 'react';
-import { useOcrImageUpload, parseOcrNumbers } from './useOcrImageUpload';
+import { useOcrImageUpload, parseOcrNumbers, compareOcrReadings } from './useOcrImageUpload';
 
 function OcrImageUpload({ existingNumbers = [], onConfirm, pasteTargetRef }) {
   const fileInputRef = useRef(null);
@@ -18,6 +18,8 @@ function OcrImageUpload({ existingNumbers = [], onConfirm, pasteTargetRef }) {
     ocrProgress,
     ocrError,
     previewNumbers,
+    alternativeNumbers,
+    previewImageUrl,
     setPreviewNumbers,
     showPreview,
     processImage,
@@ -28,6 +30,7 @@ function OcrImageUpload({ existingNumbers = [], onConfirm, pasteTargetRef }) {
 
   // Texto editable dentro del modal de preview
   const [previewText, setPreviewText] = useState('');
+  const { primaryOnly, alternativeOnly } = compareOcrReadings(previewNumbers, alternativeNumbers);
 
   // Sincronizar previewText con previewNumbers cuando se abre el preview
   useEffect(() => {
@@ -158,6 +161,18 @@ function OcrImageUpload({ existingNumbers = [], onConfirm, pasteTargetRef }) {
             </div>
 
             <div className="ocr-modal-body">
+              {previewImageUrl && (
+                <a href={previewImageUrl} target="_blank" rel="noreferrer" aria-label="Abrir imagen original ampliada">
+                  <img className="ocr-source-image" src={previewImageUrl} alt="Imagen original para comparar los números" />
+                </a>
+              )}
+              {(primaryOnly.length > 0 || alternativeOnly.length > 0) && (
+                <div className="ocr-disagreement" role="alert">
+                  <strong>Las lecturas no coinciden. Compara con la imagen y corrige la lista:</strong>
+                  <span>Solo en la lectura inicial: {primaryOnly.join(', ') || 'ninguno'}</span>
+                  <span>Solo en la otra lectura: {alternativeOnly.join(', ') || 'ninguno'}</span>
+                </div>
+              )}
               <div className="ocr-preview-stats">
                 <span className="ocr-stat-badge">
                   {parseOcrNumbers(previewText).length} número(s) detectado(s)
