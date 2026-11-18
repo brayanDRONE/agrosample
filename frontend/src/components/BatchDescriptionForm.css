@@ -529,3 +529,76 @@
     font-size: 1.25rem;
   }
 }
+
+.batch-description-container .step-header h1 {
+  color: var(--text-primary);
+}
+
+.batch-description-container .drop-zone {
+  border-color: #8bc69f;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f1faf6 0%, #fff 100%);
+}
+
+.batch-description-container .drop-zone:hover,
+.batch-description-container .drop-zone.active {
+  border-color: var(--brand-green);
+  background: linear-gradient(135deg, #e8f6ed 0%, #f8fcf9 100%);
+}
+
+.batch-description-container .drop-zone svg,
+.batch-description-container .type-option:hover .type-icon {
+  color: var(--brand-green);
+}
+
+.batch-description-container .type-option {
+  border-color: var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(16, 49, 35, 0.05);
+}
+
+.batch-description-container .type-option:hover {
+  border-color: var(--brand-green);
+  box-shadow: 0 10px 24px rgba(16, 49, 35, 0.1);
+}
+
+.batch-description-container .type-option.normal-type,
+.batch-description-container .type-option.etapa-type,
+.batch-description-container .type-option:hover.normal-type,
+.batch-description-container .type-option:hover.etapa-type {
+  background: linear-gradient(135deg, rgba(0, 138, 69, 0.035), rgba(131, 230, 53, 0.035));
+}
+
+.batch-description-container .type-option.normal-type .type-icon,
+.batch-description-container .type-option.etapa-type .type-icon {
+  color: var(--brand-green);
+}
+
+.batch-description-container .info-header {
+  border-left-color: var(--brand-green);
+  background: linear-gradient(120deg, #f1faf6 0%, #f8fbf9 100%);
+}
+
+.batch-description-container .info-item .value {
+  color: var(--brand-green-dark);
+}
+
+.batch-description-container .editable-fields-section {
+  border-color: var(--border-color);
+  border-radius: 14px;
+  background: #f8fbf9;
+}
+
+.batch-description-container .form-group .input-field:focus {
+  border-color: var(--brand-green);
+  box-shadow: 0 0 0 3px rgba(0, 138, 69, 0.12);
+}
+
+.batch-description-container .btn-save {
+  background: linear-gradient(135deg, #008a45 0%, #003d2b 100%);
+  box-shadow: 0 4px 14px rgba(0, 92, 54, 0.2);
+}
+
+.batch-description-container .btn-save:hover {
+  box-shadow: 0 7px 18px rgba(0, 92, 54, 0.25);
+}

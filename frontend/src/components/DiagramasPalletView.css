@@ -500,6 +500,107 @@
   }
 }
 
+.diagramas-overlay {
+  background: rgba(5, 28, 22, 0.76);
+  backdrop-filter: blur(4px);
+  padding: clamp(8px, 2vw, 24px);
+}
+
+.diagramas-modal {
+  max-width: min(96vw, 1600px);
+  max-height: 92vh;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 31, 23, 0.34);
+}
+
+.diagramas-header {
+  padding: 14px 20px;
+  border-bottom-color: var(--border-color);
+  background: linear-gradient(110deg, #f1faf6, #fff);
+}
+
+.diagramas-header h2 {
+  color: var(--text-primary);
+}
+
+.detail-viewer {
+  min-height: 0;
+  max-height: 58vh;
+  padding: 10px;
+  border-color: var(--border-color);
+  border-radius: 12px;
+  background: #f7fbf8;
+}
+
+.detail-viewer-grid {
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 390px), 1fr));
+  gap: 12px;
+}
+
+.detail-viewer-grid .diagrama-pallet-container {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(16, 49, 35, 0.06);
+}
+
+.detail-viewer .pallet-grid {
+  --box-cell-size: 22px !important;
+  gap: 1px;
+  padding: 7px;
+}
+
+.detail-viewer .box-cell {
+  border-radius: 4px;
+}
+
+.detail-viewer .box-cell.box-selected {
+  background: #008a45;
+  border-color: #008a45;
+  box-shadow: 0 0 5px rgba(0, 138, 69, 0.38), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.detail-viewer .box-cell.box-selected:hover {
+  background: #006f39;
+  border-color: #006f39;
+}
+
+.detail-viewer .cara-separator {
+  background: linear-gradient(180deg, #83e635 0%, #008a45 100%);
+}
+
+.diagramas-footer {
+  padding: 14px 20px;
+  border-top-color: var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .diagramas-overlay {
+    padding: 0;
+  }
+
+  .diagramas-modal {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .detail-viewer {
+    max-height: 56vh;
+  }
+
+  .detail-viewer .pallet-grid {
+    --box-cell-size: 20px !important;
+  }
+
+  .diagramas-footer {
+    padding: 12px 16px;
+  }
+}
+
 @media (max-width: 768px) {
   .diagramas-overlay {
     padding: 0;

@@ -45,6 +45,45 @@ export function parseOcrNumbers(rawText) {
 }
 
 /**
+ * Blanquea las líneas oscuras que cruzan casi todo el alto/ancho de la imagen
+ * (bordes de tabla). Un dígito nunca ocupa >85% de una fila/columna completa.
+ */
+function removeTableLines(ctx, x0, y0, w, h, margin) {
+  const imgData = ctx.getImageData(x0, y0, w, h);
+  const d = imgData.data;
+  const isDark = (x, y) => d[(y * w + x) * 4] < 140;
+
+  const lineCols = [];
+  for (let x = 0; x < w; x++) {
+    let n = 0;
+    for (let y = 0; y < h; y++) if (isDark(x, y)) n++;
+    if (n / h > 0.85) lineCols.push(x);
+  }
+  const lineRows = [];
+  for (let y = 0; y < h; y++) {
+    let n = 0;
+    for (let x = 0; x < w; x++) if (isDark(x, y)) n++;
+    if (n / w > 0.85) lineRows.push(y);
+  }
+
+  const white = (x, y) => {
+    const i = (y * w + x) * 4;
+    d[i] = d[i + 1] = d[i + 2] = 255;
+  };
+  for (const c of lineCols) {
+    for (let x = Math.max(0, c - margin); x <= Math.min(w - 1, c + margin); x++) {
+      for (let y = 0; y < h; y++) white(x, y);
+    }
+  }
+  for (const r of lineRows) {
+    for (let y = Math.max(0, r - margin); y <= Math.min(h - 1, r + margin); y++) {
+      for (let x = 0; x < w; x++) white(x, y);
+    }
+  }
+  ctx.putImageData(imgData, x0, y0);
+}
+
+/**
  * Preprocesa una imagen en un canvas para mejorar la precisión del OCR:
  * - Escala al triple (Tesseract rinde mejor con imágenes más grandes)
  * - Convierte a escala de grises
@@ -58,14 +97,18 @@ export function preprocessImageToCanvas(imageFile) {
     const url = URL.createObjectURL(imageFile);
 
     img.onload = () => {
-      const SCALE = 2; // 2x es suficiente y evita presión de memoria
+      // Escala 3x (cae a menos si la imagen es muy grande, para no saturar memoria)
+      const SCALE = Math.max(1, Math.min(3, Math.sqrt(25e6 / (img.width * img.height))));
+      const PAD = 80;
+      const w = Math.round(img.width * SCALE);
+      const h = Math.round(img.height * SCALE);
       const canvas = document.createElement('canvas');
-      canvas.width  = img.width  * SCALE;
-      canvas.height = img.height * SCALE;
+      canvas.width  = w + PAD * 2;
+      canvas.height = h + PAD * 2;
 
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-      // Fondo blanco
+      // Fondo blanco (también sirve de margen: Tesseract falla con textos pegados al borde)
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -73,7 +116,12 @@ export function preprocessImageToCanvas(imageFile) {
       // Esto preserva los bordes suaves de los trazos, evitando
       // que números delgados como "1" desaparezcan con un umbral duro.
       ctx.filter = 'grayscale(1) contrast(2.2) brightness(1.05)';
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, PAD, PAD, w, h);
+      ctx.filter = 'none';
+
+      // Borrar las líneas de borde de tablas/celdas: se fusionan con el primer dígito
+      // y hacen que el OCR lo pierda (ej. "62" -> "2", "44" -> "4").
+      removeTableLines(ctx, PAD, PAD, w, h, Math.round(SCALE * 1.7));
 
       URL.revokeObjectURL(url);
       canvas.toBlob((blob) => {

@@ -1,0 +1,332 @@
+/* PlansSection.css */
+
+.plans-section {
+  padding: 3.5rem clamp(1rem, 4vw, 3rem) 1rem;
+}
+
+.plans-container {
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+.plans-header {
+  max-width: 720px;
+  margin: 0 auto 2.2rem;
+  text-align: center;
+}
+
+.plans-title {
+  margin: 0 0 0.6rem;
+  color: #ffffff;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.plans-subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.2rem;
+  align-items: stretch;
+}
+
+.plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 1.8rem 1.6rem 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.plan-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(131, 230, 53, 0.5);
+}
+
+.plan-card.popular {
+  border-color: #84cc16;
+  background: linear-gradient(160deg, rgba(4, 120, 87, 0.45), rgba(6, 78, 59, 0.35));
+  box-shadow: 0 0 32px rgba(132, 204, 22, 0.22), 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.plan-badge {
+  position: absolute;
+  top: -0.8rem;
+  left: 50%;
+  padding: 0.25rem 0.9rem;
+  border-radius: 999px;
+  background: #84cc16;
+  color: #052e1c;
+  font-size: 0.75rem;
+  font-weight: 800;
+  transform: translateX(-50%);
+}
+
+.plan-name {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.4rem;
+}
+
+.plan-subtitle {
+  margin: 0.3rem 0 1rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.9rem;
+}
+
+.plan-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0 0 1.2rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.plan-price strong {
+  color: #84cc16;
+  font-size: 2.3rem;
+  line-height: 1;
+}
+
+.plan-price span {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.plan-features {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 0.6rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-features li {
+  position: relative;
+  padding-left: 1.5rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.plan-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #84cc16;
+  font-weight: 800;
+}
+
+.plan-button {
+  display: block;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(132, 204, 22, 0.7);
+  border-radius: 12px;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.2s, filter 0.2s;
+}
+
+.plan-button:hover {
+  background: rgba(132, 204, 22, 0.18);
+}
+
+.plan-card.popular .plan-button {
+  border-color: transparent;
+  background: linear-gradient(180deg, #8cf03c, #6fd12a);
+  color: #052e1c;
+}
+
+.plan-card.popular .plan-button:hover {
+  filter: brightness(1.07);
+}
+
+.plans-block-title {
+  margin: 0 0 1rem;
+  padding-left: 0.9rem;
+  border-left: 4px solid #83e635;
+  color: #ffffff;
+  font-size: 1.35rem;
+}
+
+.compare-wrap,
+.services-wrap,
+.faq-wrap {
+  margin-top: 3rem;
+}
+
+.compare-scroll {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.compare-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.compare-table thead th {
+  background: rgba(6, 78, 59, 0.6);
+  color: #ffffff;
+}
+
+.compare-table tbody th {
+  color: #ffffff;
+  font-weight: 600;
+  text-align: left;
+}
+
+.compare-table tbody tr:last-child th,
+.compare-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.compare-table .highlight {
+  background: rgba(132, 204, 22, 0.08);
+}
+
+.compare-table thead th.highlight {
+  background: rgba(132, 204, 22, 0.28);
+}
+
+.cmp-yes {
+  color: #84cc16;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.cmp-no {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 1rem;
+}
+
+.plans-note {
+  margin: 0.8rem 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.service-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+  color: #ffffff;
+}
+
+.service-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(131, 230, 53, 0.12);
+  color: #83e635;
+}
+
+.service-price {
+  margin-top: auto;
+  color: #84cc16;
+  font-weight: 700;
+}
+
+.faq-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.faq-item {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.faq-item.open {
+  border-color: rgba(132, 204, 22, 0.5);
+}
+
+.faq-question {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.faq-caret {
+  color: #84cc16;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.faq-answer {
+  margin: 0;
+  padding: 0 1.2rem 1.1rem;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.55;
+}
+
+@media (max-width: 1000px) {
+  .plans-grid {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+    margin: 0 auto;
+    row-gap: 1.8rem;
+  }
+
+  .services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+#about-system, #beneficios, #planes, #contacto, #cta { scroll-margin-top: 70px; }

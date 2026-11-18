@@ -28,9 +28,9 @@ export function ThemeProvider({ children }) {
   const loadTheme = async () => {
     // Tema por defecto adaptado a los colores de la página de inicio (Landing)
     const defaultTheme = {
-      primary_color: '#2c6e49',
-      secondary_color: '#1f4d35',
-      accent_color: '#10b981',
+      primary_color: '#008a45',
+      secondary_color: '#003d2b',
+      accent_color: '#83e635',
       company_name: user?.establishment?.nombre || 'agrosample',
       welcome_message: 'Automatización de etiquetas y diagramas adaptables',
       show_logo: true,
@@ -65,14 +65,14 @@ export function ThemeProvider({ children }) {
     const root = document.documentElement;
     
     // Aplicar colores como variables CSS
-    root.style.setProperty('--theme-primary', themeData.primary_color || '#667eea');
-    root.style.setProperty('--theme-secondary', themeData.secondary_color || '#764ba2');
-    root.style.setProperty('--theme-accent', themeData.accent_color || '#f56565');
+    root.style.setProperty('--theme-primary', themeData.primary_color || '#008a45');
+    root.style.setProperty('--theme-secondary', themeData.secondary_color || '#003d2b');
+    root.style.setProperty('--theme-accent', themeData.accent_color || '#83e635');
     
     // Crear versiones con transparencia
-    const primary = themeData.primary_color || '#667eea';
-    const secondary = themeData.secondary_color || '#764ba2';
-    const accent = themeData.accent_color || '#f56565';
+    const primary = themeData.primary_color || '#008a45';
+    const secondary = themeData.secondary_color || '#003d2b';
+    const accent = themeData.accent_color || '#83e635';
     
     root.style.setProperty('--theme-primary-rgb', hexToRgb(primary));
     root.style.setProperty('--theme-secondary-rgb', hexToRgb(secondary));
@@ -96,7 +96,7 @@ export function ThemeProvider({ children }) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
-      : '102, 126, 234'; // default primary color RGB
+      : '0, 138, 69'; // default primary color RGB
   };
 
   const refreshTheme = async () => {

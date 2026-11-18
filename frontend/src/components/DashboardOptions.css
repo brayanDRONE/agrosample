@@ -234,3 +234,376 @@
     height: 32px !important;
   }
 }
+
+.dashboard-container {
+  max-width: 1440px;
+  padding: clamp(1.5rem, 3vw, 2.75rem) 0;
+}
+
+.dashboard-header {
+  max-width: none;
+  padding-left: 1.1rem;
+  margin: 0 0 1.5rem 0.25rem;
+  border-left: 4px solid var(--brand-lime);
+  text-align: left;
+  animation: none;
+}
+
+.dashboard-header h1 {
+  margin-bottom: 0.25rem;
+  background: none;
+  color: var(--text-primary);
+  -webkit-text-fill-color: currentColor;
+  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+}
+
+.dashboard-header p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.options-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 0;
+}
+
+.option-card {
+  min-width: 0;
+  min-height: 390px;
+  padding: 1.1rem;
+  gap: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 5px 18px rgba(16, 49, 35, 0.07);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.option-card::before {
+  height: 3px;
+  background: var(--brand-lime);
+}
+
+.option-card:hover {
+  border-color: rgba(var(--theme-primary-rgb), 0.48);
+  background: #fff;
+  box-shadow: 0 12px 26px rgba(16, 49, 35, 0.12);
+  transform: translateY(-3px);
+}
+
+.option-card:focus-visible {
+  outline: 3px solid rgba(var(--theme-primary-rgb), 0.35);
+  outline-offset: 3px;
+}
+
+.option-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #e8f6ed;
+  color: var(--brand-green);
+}
+
+.option-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.muestreo-icon,
+.planilla-icon,
+.sdp-icon,
+.despacho-icon,
+.china-icon,
+.option-card:hover .muestreo-icon,
+.option-card:hover .planilla-icon,
+.option-card:hover .sdp-icon,
+.option-card:hover .despacho-icon,
+.option-card:hover .china-icon {
+  background: #e8f6ed;
+  color: var(--brand-green);
+}
+
+.option-content {
+  flex: 0 0 auto;
+}
+
+.option-content h2 {
+  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.option-content p {
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.option-image {
+  display: block;
+  width: 100%;
+  height: 150px;
+  margin-top: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 11px;
+  background: #f7fbf8;
+  object-fit: cover;
+  object-position: center;
+}
+
+.option-arrow {
+  margin-top: 0;
+  color: var(--brand-green);
+}
+
+.option-arrow svg {
+  width: 20px;
+  height: 20px;
+}
+
+.despacho-card {
+  min-height: 185px;
+}
+
+.despacho-card .option-image {
+  display: none;
+}
+
+@media (max-width: 1080px) {
+  .options-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-container {
+    padding: 1.5rem 0;
+  }
+
+  .dashboard-header {
+    margin-bottom: 1.2rem;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .option-card {
+    min-height: 0;
+    padding: 1rem;
+  }
+
+  .option-image {
+    height: 190px;
+  }
+
+  .despacho-card {
+    min-height: 0;
+  }
+}
+
+/* ===== Dashboard según mockup: tarjetas 2x2 con imagen a la derecha ===== */
+.dashboard-app {
+  background:
+    linear-gradient(180deg, rgba(239, 248, 244, 0.55) 0%, #f4faf8 38%, #eef7f4 100%),
+    url('../images/campo-banner.jpg') right top / 70% auto no-repeat,
+    #eef7f4;
+}
+
+.dashboard-app .dashboard-container {
+  max-width: 1240px;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 2rem);
+}
+
+.dashboard-app .dashboard-header {
+  margin: 0 0 2rem;
+  padding-left: 1.2rem;
+  border-left: 4px solid var(--brand-lime);
+}
+
+.dashboard-app .dashboard-header h1 {
+  color: #0b3b2c;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-app .dashboard-header p {
+  color: #3f5d52;
+}
+
+.dashboard-app .options-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.6rem 1.8rem;
+}
+
+.dashboard-app .option-card {
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 0;
+  padding: 1.4rem 1.4rem 1.4rem 1.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(20, 70, 50, 0.1);
+}
+
+.dashboard-app .option-card::before {
+  display: none;
+}
+
+.dashboard-app .muestreo-card { background: linear-gradient(120deg, #f5fbf2 0%, #e9f6e3 100%); }
+.dashboard-app .planilla-card { background: linear-gradient(120deg, #f4f9ff 0%, #e3f0fb 100%); }
+.dashboard-app .sdp-card { background: linear-gradient(120deg, #fffaf0 0%, #fdf1da 100%); }
+.dashboard-app .cereza-card { background: linear-gradient(120deg, #faf7ff 0%, #ece6fa 100%); }
+
+.dashboard-app .option-main {
+  display: flex;
+  flex: 1 1 52%;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.dashboard-app .option-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.dashboard-app .option-title-row h2 {
+  margin: 0;
+  color: #0e2a33;
+  font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dashboard-app .option-main p {
+  margin: 0;
+  color: #3d5560;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.dashboard-app .option-icon {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+}
+
+.dashboard-app .option-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.dashboard-app .muestreo-icon,
+.dashboard-app .option-card:hover .muestreo-icon { background: #d3efc3; color: #3c8b1f; }
+.dashboard-app .planilla-icon,
+.dashboard-app .option-card:hover .planilla-icon { background: #cfe3f8; color: #1d5fb8; }
+.dashboard-app .sdp-icon,
+.dashboard-app .option-card:hover .sdp-icon { background: #fbe3ad; color: #d48806; }
+.dashboard-app .cereza-icon,
+.dashboard-app .option-card:hover .cereza-icon { background: #dccff7; color: #6d44c9; }
+
+.dashboard-app .option-arrow {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  margin-top: auto;
+  border-radius: 50%;
+  color: #fff;
+  opacity: 1;
+}
+
+.dashboard-app .muestreo-card .option-arrow { background: #4aa22a; }
+.dashboard-app .planilla-card .option-arrow { background: #1f6fd1; }
+.dashboard-app .sdp-card .option-arrow { background: #f0a30a; }
+.dashboard-app .cereza-card .option-arrow { background: #8a5cf0; }
+
+.dashboard-app .option-image {
+  flex: 0 0 44%;
+  align-self: center;
+  width: 44%;
+  max-width: 330px;
+  height: auto;
+  max-height: 200px;
+  margin: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  object-fit: contain;
+  box-shadow: 0 6px 18px rgba(20, 60, 50, 0.12);
+}
+
+@media (max-width: 1000px) {
+  .dashboard-app .options-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-app .option-card {
+    flex-direction: column;
+  }
+
+  .dashboard-app .option-image {
+    flex-basis: auto;
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.app.dashboard-app {
+  background:
+    linear-gradient(180deg, rgba(239, 248, 244, 0.35) 0%, #f2faf6 45%, #eef7f4 100%),
+    url('../images/campo-banner.jpg') right top / 75% auto no-repeat,
+    #eef7f4;
+}
+
+.dashboard-app .dashboard-header {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.dashboard-app .user-name {
+  color: #fff;
+}
+
+.app.dashboard-app {
+  position: relative;
+  background: linear-gradient(180deg, #f2faf6 0%, #eef7f4 100%);
+}
+
+.app.dashboard-app::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 420px;
+  background: url('../images/campo-banner.jpg') right top / cover no-repeat;
+  opacity: 0.4;
+  -webkit-mask-image: linear-gradient(to bottom, #000 25%, transparent 100%), linear-gradient(to right, transparent 15%, #000 65%);
+  mask-image: linear-gradient(to bottom, #000 25%, transparent 100%), linear-gradient(to right, transparent 15%, #000 65%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  pointer-events: none;
+}
+
+.app.dashboard-app > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-app .header {
+  z-index: 20;
+}

@@ -79,3 +79,37 @@
   .sdp-report-actions > * { flex: 1; text-align: center; }
   .sdp-summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+.sdp-upload-panel,
+.sdp-report {
+  border-color: var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 8px 26px rgba(16, 49, 35, 0.07);
+}
+
+.sdp-upload-row button,
+.sdp-download {
+  border-radius: 9px;
+  background: linear-gradient(135deg, #008a45 0%, #003d2b 100%);
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.sdp-upload-row button:hover:not(:disabled),
+.sdp-download:hover {
+  box-shadow: 0 5px 14px rgba(0, 92, 54, 0.2);
+  transform: translateY(-1px);
+}
+
+.sdp-summary-grid div {
+  border-radius: 10px;
+  background: #f5faf7;
+}
+
+.sdp-table-wrap th {
+  background: var(--brand-green-dark);
+}
+
+.sdp-status {
+  border-radius: 999px;
+  padding: 5px 9px;
+}

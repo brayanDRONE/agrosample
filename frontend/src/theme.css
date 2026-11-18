@@ -4,43 +4,51 @@
 
 :root {
   /* Colores del tema (se sobrescriben dinámicamente por ThemeContext) */
-  --theme-primary: #667eea;
-  --theme-secondary: #764ba2;
-  --theme-accent: #f56565;
+  --theme-primary: #008a45;
+  --theme-secondary: #003d2b;
+  --theme-accent: #83e635;
   
   /* RGB values for transparency */
-  --theme-primary-rgb: 102, 126, 234;
-  --theme-secondary-rgb: 118, 75, 162;
-  --theme-accent-rgb: 245, 101, 101;
+  --theme-primary-rgb: 0, 138, 69;
+  --theme-secondary-rgb: 0, 61, 43;
+  --theme-accent-rgb: 131, 230, 53;
   
   /* Gradiente principal */
-  --theme-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --theme-gradient: linear-gradient(135deg, #008a45 0%, #003d2b 100%);
+  --brand-green-dark: #003d2b;
+  --brand-green-deep: #052e25;
+  --brand-green: #008a45;
+  --brand-lime: #83e635;
+  --surface-soft: #f1faf6;
+  --text-primary: #102135;
+  --text-secondary: #64748b;
+  --border-color: #dce8e4;
   
   /* Colores base que no cambian */
   --white: #ffffff;
   --black: #000000;
-  --gray-50: #f7fafc;
-  --gray-100: #edf2f7;
-  --gray-200: #e2e8f0;
-  --gray-300: #cbd5e0;
-  --gray-400: #a0aec0;
-  --gray-500: #718096;
-  --gray-600: #4a5568;
-  --gray-700: #2d3748;
-  --gray-800: #1a202c;
-  --gray-900: #171923;
+  --gray-50: #f8fbf9;
+  --gray-100: #eef4f1;
+  --gray-200: #dce8e4;
+  --gray-300: #c8d8d1;
+  --gray-400: #9aada5;
+  --gray-500: #71847b;
+  --gray-600: #52665d;
+  --gray-700: #344a40;
+  --gray-800: #193329;
+  --gray-900: #102135;
   
   /* Status colors */
-  --success: #38a169;
-  --warning: #dd6b20;
-  --error: #e53e3e;
-  --info: #3182ce;
+  --success: #16834b;
+  --warning: #b7791f;
+  --error: #c53030;
+  --info: #2563a6;
   
   /* Success RGB */
-  --success-rgb: 56, 161, 105;
-  --warning-rgb: 221, 107, 32;
-  --error-rgb: 229, 62, 62;
-  --info-rgb: 49, 130, 206;
+  --success-rgb: 22, 131, 75;
+  --warning-rgb: 183, 121, 31;
+  --error-rgb: 197, 48, 48;
+  --info-rgb: 37, 99, 166;
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -50,10 +58,10 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   
   /* Border radius */
-  --radius-sm: 4px;
-  --radius: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
   --radius-full: 9999px;
   
   /* Spacing */
@@ -65,9 +73,7 @@
   --spacing-xl: 48px;
   
   /* Typography */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  --font-sans: 'Inter', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
   
   /* Transitions */
@@ -138,6 +144,22 @@ select:focus,
 textarea:focus {
   border-color: var(--theme-primary);
   box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb), 0.1);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-sans);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(var(--theme-primary-rgb), 0.32);
+  outline-offset: 2px;
 }
 
 /* Loader/Spinner con color del tema */

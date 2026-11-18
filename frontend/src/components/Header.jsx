@@ -2,7 +2,7 @@
  * Header component - Encabezado institucional del sistema
  */
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
@@ -11,9 +11,9 @@ function Header() {
   const { theme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const companyName = theme?.company_name || user?.establishment?.nombre || 'agrosample';
-  const welcomeMessage = theme?.welcome_message || 'Automatización de etiquetas y diagramas adaptables';
 
   const handleLogout = () => {
     logout();
@@ -27,22 +27,50 @@ function Header() {
   return (
     <header className="header">
       <div className="header-content">
-        <div className="header-title">
-          <h1>{companyName}</h1>
-          {welcomeMessage && (
-            <p className="header-subtitle">{welcomeMessage}</p>
-          )}
+        <div className="header-brand">
+          <div className="header-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M27.5 4.5C16 4.5 8.5 9.2 7.1 17.1c-.6 3.2.7 5.7 3.3 6.2 3.2.6 6.1-1.6 7.6-5.3 1.5-3.6 4.3-7.7 9.5-13.5Z" fill="currentColor" />
+              <path d="M5 27c4.2-5.7 8.6-8.6 14.4-10.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div className="header-title">
+            <h1>Agro<span>Sample</span>.cl</h1>
+            <p className="header-company-name">{companyName}</p>
+          </div>
         </div>
         
+        {user && (
+          <nav className="header-nav" aria-label="Navegación principal">
+            <button type="button" className={`nav-pill${pathname === '/dashboard' ? ' active' : ''}`} onClick={handleBackToDashboard}>
+              Inicio
+            </button>
+            <button type="button" className={`nav-pill${pathname === '/muestreo' ? ' active' : ''}`} onClick={() => navigate('/muestreo')}>
+              Muestreo
+            </button>
+            <div className="nav-dropdown">
+              <button type="button" className={`nav-pill${pathname === '/planilla-descripcion' ? ' active' : ''}`}>
+                Documentos <span className="nav-caret" aria-hidden="true">⌄</span>
+              </button>
+              <div className="nav-menu">
+                <button type="button" onClick={() => navigate('/planilla-descripcion')}>Planilla de Descripción del Lote</button>
+              </div>
+            </div>
+            <div className="nav-dropdown">
+              <button type="button" className={`nav-pill${pathname === '/validacion-sdp' || pathname === '/validacion-cereza-china' ? ' active' : ''}`}>
+                Validaciones <span className="nav-caret" aria-hidden="true">⌄</span>
+              </button>
+              <div className="nav-menu">
+                <button type="button" onClick={() => navigate('/validacion-sdp')}>Validación de SDP</button>
+                <button type="button" onClick={() => navigate('/validacion-cereza-china')}>Cereza para China</button>
+              </div>
+            </div>
+          </nav>
+        )}
+
         <div className="header-actions">
           {user ? (
             <>
-              <button onClick={handleBackToDashboard} className="btn-back-home" title="Volver al Menú">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10.5 1.5H3.75A2.25 2.25 0 001.5 3.75v12.5A2.25 2.25 0 003.75 18.5h12.5a2.25 2.25 0 002.25-2.25V9.5M18.5 1.5l-7 7M18.5 1.5h-5M18.5 1.5v5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>Menú</span>
-              </button>
               <div className="user-info">
                 <div className="user-avatar">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">

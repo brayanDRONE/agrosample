@@ -1,86 +1,102 @@
 import React from 'react';
+import Icon from './Icon';
 import './InfoSection.css';
 
-function InfoSection() {
-  const features = [
-    {
-      icon: '📋',
-      title: 'Registro de Lotes',
-      description: 'Ingresa números de lote y cantidad de pallets de forma rápida y sencilla.'
-    },
-    {
-      icon: '🔢',
-      title: 'Muestreo Manual',
-      description: 'Define números de muestra manualmente con máxima flexibilidad operativa.'
-    },
-    {
-      icon: '📊',
-      title: 'Diagramas Visuales',
-      description: 'Visualiza pallets con números marcados automáticamente en diagramas.'
-    },
-    {
-      icon: '🖨️',
-      title: 'Impresoras Zebra',
-      description: 'Imprime etiquetas profesionales con texto personalizado por usuario.'
-    }
-  ];
+const solutions = [
+  {
+    icon: 'printer',
+    title: 'Muestreo y Etiquetado',
+    description: 'Genera muestras, imprime adhesivos personalizados y crea diagramas de pallets en PDF.',
+    image: '/Imagen de ChatGPT 17 nov 2026, 12_49_11-1.png',
+    imageAlt: 'Adhesivos de muestra junto a un diagrama de pallet'
+  },
+  {
+    icon: 'file',
+    title: 'Planilla de Descripción del Lote',
+    description: 'Carga tu archivo plano, registra los certificados y genera la planilla lista para presentar al SAG.',
+    image: '/Imagen de ChatGPT 17 nov 2026, 12_49_11-2.png',
+    imageAlt: 'Vista de una planilla de descripción del lote'
+  },
+  {
+    icon: 'shield',
+    title: 'Validación de SDP',
+    description: 'Carga tu packing list, valida todos los SDP del lote y obtén un resumen con reporte en PDF.',
+    image: '/Imagen de ChatGPT 17 nov 2026, 12_49_12-3.png',
+    imageAlt: 'Resumen ilustrativo de registros validados'
+  },
+  {
+    icon: 'cherry',
+    title: 'Validación de Cerezas para China',
+    description: 'Consulta múltiples CSG y CSP en las páginas del SAG y verifica el cumplimiento de tus productores y establecimientos.',
+    image: '/Imagen de ChatGPT 17 nov 2026, 12_49_14-4.png',
+    imageAlt: 'Formulario de consulta de códigos CSG y CSP'
+  }
+];
 
+const reasons = [
+  { icon: 'clock', title: 'Ahorro de tiempo', text: 'Automatiza tareas repetitivas.' },
+  { icon: 'target', title: 'Mayor precisión', text: 'Reduce errores de digitación.' },
+  { icon: 'layers', title: 'Todo en un solo lugar', text: 'Muestreo, documentos y validaciones.' },
+  { icon: 'headset', title: 'Soporte y acompañamiento', text: 'Implementación y ayuda continua.' }
+];
+
+export default function InfoSection() {
   return (
-    <section id="about-system" className="info-section">
-      <div className="info-container">
-        <div className="section-header">
-          <h2 className="info-title">¿Cómo Funciona agrosample?</h2>
-          <p className="info-subtitle">
-            Flujo simplificado de muestreo y control de pallets
-          </p>
-        </div>
+    <>
+      <section id="about-system" className="info-section">
+        <div className="info-container">
+          <div className="solutions-header">
+            <h2 className="info-title">Nuestras Soluciones</h2>
+            <p className="info-subtitle">
+              Herramientas especializadas para la preparación y control de tus inspecciones.
+            </p>
+          </div>
 
-        <div className="features-grid">
-          {features.map((feature, index) => (
-            <div key={index} className="feature-box">
-              <div className="feature-icon">{feature.icon}</div>
-              <h3 className="feature-title">{feature.title}</h3>
-              <p className="feature-description">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="benefits-section">
-          <h3 className="benefits-title">Ventajas del Sistema</h3>
-          <div className="benefits-grid">
-            <div className="benefit-item">
-              <div className="benefit-check">✓</div>
-              <div>
-                <h4>Operación Flexible</h4>
-                <p>Adaptable a diferentes procesos y necesidades de muestreo</p>
-              </div>
-            </div>
-            <div className="benefit-item">
-              <div className="benefit-check">✓</div>
-              <div>
-                <h4>Errores Reducidos</h4>
-                <p>Validación integrada en cada paso del proceso</p>
-              </div>
-            </div>
-            <div className="benefit-item">
-              <div className="benefit-check">✓</div>
-              <div>
-                <h4>Trazabilidad Total</h4>
-                <p>Registro completo de lotes, muestras y etiquetas impresas</p>
-              </div>
-            </div>
-            <div className="benefit-item">
-              <div className="benefit-check">✓</div>
-              <div>
-                <h4>Acceso Controlado</h4>
-                <p>Seguro con autenticación y personalización por usuario</p>
-              </div>
-            </div>
+          <div className="features-grid">
+            {solutions.map((item, index) => (
+              <article key={item.title} className="feature-box">
+                <span className="feature-number">{String(index + 1).padStart(2, '0')}</span>
+                <div className="feature-head">
+                  <span className="feature-icon" aria-hidden="true"><Icon name={item.icon} size={26} /></span>
+                  <h3 className="feature-title">{item.title}</h3>
+                </div>
+                <p className="feature-description">{item.description}</p>
+                <img className="feature-image" src={item.image} alt={item.imageAlt} loading="lazy" />
+              </article>
+            ))}
           </div>
         </div>
+      </section>
+
+      <section id="beneficios" className="why-section">
+        <div className="why-container">
+          <h2 className="why-title">¿Por qué elegir <span>AgroSample</span>?</h2>
+          <div className="why-grid">
+            {reasons.map((item) => (
+              <div key={item.title} className="why-item">
+                <span className="why-icon" aria-hidden="true"><Icon name={item.icon} size={26} /></span>
+                <strong>{item.title}</strong>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+export function CtaSection() {
+  return (
+    <section id="cta" className="cta-section">
+      <div className="cta-banner">
+        <span className="cta-icon" aria-hidden="true"><Icon name="calendar" size={28} /></span>
+        <div className="cta-text">
+          <h2>Optimiza la preparación de tus inspecciones</h2>
+          <p>Conoce AgroSample en acción y descubre cómo puede apoyar la operación de tu packing o exportadora.</p>
+        </div>
+        <a href="#contacto" className="cta-button">Solicitar demostración ›</a>
       </div>
     </section>
   );
 }
-
-export default InfoSection;

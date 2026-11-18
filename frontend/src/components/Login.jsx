@@ -57,6 +57,27 @@ function Login({ onLoginSuccess }) {
       <div className="bg-layer bg-layer-6"></div>
       <div className="bg-overlay"></div>
       
+      <section className="login-brand-panel" aria-label="Soluciones AgroSample">
+        <div className="login-brand-mark">
+          <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path d="M27.5 4.5C16 4.5 8.5 9.2 7.1 17.1c-.6 3.2.7 5.7 3.3 6.2 3.2.6 6.1-1.6 7.6-5.3 1.5-3.6 4.3-7.7 9.5-13.5Z" fill="currentColor" />
+            <path d="M5 27c4.2-5.7 8.6-8.6 14.4-10.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <span>Agro<strong>Sample</strong>.cl</span>
+        </div>
+        <div className="login-brand-copy">
+          <p className="login-brand-kicker">Soluciones digitales para la agroexportación</p>
+          <h2>Bienvenido a <span>AgroSample</span></h2>
+          <p>Gestiona el muestreo, la documentación y las validaciones de tus lotes desde un solo lugar.</p>
+          <ul className="login-solutions">
+            <li><span className="solution-symbol">▥</span><span><strong>Muestreo y etiquetado</strong><small>Identificación de cajas y diagramas de pallets.</small></span></li>
+            <li><span className="solution-symbol">▤</span><span><strong>Planilla de Descripción del Lote</strong><small>Generación de documentos para presentar al SAG.</small></span></li>
+            <li><span className="solution-symbol">✓</span><span><strong>Validación de SDP</strong><small>Revisión automatizada con fuentes oficiales.</small></span></li>
+            <li><span className="solution-symbol">◉</span><span><strong>Cerezas para China</strong><small>Consulta de CSG y CSP de productores.</small></span></li>
+          </ul>
+        </div>
+      </section>
+
       <div className="login-card">
         <div className="login-header">
           <div className="login-icon">
@@ -64,7 +85,7 @@ function Login({ onLoginSuccess }) {
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
             </svg>
           </div>
-          <h1>agrosample</h1>
+          <h1>AgroSample.cl</h1>
           <p>Acceso al sistema</p>
         </div>
 

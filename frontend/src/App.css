@@ -1,27 +1,29 @@
 
 .app {
   min-height: 100vh;
-  background-color: #f0fdf8;
+  background-color: var(--surface-soft);
   background-image:
-    /* Burbuja grande superior-izquierda — verde esmeralda */
-    radial-gradient(ellipse 55% 45% at 10% 15%,  rgba(16, 185, 129, 0.18) 0%, transparent 70%),
-    /* Burbuja grande superior-derecha — teal */
-    radial-gradient(ellipse 50% 40% at 92% 8%,   rgba(8, 145, 178, 0.14) 0%, transparent 65%),
-    /* Burbuja mediana centro-derecha — verde claro */
-    radial-gradient(ellipse 40% 35% at 85% 55%,  rgba(16, 185, 129, 0.11) 0%, transparent 60%),
-    /* Burbuja grande inferior-izquierda — teal oscuro */
-    radial-gradient(ellipse 55% 40% at 5%  90%,  rgba(5,  150, 105, 0.13) 0%, transparent 65%),
-    /* Burbuja sutil central — balance */
-    radial-gradient(ellipse 60% 50% at 50% 50%,  rgba(209, 250, 229, 0.5) 0%, transparent 80%);
+    radial-gradient(ellipse 55% 45% at 10% 15%, rgba(0, 138, 69, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 92% 8%, rgba(131, 230, 53, 0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 40% at 5% 90%, rgba(0, 61, 43, 0.05) 0%, transparent 65%);
 }
 
 .main-container {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1480px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 2rem clamp(1rem, 3vw, 2.5rem);
 }
 
 .content-wrapper {
   width: 100%;
+}
+
+.app:not(.dashboard-app):not(.dispatch-app) {
+  background-color: #e9f8ef;
+  background-image: url('./images/fondo-modulos.png');
+  background-size: cover;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
