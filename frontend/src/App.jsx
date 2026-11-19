@@ -8,6 +8,7 @@ import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './components/admin/AdminDashboard';
 import EstablishmentManagement from './components/admin/EstablishmentManagement';
+import AdminProfile from './components/admin/AdminProfile';
 import ThemeEditor from './components/admin/ThemeEditor';
 import DashboardOptions from './components/DashboardOptions';
 import InspectionApp from './components/InspectionApp';
@@ -68,6 +69,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute requireSuperAdmin={true}>
             <EstablishmentManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/perfil"
+        element={
+          <ProtectedRoute requireSuperAdmin={true}>
+            <AdminProfile />
           </ProtectedRoute>
         }
       />

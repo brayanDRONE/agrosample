@@ -111,6 +111,69 @@ class UserSerializer(serializers.ModelSerializer):
         return resolve_effective_sample_label(obj)
 
 
+class AdminCredentialsUpdateSerializer(serializers.Serializer):
+    """Valida cambios de las credenciales del superadministrador autenticado."""
+    username = serializers.CharField(
+        max_length=User._meta.get_field('username').max_length,
+        validators=User._meta.get_field('username').validators,
+    )
+    current_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    new_password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)
+    confirm_password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if not user.check_password(attrs['current_password']):
+            raise serializers.ValidationError({
+                'current_password': 'La contraseña actual no es correcta.',
+            })
+
+        username = attrs['username'].strip()
+        if User.objects.filter(username__iexact=username).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError({'username': 'Este nombre de usuario ya está en uso.'})
+        attrs['username'] = username
+
+        new_password = attrs.get('new_password')
+        confirm_password = attrs.get('confirm_password')
+        if bool(new_password) != bool(confirm_password):
+            raise serializers.ValidationError({
+                'confirm_password': 'Confirma la nueva contraseña.',
+            })
+        if new_password:
+            if new_password != confirm_password:
+                raise serializers.ValidationError({
+                    'confirm_password': 'Las contraseñas no coinciden.',
+                })
+            if user.check_password(new_password):
+                raise serializers.ValidationError({
+                    'new_password': 'La nueva contraseña debe ser distinta de la actual.',
+                })
+
+            candidate = User(
+                username=username,
+                email=user.email,
+                first_name=user.first_name,
+                last_name=user.last_name,
+            )
+            try:
+                validate_password(new_password, user=candidate)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError({'new_password': list(exc.messages)}) from exc
+        elif username == user.username:
+            raise serializers.ValidationError('No hay cambios para guardar.')
+
+        return attrs
+
+    def update(self, instance, validated_data):
+        instance.username = validated_data['username']
+        update_fields = ['username']
+        if validated_data.get('new_password'):
+            instance.set_password(validated_data['new_password'])
+            update_fields.append('password')
+        instance.save(update_fields=update_fields)
+        return instance
+
+
 class EstablishmentThemeSerializer(serializers.ModelSerializer):
     """Serializer para tema de establecimiento."""
     

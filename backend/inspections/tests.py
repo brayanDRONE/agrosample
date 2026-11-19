@@ -169,6 +169,102 @@ class InspectionAccessTest(TestCase):
             self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.data['access']}")
             self.assertEqual(self.client.get('/api/inspections/').status_code, 401)
 
+    def test_superadmin_can_update_own_credentials_and_revoke_old_tokens(self):
+        self.admin.set_password('Initial-safe-pass-842')
+        self.admin.save(update_fields=['password'])
+        login = self.client.post('/api/auth/login/', {
+            'username': self.admin.username, 'password': 'Initial-safe-pass-842',
+        }, format='json')
+        self.assertEqual(login.status_code, 200)
+        old_access = login.data['access']
+        old_refresh = login.data['refresh']
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch('/api/users/current/update_credentials/', {
+            'username': 'updated-admin',
+            'current_password': 'Initial-safe-pass-842',
+            'new_password': 'Updated-safe-pass-528',
+            'confirm_password': 'Updated-safe-pass-528',
+        }, format='json')
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertTrue(response.data['password_changed'])
+        self.assertNotIn('password', response.data['user'])
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.username, 'updated-admin')
+        self.assertTrue(self.admin.check_password('Updated-safe-pass-528'))
+
+        self.client.force_authenticate(None)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {old_access}')
+        self.assertEqual(self.client.get('/api/users/current/me/').status_code, 401)
+        self.client.credentials()
+        refreshed = self.client.post(
+            '/api/auth/refresh/', {'refresh': old_refresh}, format='json',
+        )
+        self.assertIn(refreshed.status_code, (200, 401))
+        if refreshed.status_code == 200:
+            self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refreshed.data['access']}")
+            self.assertEqual(self.client.get('/api/users/current/me/').status_code, 401)
+
+    def test_superadmin_can_change_username_after_confirming_current_password(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch('/api/users/current/update_credentials/', {
+            'username': 'updated-admin',
+            'current_password': 'test-password',
+        }, format='json')
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertFalse(response.data['password_changed'])
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.username, 'updated-admin')
+        self.assertTrue(self.admin.check_password('test-password'))
+
+    def test_own_credential_update_rejects_bad_current_password_and_weak_password(self):
+        self.client.force_authenticate(self.admin)
+        url = '/api/users/current/update_credentials/'
+        bad_current_password = self.client.patch(url, {
+            'username': 'updated-admin',
+            'current_password': 'wrong-password',
+        }, format='json')
+        self.assertEqual(bad_current_password.status_code, 400)
+        self.assertIn('current_password', bad_current_password.data)
+
+        duplicate_username = self.client.patch(url, {
+            'username': self.user.username,
+            'current_password': 'test-password',
+        }, format='json')
+        self.assertEqual(duplicate_username.status_code, 400)
+        self.assertIn('username', duplicate_username.data)
+
+        mismatched_password = self.client.patch(url, {
+            'username': 'updated-admin',
+            'current_password': 'test-password',
+            'new_password': 'Updated-safe-pass-528',
+            'confirm_password': 'Different-safe-pass-742',
+        }, format='json')
+        self.assertEqual(mismatched_password.status_code, 400)
+        self.assertIn('confirm_password', mismatched_password.data)
+
+        weak_password = self.client.patch(url, {
+            'username': 'updated-admin',
+            'current_password': 'test-password',
+            'new_password': '123',
+            'confirm_password': '123',
+        }, format='json')
+        self.assertEqual(weak_password.status_code, 400)
+        self.assertIn('new_password', weak_password.data)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.username, 'access-admin')
+        self.assertTrue(self.admin.check_password('test-password'))
+
+    def test_non_superadmin_cannot_update_admin_credentials(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.patch('/api/users/current/update_credentials/', {
+            'username': 'changed-user',
+            'current_password': 'any-password',
+        }, format='json')
+        self.assertEqual(response.status_code, 403)
+
     def test_new_establishment_rejects_weak_credentials(self):
         self.client.force_authenticate(self.admin)
         payload = {

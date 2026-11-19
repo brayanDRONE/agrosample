@@ -165,6 +165,11 @@ export const apiService = {
     return response.data;
   },
 
+  async updateCurrentUserCredentials(data) {
+    const response = await api.patch('/users/current/update_credentials/', data);
+    return response.data;
+  },
+
   // ========== Establecimientos (Público) ==========
   async getEstablishments() {
     const response = await api.get('/establishments/');

@@ -122,6 +122,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (userData) => {
+    setUser(userData);
+    localStorage.setItem('currentUserId', userData.id);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
   const isSuperAdmin = () => {
     return user?.role === 'SUPERADMIN' || user?.is_superadmin === true;
   };
@@ -136,6 +142,7 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     logout,
+    updateUser,
     isSuperAdmin,
     isEstablishmentAdmin,
     isAuthenticated: !!user,

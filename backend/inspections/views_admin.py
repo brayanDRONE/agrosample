@@ -20,6 +20,7 @@ from .serializers_admin import (
     EstablishmentThemeSerializer,
     UserSerializer,
     UserProfileSerializer,
+    AdminCredentialsUpdateSerializer,
     DashboardStatsSerializer,
     resolve_effective_sample_label
 )
@@ -388,3 +389,18 @@ class CurrentUserViewSet(viewsets.ViewSet):
                 ).data
         
         return Response(data)
+
+    @action(detail=False, methods=['patch'], permission_classes=[IsSuperAdmin])
+    def update_credentials(self, request):
+        """Actualiza el nombre de usuario y, opcionalmente, la contraseña propia."""
+        serializer = AdminCredentialsUpdateSerializer(
+            instance=request.user,
+            data=request.data,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            'user': UserSerializer(user).data,
+            'password_changed': bool(serializer.validated_data.get('new_password')),
+        })

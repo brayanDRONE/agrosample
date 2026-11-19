@@ -261,6 +261,16 @@
   animation: shake 0.3s ease-in-out;
 }
 
+.login-success-message {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border: 1px solid #9ae6b4;
+  border-radius: 8px;
+  color: #276749;
+  background: #f0fff4;
+  font-size: 14px;
+}
+
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
