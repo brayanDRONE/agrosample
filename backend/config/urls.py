@@ -15,9 +15,9 @@ urlpatterns = [
     path('api/cherry-china/', include('cherry_china_validation.urls')),
 ]
 
-# Servir archivos media tanto en desarrollo como en producción (Render)
+# Los informes y avatares no se sirven desde rutas públicas.
 urlpatterns += [
-    re_path(r'^media/(?P<path>.*)$', serve, {
+    re_path(r'^media/(?P<path>(?:logos|favicons)/[^/]+)$', serve, {
         'document_root': settings.MEDIA_ROOT,
     }),
 ]

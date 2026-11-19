@@ -6,6 +6,7 @@ from django.db.models import JSONField
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 from django.contrib.auth.models import User
+import uuid
 
 
 def get_current_date():
@@ -102,12 +103,8 @@ class Establishment(models.Model):
         return self.planta_fruticola or 'Sin nombre'
     
     def has_active_subscription(self):
-        """Verifica si la suscripción está activa."""
-        if self.subscription_status != 'ACTIVE':
-            return False
-        if self.subscription_expiry and self.subscription_expiry < timezone.now().date():
-            return False
-        return True
+        """La fecha histórica no bloquea el acceso; la suspensión sí."""
+        return self.is_active and self.subscription_status != 'SUSPENDED'
     
     def days_until_expiry(self):
         """Calcula días hasta que expire la suscripción."""
@@ -123,6 +120,50 @@ class Establishment(models.Model):
         if days_left is None:
             return False
         return 0 < days_left <= days
+
+
+class EstablishmentPlan(models.Model):
+    PLAN_CHOICES = [('FREE', 'Free'), ('STARTER', 'Starter'), ('PRO', 'Pro')]
+
+    establishment = models.OneToOneField(
+        Establishment, on_delete=models.CASCADE, related_name='commercial_plan'
+    )
+    plan = models.CharField(max_length=10, choices=PLAN_CHOICES)
+    activated_at = models.DateTimeField()
+    free_reset_at = models.DateTimeField(null=True, blank=True)
+    alert_message = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class PlanUsage(models.Model):
+    STATUS_CHOICES = [
+        ('RESERVED', 'Reservado'),
+        ('DISPATCHED', 'Enviado a impresión'),
+        ('COMPLETED', 'Completado'),
+        ('CANCELLED', 'Cancelado'),
+    ]
+    establishment = models.ForeignKey(
+        Establishment, on_delete=models.CASCADE, related_name='plan_usages'
+    )
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='plan_usages')
+    plan = models.CharField(max_length=10, choices=EstablishmentPlan.PLAN_CHOICES)
+    activation = models.DateTimeField()
+    operation = models.CharField(max_length=30)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='RESERVED')
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['establishment', 'plan', 'activation', 'status'])]
+
+
+class PlanBatchArtifact(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    usage = models.OneToOneField(PlanUsage, on_delete=models.SET_NULL, null=True, blank=True)
+    filename = models.CharField(max_length=255)
+    data = models.BinaryField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Inspection(models.Model):

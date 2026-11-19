@@ -5,9 +5,8 @@ import re
 import unicodedata
 from datetime import datetime
 from io import BytesIO
-from pathlib import Path
 
-from django.conf import settings
+from django.urls import reverse
 from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -16,6 +15,8 @@ from rest_framework import status
 
 from .sag_sdp_service import SagSdpService
 from .sdp_excel_parser import parse_sdp_workbook
+from .plan_usage import PlanUsageError, finish_usage, reserve_usage
+from .models import PlanBatchArtifact
 
 
 logger = logging.getLogger(__name__)
@@ -112,7 +113,7 @@ def _compare_row(row, sag_result):
     }
 
 
-def _build_summary_pdf(results, filename, numero_lote, include_box_date=False):
+def _build_summary_pdf(results, numero_lote, include_box_date=False):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import landscape, letter
     from reportlab.lib.styles import getSampleStyleSheet
@@ -197,12 +198,7 @@ def _build_summary_pdf(results, filename, numero_lote, include_box_date=False):
     table.setStyle(TableStyle(table_style_commands))
     elements.append(table)
     document.build(elements)
-    buffer.seek(0)
-    media_dir = Path(settings.MEDIA_ROOT) / 'sdp_validation'
-    media_dir.mkdir(parents=True, exist_ok=True)
-    path = media_dir / filename
-    path.write_bytes(buffer.getvalue())
-    return path, len(buffer.getvalue())
+    return buffer.getvalue()
 
 
 @api_view(['POST'])
@@ -217,24 +213,37 @@ def validate_sdp_excel(request):
 
     include_box_date = str(request.POST.get('incluir_caja_fecha', '')).lower() in ('true', '1', 'yes')
 
+    usage = None
+    usage_completed = False
     try:
         parsed = parse_sdp_workbook(uploaded_file)
         if parsed['errors']:
             return Response({'success': False, 'message': 'El Excel no tiene las columnas requeridas', 'errors': parsed['errors']}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            usage = reserve_usage(request.user, 'sdp')
+        except PlanUsageError as error:
+            return Response({'success': False, 'message': str(error)}, status=status.HTTP_403_FORBIDDEN)
         service = SagSdpService()
         sag_cache = {sdp: service.query(sdp) for sdp in parsed['unique_sdps']}
+        if not any(item['status'] in ('FOUND', 'NOT_FOUND') for item in sag_cache.values()):
+            return Response({'success': False, 'message': 'No se pudo completar ninguna consulta SAG.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        if not finish_usage(usage, True):
+            return Response({'success': False, 'message': 'La reserva de uso fue cancelada. Contacta al administrador.'}, status=status.HTTP_409_CONFLICT)
+        usage_completed = True
         consolidated_rows = _merge_excel_rows(parsed['rows'], include_box_date=include_box_date)
         results = [_compare_row(row, sag_cache[row['sdp']]) for row in consolidated_rows]
         results.sort(key=_csg_sort_key)
 
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'validacion_sdp_{timestamp}.pdf'
-        pdf_path, pdf_size = _build_summary_pdf(
+        pdf_data = _build_summary_pdf(
             results,
-            filename,
             parsed['metadata'].get('numero_lote', ''),
             include_box_date=include_box_date,
+        )
+        artifact = PlanBatchArtifact.objects.create(
+            user=request.user, usage=usage, filename=filename, data=pdf_data,
         )
         counts = {
             'total': len(results),
@@ -251,9 +260,12 @@ def validate_sdp_excel(request):
             'include_box_date': include_box_date,
             'summary': counts,
             'results': results,
-            'pdf_url': request.build_absolute_uri(f'{settings.MEDIA_URL}sdp_validation/{filename}'),
-            'pdf_size': pdf_size,
+            'pdf_url': request.build_absolute_uri(reverse('plan-batch-pdf', args=[artifact.pk])),
+            'pdf_size': len(pdf_data),
         })
     except Exception as error:
         logger.exception('[SDP] Error procesando Excel')
         return Response({'success': False, 'message': 'No se pudo procesar el Excel', 'errors': [str(error)]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    finally:
+        if usage and not usage_completed:
+            finish_usage(usage, False)

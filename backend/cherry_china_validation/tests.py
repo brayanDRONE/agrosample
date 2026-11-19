@@ -10,11 +10,12 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from inspections.models import UserProfile
+from inspections.models import Establishment, UserProfile
+from inspections.plan_usage import PlanUsageError, assign_plan, finish_usage, reserve_usage
 
-from .models import CherryChinaPlan, CherryChinaReport
+from .models import CherryChinaReport
 from .pdf import build_validation_pdf
-from .quota import FREE_REPORT_LIMIT, ReportQuotaExceeded, get_account_quota, reserve_report
+from .quota import get_account_quota, reserve_report
 from .rules import summarize_campaign_rows, summarize_chinaport_rows, summarize_descolgados
 from .sources import (
     _map_powerbi_row,
@@ -28,102 +29,84 @@ from .worker import claim_next_report, process_report
 class CherryChinaQuotaTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='quota-test', password='test-password')
+        self.establishment = Establishment.objects.create(planta_fruticola='Test', license_key='china-quota')
+        UserProfile.objects.create(user=self.user, establishment=self.establishment)
 
-    def test_new_user_has_five_free_reports(self):
+    def test_plan_must_be_assigned(self):
         quota = get_account_quota(self.user)
-        self.assertEqual(quota['limit'], FREE_REPORT_LIMIT)
-        self.assertEqual(quota['remaining'], FREE_REPORT_LIMIT)
-        self.assertFalse(quota['unlimited'])
+        self.assertEqual(quota['plan'], 'UNASSIGNED')
+        with self.assertRaises(PlanUsageError):
+            reserve_report(self.user, '176264', '')
 
-    def test_failed_reports_do_not_consume_monthly_quota(self):
-        for _ in range(FREE_REPORT_LIMIT):
-            CherryChinaReport.objects.create(user=self.user, status='FAILED')
-
+    def test_china_shares_free_quota_with_other_modules(self):
+        assign_plan(self.establishment, 'FREE')
+        finish_usage(reserve_usage(self.user, 'print'), True)
         report = reserve_report(self.user, '176264', '')
-        self.assertEqual(report.status, 'QUEUED')
-
-    def test_completed_and_processing_reports_reserve_the_free_quota(self):
-        for status in ['COMPLETED'] * FREE_REPORT_LIMIT:
-            CherryChinaReport.objects.create(user=self.user, status=status)
-
-        with self.assertRaises(ReportQuotaExceeded):
+        self.assertEqual(get_account_quota(self.user)['remaining'], 0)
+        with self.assertRaises(PlanUsageError):
             reserve_report(self.user, '176264', '')
+        finish_usage(report.plan_usage, False)
+        self.assertEqual(get_account_quota(self.user)['remaining'], 1)
 
-    def test_paid_plan_has_unlimited_usage(self):
-        CherryChinaPlan.objects.create(
-            user=self.user,
-            paid_until=timezone.now().date() + timedelta(days=30),
-        )
-        for _ in range(FREE_REPORT_LIMIT + 2):
-            CherryChinaReport.objects.create(user=self.user, status='COMPLETED')
-
+    @patch('cherry_china_validation.worker.build_validation_pdf', return_value=b'%PDF')
+    @patch('cherry_china_validation.worker.run_cherry_china_checks')
+    def test_partial_sources_count_as_completed_query(self, checks, pdf):
+        assign_plan(self.establishment, 'FREE')
         report = reserve_report(self.user, '176264', '')
-        self.assertEqual(report.status, 'QUEUED')
-        self.assertTrue(get_account_quota(self.user)['unlimited'])
+        self.assertEqual(claim_next_report(), report.pk)
+        checks.return_value = ({}, [{'name': 'SRA', 'status': 'partial'}])
+        report = process_report(report.pk)
+        self.assertEqual(report.status, 'COMPLETED')
+        self.assertEqual(get_account_quota(self.user)['remaining'], 1)
 
-    def test_custom_monthly_limit_is_enforced(self):
-        CherryChinaPlan.objects.create(user=self.user, monthly_report_limit=2)
-        CherryChinaReport.objects.create(user=self.user, status='COMPLETED')
+    @patch('cherry_china_validation.worker.run_cherry_china_checks')
+    def test_failed_query_releases_use(self, checks):
+        assign_plan(self.establishment, 'FREE')
+        report = reserve_report(self.user, '176264', '')
+        claim_next_report()
+        checks.return_value = ({}, [{'name': 'SRA', 'status': 'unavailable'}])
+        with self.assertLogs('cherry_china_validation.worker', level='ERROR') as logs:
+            self.assertEqual(process_report(report.pk).status, 'FAILED')
+        self.assertIn('Fallo al procesar informe', logs.output[0])
+        self.assertEqual(get_account_quota(self.user)['remaining'], 2)
 
-        quota = get_account_quota(self.user)
-        self.assertEqual(quota['plan'], 'CUSTOM')
-        self.assertEqual(quota['limit'], 2)
-        self.assertEqual(quota['remaining'], 1)
-        reserve_report(self.user, '176264', '')
+    def test_stale_worker_releases_use(self):
+        assign_plan(self.establishment, 'FREE')
+        report = reserve_report(self.user, '176264', '')
+        claim_next_report()
+        CherryChinaReport.objects.filter(pk=report.pk).update(started_at=timezone.now() - timedelta(hours=2))
+        self.assertIsNone(claim_next_report())
+        report.refresh_from_db()
+        self.assertEqual(report.status, 'FAILED')
+        self.assertEqual(get_account_quota(self.user)['remaining'], 2)
 
-        with self.assertRaises(ReportQuotaExceeded):
-            reserve_report(self.user, '176264', '')
-
-    def test_custom_zero_limit_blocks_reports(self):
-        CherryChinaPlan.objects.create(user=self.user, monthly_report_limit=0)
-
-        with self.assertRaises(ReportQuotaExceeded):
-            reserve_report(self.user, '176264', '')
-
-    def test_admin_can_set_user_limit_or_unlimited_access(self):
-        admin_user = User.objects.create_user(username='quota-admin', password='test-password')
-        UserProfile.objects.create(user=admin_user, role='SUPERADMIN')
-        client = APIClient()
-        client.force_authenticate(admin_user)
-
-        response = client.patch(
-            f'/api/cherry-china/admin/users/{self.user.pk}/',
-            {'unlimited': False, 'monthly_limit': 12},
-            format='json',
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['user']['quota']['limit'], 12)
-        self.assertEqual(response.data['user']['quota']['plan'], 'CUSTOM')
-
-        response = client.patch(
-            f'/api/cherry-china/admin/users/{self.user.pk}/',
-            {'unlimited': True},
-            format='json',
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.data['user']['quota']['unlimited'])
-
-    def test_regular_user_cannot_manage_user_quotas(self):
+    def test_stale_queued_report_is_released_without_worker(self):
+        assign_plan(self.establishment, 'FREE')
+        report = reserve_report(self.user, '176264', '')
+        CherryChinaReport.objects.filter(pk=report.pk).update(created_at=timezone.now() - timedelta(hours=2))
         client = APIClient()
         client.force_authenticate(self.user)
+        response = client.get(f'/api/cherry-china/reports/{report.pk}/status/')
+        self.assertEqual(response.data['status'], 'FAILED')
+        self.assertEqual(response.data['quota']['remaining'], 2)
 
-        response = client.get('/api/cherry-china/admin/users/')
-
-        self.assertEqual(response.status_code, 403)
-
-    def test_admin_cannot_assign_negative_limit(self):
-        admin_user = User.objects.create_user(username='quota-admin', password='test-password')
-        UserProfile.objects.create(user=admin_user, role='SUPERADMIN')
-        client = APIClient()
-        client.force_authenticate(admin_user)
-
-        response = client.patch(
-            f'/api/cherry-china/admin/users/{self.user.pk}/',
-            {'unlimited': False, 'monthly_limit': -1},
-            format='json',
-        )
-
-        self.assertEqual(response.status_code, 400)
+    @patch('cherry_china_validation.worker.build_validation_pdf', side_effect=RuntimeError('PDF failed'))
+    @patch('cherry_china_validation.worker.run_cherry_china_checks')
+    def test_pdf_failure_keeps_completed_query_available(self, checks, pdf):
+        assign_plan(self.establishment, 'FREE')
+        report = reserve_report(self.user, '176264', '')
+        claim_next_report()
+        checks.return_value = ({'csg': {'code': '176264'}}, [{'name': 'SRA', 'status': 'ok'}])
+        with self.assertLogs('cherry_china_validation.worker', level='ERROR') as logs:
+            report = process_report(report.pk)
+        self.assertIn('No se pudo generar el PDF', logs.output[0])
+        self.assertEqual(report.status, 'COMPLETED')
+        self.assertEqual(get_account_quota(self.user)['remaining'], 1)
+        with patch('cherry_china_validation.views.build_validation_pdf', return_value=b'%PDF-recovered'):
+            client = APIClient()
+            client.force_authenticate(self.user)
+            response = client.get(f'/api/cherry-china/reports/{report.pk}/pdf/')
+            self.assertEqual(b''.join(response.streaming_content), b'%PDF-recovered')
 
 
 class CherryChinaSourceRuleTests(TestCase):
@@ -421,6 +404,9 @@ class CherryChinaSourceRuleTests(TestCase):
 class CherryChinaApiTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='api-test', password='test-password')
+        establishment = Establishment.objects.create(planta_fruticola='Test', license_key='china-api')
+        UserProfile.objects.create(user=self.user, establishment=establishment)
+        assign_plan(establishment, 'FREE')
         self.client = APIClient()
 
     def test_validation_requires_authentication(self):
@@ -482,7 +468,7 @@ class CherryChinaApiTests(TestCase):
 
                 self.assertEqual(response.status_code, 202)
                 self.assertEqual(response.data['status'], 'QUEUED')
-                self.assertEqual(response.data['quota']['remaining'], FREE_REPORT_LIMIT - 1)
+                self.assertEqual(response.data['quota']['remaining'], 1)
                 report = CherryChinaReport.objects.get(user=self.user)
                 self.assertEqual(report.csgs, ['176264', '176265', '176266'])
                 self.assertEqual(report.csps, ['175848', '175849'])
@@ -509,7 +495,7 @@ class CherryChinaApiTests(TestCase):
                 report.pdf_file.delete(save=False)
 
         self.assertEqual(response.status_code, 202)
-        self.assertEqual(response.data['quota']['remaining'], FREE_REPORT_LIMIT - 1)
+        self.assertEqual(response.data['quota']['remaining'], 1)
         report = CherryChinaReport.objects.get(user=self.user)
         self.assertEqual(report.csgs, ['176264', '176265', '176266'])
         run_checks.assert_called_once()
@@ -550,7 +536,7 @@ class CherryChinaApiTests(TestCase):
 
                 self.assertEqual(response.status_code, 202)
                 self.assertEqual(response.data['status'], 'QUEUED')
-                self.assertEqual(response.data['quota']['remaining'], FREE_REPORT_LIMIT - 1)
+                self.assertEqual(response.data['quota']['remaining'], 1)
                 report = CherryChinaReport.objects.get(pk=response.data['report_id'], user=self.user)
                 self.assertEqual(report.status, 'QUEUED')
                 run_checks.assert_not_called()

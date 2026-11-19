@@ -1,8 +1,13 @@
+import { apiService } from './api';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/batch-description`
   : (import.meta.env.DEV ? 'http://localhost:8000/api/batch-description' : '/api/batch-description');
 
 export async function validateSdpExcel(file, includeBoxDate = false) {
+  if (!await apiService.ensureValidToken()) {
+    throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+  }
   const formData = new FormData();
   formData.append('file', file);
   formData.append('incluir_caja_fecha', includeBoxDate ? 'true' : 'false');

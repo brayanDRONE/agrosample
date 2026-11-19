@@ -24,19 +24,11 @@ Sistema multi-tenant para gestión de inspecciones y muestreo agrícola con pane
 
 ## 🔐 Credenciales de Acceso
 
-### Superadministrador
-- **Usuario**: `admin`
-- **Contraseña**: `admin123`
-- **Acceso**: Panel de administración completo
-
-### Establecimientos de Prueba
-Los administradores de establecimiento fueron creados con el formato:
-- **Usuario**: `admin_[nombre_establecimiento]`
-- **Contraseña**: `password123`
-
-Ejemplo:
-- Usuario: `admin_frutícola_los_andes`
-- Contraseña: `password123`
+No se crean credenciales predeterminadas en instalaciones nuevas. Para crear
+un superadministrador, seguir [la guía de despliegue](./DEPLOYMENT.md). Las
+cuentas existentes conservan sus contraseñas: cambiar de forma segura cualquier
+contraseña histórica o de prueba antes de usar el sistema en producción.
+Al actualizar una contraseña, las sesiones anteriores dejan de ser válidas.
 
 ## 📊 Funcionalidades del Panel de Administración
 

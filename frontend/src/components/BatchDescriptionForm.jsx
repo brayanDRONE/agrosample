@@ -4,6 +4,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import batchDescriptionService from '../services/batchDescriptionService';
+import { apiService } from '../services/api';
 import PalletDataTable from './PalletDataTable';
 import FolioOrderPanel from './FolioOrderPanel';
 import './BatchDescriptionForm.css';
@@ -292,7 +293,13 @@ function BatchDescriptionForm({
           
           try {
             // Descargar el PDF como blob
-            const pdfResponse = await fetch(response.pdf_url);
+            const isTokenValid = await apiService.ensureValidToken();
+            if (!isTokenValid) {
+              throw new Error('Tu sesión venció. Inicia sesión nuevamente.');
+            }
+            const pdfResponse = await fetch(response.pdf_url, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
+            });
             if (!pdfResponse.ok) {
               throw new Error(`Error al descargar PDF: ${pdfResponse.status}`);
             }

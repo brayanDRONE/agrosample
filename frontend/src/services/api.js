@@ -60,17 +60,21 @@ const hasExceededSessionDuration = () => {
   return Date.now() - loginAt >= MAX_SESSION_DURATION_MS;
 };
 
+let refreshPromise = null;
+
 const refreshAccessToken = async () => {
+  if (refreshPromise) return refreshPromise;
   const refreshToken = localStorage.getItem('refresh_token');
   if (!refreshToken) return null;
 
-  const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-    refresh: refreshToken
-  });
-
-  const { access } = response.data;
-  localStorage.setItem('access_token', access);
-  return access;
+  refreshPromise = axios.post(`${API_BASE_URL}/auth/refresh/`, { refresh: refreshToken })
+    .then(({ data: { access, refresh } }) => {
+      localStorage.setItem('access_token', access);
+      if (refresh) localStorage.setItem('refresh_token', refresh);
+      return access;
+    })
+    .finally(() => { refreshPromise = null; });
+  return refreshPromise;
 };
 
 // Interceptor para agregar token JWT a las peticiones
@@ -91,6 +95,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (error.response?.status === 401 && originalRequest._retry) {
+      clearAuthStorage();
+      window.location.href = '/';
+      return Promise.reject(error);
+    }
+
     // Si el error es 401 y no hemos intentado renovar el token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -102,15 +112,8 @@ api.interceptors.response.use(
       }
 
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-            refresh: refreshToken
-          });
-
-          const { access } = response.data;
-          localStorage.setItem('access_token', access);
-
+        const access = await refreshAccessToken();
+        if (access) {
           // Reintentar la petición original
           originalRequest.headers.Authorization = `Bearer ${access}`;
           return api(originalRequest);
@@ -185,6 +188,15 @@ export const apiService = {
     return response.data;
   },
 
+  async downloadPrivatePdf(url) {
+    const target = new URL(url, window.location.origin);
+    if (target.origin !== new URL(API_BASE_URL, window.location.origin).origin) {
+      throw new Error('La dirección del documento no pertenece al servidor de AgroSample.');
+    }
+    const response = await api.get(target.href, { responseType: 'blob' });
+    return response.data;
+  },
+
   // ========== ADMIN: Dashboard ==========
   async getAdminStats() {
     const response = await api.get('/admin/dashboard/stats/');
@@ -210,6 +222,54 @@ export const apiService = {
   async getAllEstablishments() {
     const response = await api.get('/admin/establishments/');
     return response.data;
+  },
+
+  async getEstablishmentPlans() {
+    const response = await api.get('/admin/establishments/plans/');
+    return response.data;
+  },
+
+  async getAccountPlan() {
+    const response = await api.get('/plans/account/');
+    return response.data.plan;
+  },
+
+  async assignEstablishmentPlan(id, plan) {
+    const response = await api.post(`/admin/establishments/${id}/assign_plan/`, { plan });
+    return response.data;
+  },
+
+  async resetFreeUsage(id) {
+    const response = await api.post(`/admin/establishments/${id}/reset_free_usage/`);
+    return response.data;
+  },
+
+  async getPendingPlanUsages(id) {
+    const response = await api.get(`/admin/establishments/${id}/pending_usages/`);
+    return response.data;
+  },
+
+  async resolvePendingPlanUsage(id, usageId, succeeded) {
+    const response = await api.post(`/admin/establishments/${id}/pending_usages/`, { usage_id: usageId, succeeded });
+    return response.data;
+  },
+
+  async acknowledgePlanAlert(message) {
+    await api.post('/plans/alert/acknowledge/', { message });
+  },
+
+  async reservePlanUsage(operation) {
+    const response = await api.post('/plans/reserve/', { operation });
+    return response.data.reservation_id;
+  },
+
+  async finishPlanUsage(id, succeeded) {
+    const response = await api.post(`/plans/reservations/${id}/finish/`, { succeeded });
+    return response.data;
+  },
+
+  async dispatchPlanPrint(id) {
+    await api.post(`/plans/reservations/${id}/dispatch-print/`);
   },
 
   async getEstablishmentById(id) {

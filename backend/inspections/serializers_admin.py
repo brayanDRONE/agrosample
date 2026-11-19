@@ -4,10 +4,30 @@ Serializers para el panel de administración.
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from .models import Establishment, EstablishmentTheme, UserProfile
 
 
 DEFAULT_SAMPLE_LABEL = 'MUESTRA USDA'
+
+
+def validate_admin_credentials(attrs, user=None):
+    username = attrs.get('admin_username', user.username if user else '')
+    email = attrs.get('admin_email', user.email if user else '')
+    if 'admin_username' in attrs:
+        users = User.objects.filter(username=username)
+        if user:
+            users = users.exclude(pk=user.pk)
+        if users.exists():
+            raise serializers.ValidationError({'admin_username': ['Este usuario ya existe.']})
+    if 'admin_password' in attrs:
+        candidate = User(username=username, email=email)
+        try:
+            validate_password(attrs['admin_password'], user=candidate)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'admin_password': list(exc.messages)}) from exc
 
 
 def resolve_effective_sample_label(user):
@@ -110,6 +130,9 @@ class EstablishmentDetailSerializer(serializers.ModelSerializer):
     days_until_expiry = serializers.SerializerMethodField()
     is_expiring_soon = serializers.SerializerMethodField()
     has_active_subscription = serializers.SerializerMethodField()
+    admin_username = serializers.CharField(write_only=True, required=False)
+    admin_password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
+    admin_email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
     
     class Meta:
         model = Establishment
@@ -120,31 +143,14 @@ class EstablishmentDetailSerializer(serializers.ModelSerializer):
             'subscription_status', 'subscription_start', 'subscription_expiry',
             'license_key', 'sample_label_text', 'created_at', 'updated_at',
             'theme', 'days_until_expiry', 'is_expiring_soon',
-            'has_active_subscription'
+            'has_active_subscription', 'admin_username', 'admin_password', 'admin_email'
         ]
         read_only_fields = ['created_at', 'updated_at', 'license_key']
     
     def get_days_until_expiry(self, obj):
-        """Calcula días hasta expiración y actualiza estado si es necesario."""
-        from django.utils import timezone
-        
+        """Calcula los días restantes de la suscripción histórica."""
         days = obj.days_until_expiry()
-        
-        # Si no hay fecha de expiración, retornar 0
-        if days is None:
-            return 0
-        
-        # Si ya expiró y está marcado como ACTIVE, actualizar a EXPIRED
-        if days <= 0 and obj.subscription_status == 'ACTIVE':
-            obj.subscription_status = 'EXPIRED'
-            obj.save(update_fields=['subscription_status'])
-            return 0
-        
-        # Retornar 0 si es negativo (por si acaso)
-        if days < 0:
-            return 0
-            
-        return days
+        return max(days, 0) if days is not None else 0
     
     def get_is_expiring_soon(self, obj):
         return obj.is_expiring_soon()
@@ -152,10 +158,33 @@ class EstablishmentDetailSerializer(serializers.ModelSerializer):
     def get_has_active_subscription(self, obj):
         return obj.has_active_subscription()
 
+    def validate(self, attrs):
+        if any(key in attrs for key in ('admin_username', 'admin_password', 'admin_email')):
+            if not self.instance.admin_user:
+                raise serializers.ValidationError('El establecimiento no tiene usuario administrador.')
+            if 'admin_user' in attrs and attrs['admin_user'] != self.instance.admin_user:
+                raise serializers.ValidationError('No se puede cambiar el usuario y sus credenciales en la misma operación.')
+            validate_admin_credentials(attrs, self.instance.admin_user)
+        return attrs
+
+    @transaction.atomic
     def update(self, instance, validated_data):
         """Sincroniza el texto de etiqueta del perfil admin al actualizar establecimiento."""
+        username = validated_data.pop('admin_username', None)
+        password = validated_data.pop('admin_password', None)
+        email = validated_data.pop('admin_email', None)
         new_label = validated_data.get('sample_label_text', instance.sample_label_text)
         instance = super().update(instance, validated_data)
+
+        if username is not None or password is not None or email is not None:
+            user = instance.admin_user
+            if username is not None:
+                user.username = username
+            if email is not None:
+                user.email = email
+            if password is not None:
+                user.set_password(password)
+            user.save()
 
         if instance.admin_user and hasattr(instance.admin_user, 'profile'):
             profile = instance.admin_user.profile
@@ -185,7 +214,12 @@ class EstablishmentCreateSerializer(serializers.ModelSerializer):
             'admin_username', 'admin_password', 'admin_email',
             'admin_first_name', 'admin_last_name', 'subscription_days'
         ]
+
+    def validate(self, attrs):
+        validate_admin_credentials(attrs)
+        return attrs
     
+    @transaction.atomic
     def create(self, validated_data):
         from django.utils import timezone
         from datetime import timedelta
@@ -193,7 +227,7 @@ class EstablishmentCreateSerializer(serializers.ModelSerializer):
         # Extraer datos del usuario
         admin_username = validated_data.pop('admin_username')
         admin_password = validated_data.pop('admin_password')
-        admin_email = validated_data.pop('admin_email')
+        admin_email = validated_data.pop('admin_email', '')
         admin_first_name = validated_data.pop('admin_first_name', '')
         admin_last_name = validated_data.pop('admin_last_name', '')
         subscription_days = validated_data.pop('subscription_days', 30)

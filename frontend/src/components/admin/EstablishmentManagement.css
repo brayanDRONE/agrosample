@@ -543,3 +543,53 @@
     flex-direction: column;
   }
 }
+
+  .establishment-management {
+    margin-left: 58px;
+    background: linear-gradient(135deg, #f1fbf5, #ddf5ea);
+  }
+  .establishment-management .page-header {
+    position: relative;
+    border: 0;
+    border-radius: 0 0 14px 0;
+    padding: 16px 0;
+    box-shadow: 0 4px 18px rgba(8, 77, 50, .09);
+  }
+  .establishment-management .header-content { max-width: none; gap: 20px; }
+  .establishment-management .admin-brand { padding-right: 20px; border-right: 1px solid #d5e0dc; }
+  .establishment-management .header-left { flex: 1; flex-wrap: wrap; gap: 12px 20px; }
+  .establishment-management .header-left h1 { color: #143b2b; font-size: 23px; }
+  .establishment-management .header-right { flex-wrap: wrap; align-items: center; }
+  .establishment-management .btn-back { color: #087433; font-weight: 600; }
+  .establishment-management .btn-back:hover { color: #045a29; }
+  .establishment-management .btn-primary { background: #087433; color: white; }
+  .establishment-management .btn-primary:hover { background: #05612b; box-shadow: 0 4px 10px rgba(8, 116, 51, .2); }
+  .establishment-management .btn-secondary { background: #eff8f2; color: #15583b; }
+  .establishment-management .filter-btn { border-color: #d3eadc; color: #286047; }
+  .establishment-management .filter-btn:hover { border-color: #0a9c53; color: #087433; }
+  .establishment-management .filter-btn.active { background: #087433; border-color: #087433; color: white; }
+  .establishment-management .establishments-table-wrapper { overflow-x: auto; padding: 10px; box-shadow: 0 4px 12px rgba(19, 84, 55, .09); }
+  .establishment-management .establishments-table thead { background: #e3f5e9; }
+  .establishment-management .establishments-table th { color: #214437; border-bottom: 0; }
+  .establishment-management .establishments-table td { white-space: nowrap; }
+  .establishment-management .modal-overlay { background: rgba(3, 42, 28, .58); }
+  .establishment-management .modal { border-radius: 16px; }
+  .establishment-management .modal-header h2, .establishment-management .form-section-title { color: #143b2b; }
+  .establishment-management .form-section-title { border-color: #d9eae0; }
+  .establishment-management .form-group input:focus,
+  .establishment-management .form-group select:focus,
+  .establishment-management .form-group textarea:focus {
+    border-color: #0a9c53;
+    box-shadow: 0 0 0 3px rgba(10, 156, 83, .12);
+  }
+
+  @media (max-width: 640px) {
+    .establishment-management { margin-left: 48px; }
+    .establishment-management .header-content, .establishment-management .filters, .establishment-management .page-main { padding-left: 16px; padding-right: 16px; }
+    .establishment-management .admin-brand { border: 0; padding: 0; }
+    .establishment-management .header-left { flex-basis: 100%; }
+    .establishment-management .header-left h1 { font-size: 20px; }
+    .establishment-management .header-right { gap: 8px; }
+    .establishment-management .modal-overlay { padding: 10px; }
+    .establishment-management .modal-header, .establishment-management .modal-body { padding: 16px; }
+  }

@@ -4,9 +4,13 @@ services:
     name: agrosample-backend
     runtime: python
     rootDir: backend
-    plan: free
+    plan: 0.5c-512mb
+    disk:
+      name: agrosample-media
+      mountPath: /opt/render/project/src/backend/media
+      sizeGB: 10
     buildCommand: "pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --no-input --clear"
-    startCommand: "python manage.py migrate && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: SECRET_KEY
         generateValue: true

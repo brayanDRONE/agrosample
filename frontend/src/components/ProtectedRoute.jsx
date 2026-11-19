@@ -41,11 +41,9 @@ function ProtectedRoute({ children, requireSuperAdmin = false, requireEstablishm
     return <Navigate to="/" replace />;
   }
 
-  // Bloquear acceso si la suscripción del establecimiento está expirada o suspendida
-  // Los superadmins nunca son bloqueados por suscripción
-  const isEstAdmin = user?.role === 'ESTABLISHMENT_ADMIN' || user?.is_establishment_admin === true;
+  // La suspensión bloquea a todos los usuarios del establecimiento.
   const hasActiveSubscription = user?.establishment?.has_active_subscription !== false;
-  if (isEstAdmin && !hasActiveSubscription) {
+  if (!isSuperAdmin() && !hasActiveSubscription) {
     return <SubscriptionExpiredView />;
   }
 

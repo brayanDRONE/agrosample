@@ -24,23 +24,35 @@ def add_unique(items, value):
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY') or 'django-insecure-local-dev-key-change-in-production'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+is_hosted = os.environ.get('RENDER') == 'true' or bool(os.environ.get('RAILWAY_ENVIRONMENT'))
+DEBUG = os.environ.get('DEBUG', 'False' if is_hosted else 'True') == 'True'
+if is_hosted and DEBUG:
+    raise RuntimeError('DEBUG no puede estar habilitado en el entorno alojado.')
+
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise RuntimeError('SECRET_KEY debe configurarse cuando DEBUG=False.')
+    SECRET_KEY = 'django-insecure-local-dev-key-change-in-production'
+if not DEBUG and SECRET_KEY == 'django-insecure-local-dev-key-change-in-production':
+    raise RuntimeError('SECRET_KEY de desarrollo no se permite cuando DEBUG=False.')
 
 ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS', 'localhost,127.0.0.1')
 render_external_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
 add_unique(ALLOWED_HOSTS, render_external_hostname)
 
 # CSRF trusted origins for production
-CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173')
+CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173' if DEBUG else '')
 if render_external_hostname:
     add_unique(CSRF_TRUSTED_ORIGINS, f'https://{render_external_hostname}')
 
 # Reconocer el proxy (ej. Render) para generar URLs con https en lugar de http
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
 
 
 # Application definition
@@ -109,9 +121,9 @@ if os.environ.get('DATABASE_URL'):
             conn_health_checks=True,
         )
     }
-elif os.environ.get('RENDER') == 'true':
+elif not DEBUG:
     raise RuntimeError(
-        'DATABASE_URL no está configurada en Render. '
+        'DATABASE_URL no está configurada para producción. '
         'Crea la base de datos PostgreSQL y conecta la variable DATABASE_URL '
         'al servicio del backend antes del deploy.'
     )
@@ -123,6 +135,9 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+if not DEBUG and DATABASES['default']['ENGINE'] != 'django.db.backends.postgresql':
+    raise RuntimeError('Producción requiere una base de datos PostgreSQL.')
 
 
 # Password validation
@@ -174,7 +189,7 @@ STORAGES = {
 
 # Media files (Uploads)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -184,6 +199,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
@@ -208,12 +226,13 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'CHECK_REVOKE_TOKEN': True,
 }
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = env_csv(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177'
+    'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176,http://localhost:5177' if DEBUG else ''
 )
 
 # Mantener permitidos los dominios oficiales aunque la variable de Render no los incluya.

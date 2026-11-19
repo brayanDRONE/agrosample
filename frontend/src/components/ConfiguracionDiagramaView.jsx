@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import './ConfiguracionDiagramaView.css';
 
 function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, onClose }) {
@@ -226,6 +227,9 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
     setSuccessMessage(null);
 
     try {
+      if (!await apiService.ensureValidToken()) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
       const token = localStorage.getItem('access_token');
       const payload = {
         configurations: configurations.map(c => ({
@@ -236,7 +240,7 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
         }))
       };
 
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api');
       
       const headers = {
         'Content-Type': 'application/json'

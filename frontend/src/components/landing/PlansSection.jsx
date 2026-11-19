@@ -13,6 +13,7 @@ const plans = [
       '1 usuario por empresa',
       'Hasta 2 usos de módulo al día',
       'Acceso a los módulos habilitados',
+      'Impresión de adhesivos y diagramas de pallets',
       'Configuración remota de impresora',
       'Soporte básico'
     ],
@@ -28,8 +29,9 @@ const plans = [
     features: [
       'Acceso a los cuatro módulos',
       '1 usuario por empresa',
-      'Hasta 150 operaciones mensuales',
+      '150 operaciones por activación',
       'Muestreo y etiquetado personalizado',
+      'Diagramas de pallets',
       'Planillas de Descripción del Lote',
       'Validación de SDP',
       'Validación de cerezas para China (CSG/CSP)',
@@ -48,7 +50,7 @@ const plans = [
     features: [
       'Acceso a los cuatro módulos',
       '1 usuario por empresa',
-      'Alto volumen de operaciones, sujeto a política de uso razonable',
+      'Operaciones ilimitadas durante 30 días',
       'Impresión personalizada de adhesivos',
       'Diagramación de pallets',
       'Generación de reportes PDF',
@@ -63,10 +65,10 @@ const plans = [
 
 const comparison = [
   { label: 'Usuarios por empresa', values: ['1', '1', '1'] },
-  { label: 'Operaciones permitidas', values: ['2 cada 24 horas', 'Hasta 150 al mes', 'Alto volumen*'] },
+  { label: 'Operaciones permitidas', values: ['2 cada 24 horas', '150 por activación', 'Ilimitadas durante 30 días'] },
   { label: 'Módulo de muestreo', values: ['Limitado', true, true] },
-  { label: 'Impresión de adhesivos', values: [false, true, true] },
-  { label: 'Diagramas de pallets', values: [false, false, true] },
+  { label: 'Impresión de adhesivos', values: ['Limitado', true, true] },
+  { label: 'Diagramas de pallets', values: ['Limitado', true, true] },
   { label: 'Generación de planillas', values: ['Limitado', true, true] },
   { label: 'Validación SDP', values: ['Limitado', true, true] },
   { label: 'Validación CSG/CSP China', values: ['Limitado', true, true] },
@@ -101,7 +103,7 @@ const faqs = [
   },
   {
     q: '¿Qué sucede cuando alcanzo el límite de operaciones?',
-    a: 'Los límites aún no se aplican de forma automática. Para conocer cómo se gestionará esta situación, solicita información comercial y te responderemos.'
+    a: 'En Free, cada uso vuelve a estar disponible 24 horas después. Al agotar Starter o vencer Pro, tu cuenta pasa a Free; puedes solicitar un nuevo plan.'
   },
   {
     q: '¿Puedo contratar la plataforma solo durante la temporada frutícola?',
@@ -174,7 +176,7 @@ export default function PlansSection() {
               </tbody>
             </table>
           </div>
-          <p className="plans-note">* Sujeto a política de uso razonable. Los límites comerciales son referenciales.</p>
+          <p className="plans-note">Los usos son compartidos entre los módulos y se asignan por establecimiento.</p>
         </div>
 
         <div className="services-wrap">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import Header from './Header';
+import { apiService } from '../services/api';
 import './DispatchPdfUploadApp.css';
 
 function DispatchPdfUploadAppContent() {
@@ -54,8 +55,13 @@ function DispatchPdfUploadAppContent() {
     setMessage('');
 
     try {
-      const response = await fetch('/api/dispatch-flatfile/generate-from-pdf/', {
+      if (!await apiService.ensureValidToken()) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
+      const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api');
+      const response = await fetch(`${apiUrl}/dispatch-flatfile/generate-from-pdf/`, {
         method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
         body: formData,
       });
 

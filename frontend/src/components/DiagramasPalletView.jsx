@@ -7,6 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
+import { withPlanUsage } from '../services/planUsageService';
+import { apiService } from '../services/api';
 import DiagramaPallet from './DiagramaPallet';
 import ConfiguracionDiagramaView from './ConfiguracionDiagramaView';
 import './DiagramasPalletView.css';
@@ -69,8 +71,11 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
       setLoading(true);
       setError(null);
 
+      if (!await apiService.ensureValidToken()) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api');
       
       const headers = {
         'Content-Type': 'application/json'
@@ -122,7 +127,7 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
     fetchDiagramData();
   };
 
-  const generatePDF = () => {
+  const generatePDF = async () => {
     if (!diagramData) return;
 
     setGeneratingPDF(true);
@@ -187,7 +192,7 @@ function DiagramasPalletView({ inspection, selectedNumbers = [], onClose }) {
 
       // Guardar archivo
       const filename = `Diagramas_Pallets_${inspData.numero_lote}.pdf`;
-      doc.save(filename);
+      await withPlanUsage('diagram', () => doc.save(filename));
       console.log(`PDF generado: ${filename}`);
     } catch (error) {
       console.error('Error generando PDF:', error);

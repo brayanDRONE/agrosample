@@ -8,10 +8,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User
 from django.db.models import Q, Count
+from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 
-from .models import Establishment, EstablishmentTheme, UserProfile, Inspection
+from .models import Establishment, EstablishmentPlan, EstablishmentTheme, PlanUsage, UserProfile, Inspection
+from .plan_usage import PlanUsageError, assign_plan, finish_usage, plan_summary, reset_free
 from .serializers_admin import (
     EstablishmentDetailSerializer,
     EstablishmentCreateSerializer,
@@ -78,10 +80,11 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         elif hasattr(self.user, 'profile') and self.user.profile.establishment:
             establishment = self.user.profile.establishment
         
-        # Bloquear login si la suscripción está expirada o suspendida
-        # (solo para admins de establecimiento, nunca para superadmins)
+        # La suspensión sigue bloqueando el acceso; los planes vencidos pasan a Free.
         is_superadmin = hasattr(self.user, 'profile') and self.user.profile.is_superadmin()
-        if not is_superadmin and establishment and not establishment.has_active_subscription():
+        if not is_superadmin and establishment and (
+            not establishment.has_active_subscription()
+        ):
             status_msg = {
                 'EXPIRED': 'Suscripción vencida.',
                 'SUSPENDED': 'Cuenta suspendida.',
@@ -92,6 +95,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         
         # Agregar establecimiento si existe
         if establishment:
+            plan = EstablishmentPlan.objects.filter(establishment=establishment).first()
+            if plan:
+                data['user']['plan'] = plan_summary(plan)
+                data['user']['plan_alert'] = plan.alert_message
             data['user']['establishment'] = {
                 'id': establishment.id,
                 'nombre': establishment.planta_fruticola,
@@ -182,6 +189,66 @@ class AdminEstablishmentViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return EstablishmentCreateSerializer
         return EstablishmentDetailSerializer
+
+    @action(detail=False, methods=['get'])
+    def plans(self, request):
+        establishments = self.queryset.select_related('commercial_plan')
+        return Response([
+            {
+                'id': est.pk,
+                'name': est.planta_fruticola,
+                'plan': plan_summary(est.commercial_plan) if hasattr(est, 'commercial_plan') else None,
+            }
+            for est in establishments
+        ])
+
+    @action(detail=True, methods=['post'])
+    def assign_plan(self, request, pk=None):
+        try:
+            plan = assign_plan(self.get_object(), request.data.get('plan'))
+        except ValueError as error:
+            return Response({'message': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(plan_summary(plan))
+
+    @action(detail=True, methods=['post'])
+    def reset_free_usage(self, request, pk=None):
+        establishment = self.get_object()
+        try:
+            reset_free(establishment)
+        except (PlanUsageError, EstablishmentPlan.DoesNotExist) as error:
+            message = str(error) if isinstance(error, PlanUsageError) else 'El establecimiento no tiene plan.'
+            return Response({'message': message}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(plan_summary(establishment.commercial_plan))
+
+    @action(detail=True, methods=['get', 'post'])
+    def pending_usages(self, request, pk=None):
+        establishment = self.get_object()
+        cutoff = timezone.now() - timedelta(hours=1)
+        if request.method == 'GET':
+            usages = PlanUsage.objects.filter(
+                establishment=establishment, status='RESERVED',
+                operation__in=['sdp', 'diagram'], created_at__lt=cutoff,
+            ).select_related('user').order_by('created_at')
+            return Response([
+                {'id': usage.pk, 'operation': usage.operation, 'user': usage.user.username,
+                 'created_at': usage.created_at}
+                for usage in usages
+            ])
+
+        succeeded = request.data.get('succeeded')
+        usage_id = request.data.get('usage_id')
+        if not isinstance(succeeded, bool) or not isinstance(usage_id, int):
+            return Response({'message': 'Indica la reserva y su resultado.'}, status=400)
+        with transaction.atomic():
+            Establishment.objects.select_for_update().get(pk=establishment.pk)
+            usage = PlanUsage.objects.select_for_update().filter(
+                pk=usage_id, establishment=establishment, status='RESERVED',
+                operation__in=['sdp', 'diagram'], created_at__lt=cutoff,
+            ).first()
+            if not usage:
+                return Response({'message': 'La reserva ya no está disponible para revisión.'}, status=409)
+            finish_usage(usage, succeeded)
+        return Response({'success': True})
     
     @action(detail=False, methods=['get'])
     def active(self, request):
@@ -218,31 +285,12 @@ class AdminEstablishmentViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def renew_subscription(self, request, pk=None):
-        """Renueva la suscripción de un establecimiento."""
-        establishment = self.get_object()
-        
-        days = request.data.get('days', 30)
-        
-        if establishment.subscription_expiry:
-            # Si aún no ha expirado, extender desde la fecha actual de expiración
-            if establishment.subscription_expiry >= timezone.now().date():
-                new_expiry = establishment.subscription_expiry + timedelta(days=days)
-            else:
-                # Si ya expiró, comenzar desde hoy
-                new_expiry = timezone.now().date() + timedelta(days=days)
-        else:
-            new_expiry = timezone.now().date() + timedelta(days=days)
-        
-        establishment.subscription_expiry = new_expiry
-        establishment.subscription_status = 'ACTIVE'
-        establishment.save()
-        
-        serializer = self.get_serializer(establishment)
-        return Response({
-            'success': True,
-            'message': f'Suscripción renovada por {days} días',
-            'data': serializer.data
-        })
+        """La renovación anterior no activa ni renueva planes comerciales."""
+        self.get_object()
+        return Response(
+            {'message': 'La renovación por días ya no está disponible. Asigna o renueva un plan.'},
+            status=status.HTTP_410_GONE,
+        )
     
     @action(detail=True, methods=['post'])
     def suspend(self, request, pk=None):
@@ -321,6 +369,7 @@ class CurrentUserViewSet(viewsets.ViewSet):
         
         # Agregar información del establecimiento si existe
         if establishment:
+            plan = EstablishmentPlan.objects.filter(establishment=establishment).first()
             data['establishment'] = {
                 'id': establishment.id,
                 'nombre': establishment.planta_fruticola,
@@ -330,6 +379,7 @@ class CurrentUserViewSet(viewsets.ViewSet):
                 'days_until_expiry': establishment.days_until_expiry(),
                 'sample_label_text': establishment.sample_label_text or 'MUESTRA USDA'
             }
+            data['establishment']['plan'] = plan_summary(plan) if plan else None
             
             # Agregar tema si existe
             if hasattr(establishment, 'theme'):

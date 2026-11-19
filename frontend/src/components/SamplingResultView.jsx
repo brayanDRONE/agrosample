@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
+import { withPlanUsage } from '../services/planUsageService';
 import autoTable from 'jspdf-autotable';
 import DiagramasPalletView from './DiagramasPalletView';
 import OcrImageUpload from './OcrImageUpload';
@@ -410,7 +411,11 @@ function SamplingResultView({ result, onNewInspection }) {
       const selectedPrinter = printers[printerIndex];
 
       // Enviar datos de impresión con los números parseados
-      const response = await fetch(`${PRINT_SERVICE_URL}/print`, {
+      const result = await withPlanUsage('print', async () => {
+        let response;
+        let printResult;
+        try {
+          response = await fetch(`${PRINT_SERVICE_URL}/print`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -426,15 +431,19 @@ function SamplingResultView({ result, onNewInspection }) {
           leyenda: effectiveLabelText,
           label_size: labelSize,
         }),
+         });
+         printResult = await response.json();
+       } catch (error) {
+         const uncertainError = new Error('No se pudo confirmar el resultado de la impresión. El uso se contará; verifica la impresora antes de repetir.');
+         uncertainError.planUsageUncertain = true;
+         throw uncertainError;
+       }
+        if (!response.ok || !printResult.success) {
+          throw new Error(printResult.error || 'Error desconocido al imprimir');
+        }
+        return printResult;
       });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert(result.message);
-      } else {
-        throw new Error(result.error || 'Error desconocido al imprimir');
-      }
+      alert(result.message);
     } catch (error) {
       const errorMsg = error.message.includes('Failed to fetch')
         ? 'No se pudo conectar al servicio de impresión.\n\nAsegúrese de que:\n1. El servicio zebra_print_service.py esté ejecutándose\n2. Esté corriendo en http://127.0.0.1:5000\n3. La impresora Zebra esté conectada'

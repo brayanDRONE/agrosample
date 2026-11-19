@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import apiService from '../../services/api';
+import AdminNavigation, { AdminBrand } from './AdminNavigation';
 import './EstablishmentManagement.css';
 
 function EstablishmentManagement() {
@@ -20,7 +21,7 @@ function EstablishmentManagement() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [selectedEstablishment, setSelectedEstablishment] = useState(null);
-  const [renewDays, setRenewDays] = useState(30);
+  const [renewPlan, setRenewPlan] = useState('FREE');
   const [formData, setFormData] = useState({
     exportadora: '',
     planta_fruticola: '',
@@ -46,14 +47,23 @@ function EstablishmentManagement() {
       setLoading(true);
       setError(null);
 
-      let data;
-      if (filterType === 'all') {
-        data = await apiService.getAllEstablishments();
-      } else {
-        data = await apiService.getEstablishmentsByFilter(filterType);
-      }
-
-      setEstablishments(data);
+      const [data, plans] = await Promise.all([
+        apiService.getAllEstablishments(),
+        apiService.getEstablishmentPlans()
+      ]);
+      const combined = data.map((est) => ({
+        ...est,
+        plan: plans.find((item) => item.id === est.id)?.plan || null
+      }));
+      setEstablishments(combined.filter((est) => {
+        if (filterType === 'active') return est.is_active && est.subscription_status !== 'SUSPENDED';
+        if (filterType === 'expiring_soon') {
+          const expires = est.plan?.expires_at && new Date(est.plan.expires_at);
+          return expires && expires - Date.now() <= 7 * 86400000 && expires > Date.now();
+        }
+        if (filterType === 'expired') return !est.plan;
+        return true;
+      }));
     } catch (err) {
       console.error('Error loading establishments:', err);
       setError('Error al cargar los establecimientos');
@@ -97,9 +107,10 @@ function EstablishmentManagement() {
       setShowCreateModal(false);
       resetForm();
       loadEstablishments();
+      alert('Establecimiento creado. Asigna un plan para habilitar sus módulos.');
     } catch (err) {
       console.error('Error creating establishment:', err);
-      alert('Error al crear el establecimiento');
+      alert(err.response?.data?.admin_password?.join(' ') || err.response?.data?.admin_username?.join(' ') || 'Error al crear el establecimiento');
     }
   };
 
@@ -136,21 +147,22 @@ function EstablishmentManagement() {
       loadEstablishments();
     } catch (err) {
       console.error('Error updating establishment:', err);
-      alert('Error al actualizar el establecimiento');
+      alert(err.response?.data?.admin_password?.join(' ') || err.response?.data?.admin_username?.join(' ') || 'Error al actualizar el establecimiento');
     }
   };
 
   const handleRenewSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiService.renewSubscription(selectedEstablishment.id, renewDays);
+      if (!window.confirm(`¿Asignar ${renewPlan}? Se cancelarán las operaciones pendientes.`)) return;
+      await apiService.assignEstablishmentPlan(selectedEstablishment.id, renewPlan);
       setShowRenewModal(false);
       setSelectedEstablishment(null);
-      setRenewDays(30);
+      setRenewPlan('FREE');
       loadEstablishments();
     } catch (err) {
       console.error('Error renewing subscription:', err);
-      alert('Error al renovar la suscripción');
+      alert(err.response?.data?.message || 'Error al asignar el plan');
     }
   };
 
@@ -208,6 +220,7 @@ function EstablishmentManagement() {
 
   const openRenewModal = (establishment) => {
     setSelectedEstablishment(establishment);
+    setRenewPlan(establishment.plan?.plan || 'FREE');
     setShowRenewModal(true);
   };
 
@@ -233,23 +246,17 @@ function EstablishmentManagement() {
     if (establishment.subscription_status === 'SUSPENDED') {
       return <span className="badge badge-suspended">Suspendido</span>;
     }
-    const isExpired =
-      establishment.subscription_status === 'EXPIRED' ||
-      (establishment.days_until_expiry !== null && establishment.days_until_expiry <= 0);
-    if (isExpired) {
-      return <span className="badge badge-expired">Expirado</span>;
-    }
-    if (establishment.is_expiring_soon) {
-      return <span className="badge badge-expiring">Por vencer</span>;
-    }
+    if (!establishment.is_active) return <span className="badge badge-suspended">Inactivo</span>;
     return <span className="badge badge-active">Activo</span>;
   };
 
   return (
     <div className="establishment-management">
+      <AdminNavigation current="establishments" />
       {/* Header */}
       <header className="page-header">
         <div className="header-content">
+          <AdminBrand />
           <div className="header-left">
             <button onClick={() => navigate('/admin')} className="btn-back">
               ← Volver al Dashboard
@@ -291,7 +298,7 @@ function EstablishmentManagement() {
           className={`filter-btn ${filterType === 'expired' ? 'active' : ''}`}
           onClick={() => handleFilterChange('expired')}
         >
-          Expirados
+          Sin plan
         </button>
       </div>
 
@@ -329,7 +336,7 @@ function EstablishmentManagement() {
                   <th>Usuario Admin</th>
                   <th>Teléfono</th>
                   <th>Estado</th>
-                  <th>Vence en</th>
+                  <th>Plan</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -349,13 +356,7 @@ function EstablishmentManagement() {
                     <td>{est.phone || '-'}</td>
                     <td>{getStatusBadge(est)}</td>
                     <td>
-                      {est.days_until_expiry !== null && est.days_until_expiry > 0 ? (
-                        <span className={est.is_expiring_soon ? 'days-warning' : 'days-normal'}>
-                          {est.days_until_expiry} días
-                        </span>
-                      ) : (
-                        <span className="days-expired">Expirado</span>
-                      )}
+                      {est.plan ? `${est.plan.plan}${est.plan.expires_at ? ` · vence ${est.plan.expires_at.slice(0, 10)}` : ''}` : 'Sin asignar'}
                     </td>
                     <td>
                       <div className="action-buttons">
@@ -371,7 +372,7 @@ function EstablishmentManagement() {
                         <button
                           onClick={() => openRenewModal(est)}
                           className="btn-icon btn-success"
-                          title="Renovar Suscripción"
+                          title="Asignar o renovar plan"
                         >
                           <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
@@ -386,7 +387,7 @@ function EstablishmentManagement() {
                             <path fillRule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clipRule="evenodd" />
                           </svg>
                         </button>
-                        {est.subscription_status === 'ACTIVE' ? (
+                        {est.subscription_status !== 'SUSPENDED' ? (
                           <button
                             onClick={() => handleSuspend(est.id)}
                             className="btn-icon btn-warning"
@@ -505,16 +506,7 @@ function EstablishmentManagement() {
                     required
                   />
                 </div>
-                <div className="form-group">
-                  <label>Días de Suscripción *</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={formData.subscription_days}
-                    onChange={(e) => setFormData({ ...formData, subscription_days: parseInt(e.target.value) })}
-                    required
-                  />
-                </div>
+                <p>Después de crear el establecimiento, asígnale un plan desde la lista.</p>
               </div>
 
               <div className="form-section-title">Credenciales de Acceso al Sistema</div>
@@ -706,27 +698,25 @@ function EstablishmentManagement() {
         <div className="modal-overlay" onClick={() => setShowRenewModal(false)}>
           <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Renovar Suscripción</h2>
+              <h2>Asignar o renovar plan</h2>
               <button onClick={() => setShowRenewModal(false)} className="btn-close">×</button>
             </div>
             <form onSubmit={handleRenewSubmit} className="modal-body">
-              <p>Renovar suscripción de: <strong>{selectedEstablishment.nombre}</strong></p>
+              <p>Establecimiento: <strong>{selectedEstablishment.planta_fruticola}</strong></p>
               <div className="form-group">
-                <label>Días a agregar</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={renewDays}
-                  onChange={(e) => setRenewDays(parseInt(e.target.value))}
-                  required
-                />
+                <label>Plan</label>
+                <select value={renewPlan} onChange={(e) => setRenewPlan(e.target.value)}>
+                  <option value="FREE">Free</option>
+                  <option value="STARTER">Starter</option>
+                  <option value="PRO">Pro</option>
+                </select>
               </div>
               <div className="modal-footer">
                 <button type="button" onClick={() => setShowRenewModal(false)} className="btn btn-secondary">
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Renovar
+                  Asignar
                 </button>
               </div>
             </form>

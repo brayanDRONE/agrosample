@@ -1,0 +1,41 @@
+.admin-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 110;
+  width: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, #005640, #003a2c);
+}
+
+.admin-sidebar-brand {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 72px;
+  border-bottom: 1px solid rgba(255, 255, 255, .16);
+  color: #d7ffe6;
+}
+
+.admin-sidebar-brand svg { width: 29px; height: 29px; }
+.admin-sidebar-links { display: grid; gap: 8px; padding-top: 20px; }
+.admin-sidebar-link {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 9px;
+  color: #e2f5e9;
+}
+.admin-sidebar-link:hover,
+.admin-sidebar-link.active { background: #00a65c; color: white; }
+.admin-sidebar-link svg { width: 21px; height: 21px; }
+.admin-brand { display: flex; align-items: center; gap: 6px; color: #15983a; font-size: 19px; font-weight: 700; white-space: nowrap; }
+.admin-brand svg { width: 29px; height: 29px; }
+.admin-brand strong { color: #14251e; }
+
+@media (max-width: 640px) {
+  .admin-sidebar { width: 48px; }
+  .admin-sidebar-link { width: 38px; height: 38px; }
+}

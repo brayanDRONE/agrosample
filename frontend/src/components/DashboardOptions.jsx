@@ -3,7 +3,10 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import Header from './Header';
 import muestreoImg from '../images/dash-muestreo.jpg';
 import planillaImg from '../images/dash-planilla.jpg';
@@ -73,6 +76,18 @@ const OPTIONS = [
 
 function DashboardOptionsContent() {
   const navigate = useNavigate();
+  const { user, isSuperAdmin } = useAuth();
+  const [plan, setPlan] = useState(null);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [planError, setPlanError] = useState('');
+
+  useEffect(() => {
+    if (isSuperAdmin() || !user?.establishment) return;
+    apiService.getAccountPlan().then(setPlan).catch((error) => {
+      console.error('Error al consultar el plan:', error);
+      setPlanError('No se pudo consultar el plan.');
+    }).finally(() => setPlanLoading(false));
+  }, [user]);
 
   return (
     <div className="app dashboard-app">
@@ -84,6 +99,13 @@ function DashboardOptionsContent() {
             <div className="dashboard-header">
               <h1>¿Qué deseas realizar hoy?</h1>
               <p>Selecciona una solución para comenzar.</p>
+              {!isSuperAdmin() && (
+                <p role="status">
+                  {planError || (planLoading ? 'Consultando plan...' : plan
+                    ? `Plan ${plan.plan}: ${plan.remaining === null ? 'usos ilimitados' : `${plan.remaining} de ${plan.limit} usos disponibles`}`
+                    : 'Sin plan asignado. Contacta al administrador.')}
+                </p>
+              )}
             </div>
 
             <div className="options-grid">

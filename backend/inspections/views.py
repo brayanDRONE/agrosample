@@ -26,6 +26,7 @@ from .utils import (
 )
 from .dispatch_flatfile import build_dispatch_flat_file
 from .planilla_parser import parse_planilla_pdf, map_planilla_to_multipuerto
+from .plan_usage import _is_superadmin, establishment_for_user
 
 
 def parse_manual_sample_numbers(raw_numbers):
@@ -53,47 +54,73 @@ def parse_manual_sample_numbers(raw_numbers):
     return sorted(set(parsed))
 
 
-class AllowAnyReadPermission(permissions.BasePermission):
-    """
-    Permite acceso anónimo para lectura (GET).
-    Requiere autenticación para escritura (POST, PUT, DELETE).
-    """
+class ActiveEstablishmentPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        # Permitir GET sin autenticación
-        if request.method == 'GET':
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if _is_superadmin(request.user):
             return True
-        # Permitir POST sin autenticación también (para usuarios públicos generando muestreos)
-        if request.method == 'POST':
-            return True
-        # Para otras operaciones, requerir autenticación
-        return request.user and request.user.is_authenticated
+        establishment = establishment_for_user(request.user)
+        return bool(establishment and establishment.has_active_subscription())
+
+
+def visible_inspections(user):
+    if _is_superadmin(user):
+        return Inspection.objects.all()
+    establishment = establishment_for_user(user)
+    if not establishment:
+        return Inspection.objects.none()
+    return Inspection.objects.filter(establishment=establishment)
 
 
 class EstablishmentViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet para consultar establecimientos.
-    Solo lectura desde el frontend. Acceso público.
+    Solo lectura; los usuarios ven su propio establecimiento.
     """
-    queryset = Establishment.objects.filter(is_active=True)
     serializer_class = EstablishmentSerializer
-    permission_classes = [AllowAnyReadPermission]
+    permission_classes = [ActiveEstablishmentPermission]
+
+    def get_queryset(self):
+        queryset = Establishment.objects.filter(is_active=True)
+        if _is_superadmin(self.request.user):
+            return queryset
+        return queryset.filter(pk=establishment_for_user(self.request.user).pk)
 
 
 class InspectionViewSet(viewsets.ModelViewSet):
     """
     ViewSet para gestionar inspecciones.
-    Acceso público.
+    Los usuarios acceden únicamente a las inspecciones de su establecimiento.
     """
-    queryset = Inspection.objects.all()
     serializer_class = InspectionSerializer
-    permission_classes = [AllowAnyReadPermission]
+    permission_classes = [ActiveEstablishmentPermission]
+
+    def get_queryset(self):
+        return visible_inspections(self.request.user)
+
+    def perform_create(self, serializer):
+        self._save_inspection(serializer)
+
+    def perform_update(self, serializer):
+        self._save_inspection(serializer)
+
+    def _save_inspection(self, serializer):
+        if _is_superadmin(self.request.user):
+            serializer.save()
+            return
+        establishment = establishment_for_user(self.request.user)
+        requested = serializer.validated_data.get('establishment', establishment)
+        if requested != establishment:
+            raise serializers.ValidationError({'establishment': 'No puede asignar otro establecimiento.'})
+        serializer.save(establishment=establishment)
 
 
 class DispatchFlatFileViewSet(viewsets.ViewSet):
     """
     ViewSet independiente para generar archivo plano de despacho.
     """
-    permission_classes = [AllowAnyReadPermission]
+    permission_classes = [ActiveEstablishmentPermission]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     @action(detail=False, methods=['post'], url_path='generate')
@@ -194,19 +221,21 @@ class DispatchFlatFileViewSet(viewsets.ViewSet):
 class SamplingResultViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet para consultar resultados de muestreo.
-    Solo lectura. Acceso público.
+    Solo lectura para los resultados del establecimiento del usuario.
     """
-    queryset = SamplingResult.objects.all()
     serializer_class = SamplingResultSerializer
-    permission_classes = [AllowAnyReadPermission]
+    permission_classes = [ActiveEstablishmentPermission]
+
+    def get_queryset(self):
+        return SamplingResult.objects.filter(inspection__in=visible_inspections(self.request.user))
 
 
 class MuestreoViewSet(viewsets.ViewSet):
     """
     ViewSet personalizado para generar muestreos.
-    Acceso público para usuarios anónimos.
+    Los lotes se asocian al establecimiento del usuario autenticado.
     """
-    permission_classes = [AllowAnyReadPermission]
+    permission_classes = [ActiveEstablishmentPermission]
     
     @action(detail=False, methods=['post'], url_path='generar')
     def generar_muestreo(self, request):
@@ -264,7 +293,7 @@ class MuestreoViewSet(viewsets.ViewSet):
             inspection = Inspection.objects.create(
                 exportador=data.get('exportador') or 'N/A',
                 establecimiento_nombre=data.get('establecimiento_nombre') or 'N/A',
-                establishment=None,
+                establishment=establishment_for_user(request.user),
                 inspector_sag=data.get('inspector_sag') or 'N/A',
                 contraparte_sag=data.get('contraparte_sag') or 'N/A',
                 especie=data.get('especie') or 'N/A',
@@ -332,8 +361,8 @@ class MuestreoViewSet(viewsets.ViewSet):
             "message": "Configuraciones guardadas exitosamente"
         }
         """
+        inspection = get_object_or_404(visible_inspections(request.user), id=inspection_id)
         try:
-            inspection = get_object_or_404(Inspection, id=inspection_id)
             
             configurations = request.data.get('configurations', [])
             manual_sample_numbers = parse_manual_sample_numbers(
@@ -467,9 +496,8 @@ class MuestreoViewSet(viewsets.ViewSet):
             }
         }
         """
+        inspection = get_object_or_404(visible_inspections(request.user), id=inspection_id)
         try:
-            # Obtener inspección
-            inspection = get_object_or_404(Inspection, id=inspection_id)
             
             # Verificar que tenga sampling_result
             if not hasattr(inspection, 'sampling_result'):
@@ -588,12 +616,16 @@ class MuestreoViewSet(viewsets.ViewSet):
 
 class ThemeViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet público para que los establecimientos obtengan su tema.
-    Solo lectura. Acceso público.
+    ViewSet de solo lectura para el tema del establecimiento.
     """
-    queryset = EstablishmentTheme.objects.all()
     serializer_class = EstablishmentThemeSerializer
-    permission_classes = [AllowAnyReadPermission]
+    permission_classes = [ActiveEstablishmentPermission]
+
+    def get_queryset(self):
+        queryset = EstablishmentTheme.objects.all()
+        if _is_superadmin(self.request.user):
+            return queryset
+        return queryset.filter(establishment=establishment_for_user(self.request.user))
     
     @action(detail=False, methods=['get'], url_path='my-theme')
     def my_theme(self, request):
@@ -608,9 +640,7 @@ class ThemeViewSet(viewsets.ReadOnlyModelViewSet):
             }, status=status.HTTP_401_UNAUTHORIZED)
         
         # Obtener establecimiento del usuario
-        establishment = None
-        if hasattr(request.user, 'establishment_admin'):
-            establishment = request.user.establishment_admin
+        establishment = establishment_for_user(request.user)
         
         if not establishment:
             return Response({

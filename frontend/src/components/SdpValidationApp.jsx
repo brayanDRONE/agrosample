@@ -6,6 +6,7 @@ import { useRef, useState } from 'react';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import Header from './Header';
 import { validateSdpExcel } from '../services/sdpValidationService';
+import { apiService } from '../services/api';
 import './SdpValidationApp.css';
 
 function SdpValidationAppContent() {
@@ -48,6 +49,23 @@ function SdpValidationAppContent() {
       setError(requestError.message || 'No se pudo procesar el archivo Excel');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    setError(null);
+    try {
+      const blob = await apiService.downloadPrivatePdf(report.pdf_url);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'validacion_sdp.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (downloadError) {
+      setError(downloadError.response?.data?.message || downloadError.message || 'No se pudo descargar el PDF');
     }
   };
 
@@ -109,9 +127,9 @@ function SdpValidationAppContent() {
                     <button type="button" className="sdp-new-validation" onClick={handleNewValidation}>
                       Nueva validación
                     </button>
-                    <a className="sdp-download" href={report.pdf_url} target="_blank" rel="noreferrer" download>
+                    <button type="button" className="sdp-download" onClick={handleDownload}>
                       Descargar PDF
-                    </a>
+                    </button>
                   </div>
                 </div>
                 <div className="sdp-summary-grid">

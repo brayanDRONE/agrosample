@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { apiService } from '../services/api';
 import DiagramaPalletCard from './DiagramaPalletCard';
 import DiagramaPallet from './DiagramaPallet';
 import ConfiguracionDiagramaView from './ConfiguracionDiagramaView';
@@ -34,8 +35,11 @@ function DiagramaPalletCardsView({ inspection, onClose }) {
       setLoading(true);
       setError(null);
 
+      if (!await apiService.ensureValidToken()) {
+        throw new Error('Su sesión ha expirado. Por favor, inicie sesión nuevamente.');
+      }
       const token = localStorage.getItem('access_token');
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api');
       
       const headers = {
         'Content-Type': 'application/json'

@@ -1,72 +1,20 @@
-# Guía de Despliegue en Render
+# Despliegue en Render
 
-## Paso 1: Crear cuenta en Render
-1. Ve a https://render.com
-2. Haz clic en "Get Started" o "Sign Up"
-3. Puedes registrarte con tu cuenta de GitHub (recomendado)
+Seguir primero [Preparación de despliegue](./DEPLOYMENT.md). No habilitar un
+despliegue automático antes de verificar respaldos y migraciones.
 
-## Paso 2: Conectar el repositorio
-1. En el dashboard de Render, haz clic en "New +"
-2. Selecciona "Blueprint" (Blueprint Instance)
-3. Conecta tu cuenta de GitHub si no lo has hecho
-4. Busca y selecciona el repositorio `proyecto_usda`
-5. Haz clic en "Connect"
+El archivo `render.yaml` describe un servicio web y un worker independiente
+para informes China. El worker necesita un plan compatible, Chromium y acceso a
+la **misma** base PostgreSQL que el servicio web. `DATABASE_URL` se configura
+manualmente en ambos servicios; el archivo no crea ni conecta la base por sí
+solo. Las credenciales de las fuentes externas también se configuran mediante
+variables privadas del proveedor.
 
-## Paso 3: Configurar variables de entorno
-Render leerá el archivo `render.yaml` automáticamente, pero necesitas configurar estas variables manualmente:
+Revisar los planes y las opciones de almacenamiento persistente del proveedor:
+el sistema de archivos efímero no conserva medios históricos tras reinicios o
+despliegues. El frontend requiere `VITE_API_URL` y debe compilarse de nuevo
+cuando cambie esa variable.
 
-1. Ve a tu servicio "usda-backend"
-2. En el menú lateral, haz clic en "Environment"
-3. Agrega estas variables:
-
-```
-ALLOWED_HOSTS=tu-app.onrender.com
-CSRF_TRUSTED_ORIGINS=https://tu-app.onrender.com
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-```
-
-**Nota:** Render generará automáticamente:
-- `SECRET_KEY` (valor aleatorio seguro)
-- `DATABASE_URL` (desde la base de datos PostgreSQL creada)
-
-## Paso 4: Deploy
-1. Render iniciará el despliegue automáticamente
-2. El proceso toma 3-5 minutos
-3. Verás los logs en tiempo real
-
-## Paso 5: Crear superusuario
-Una vez desplegado:
-
-1. En el dashboard de Render, ve a tu servicio "usda-backend"
-2. En el menú superior, haz clic en "Shell"
-3. Ejecuta:
-```bash
-python manage.py createsuperuser
-```
-4. Ingresa:
-   - Username: `admin`
-   - Email: `admin@usda.cl`
-   - Password: `admin123` (o la que prefieras)
-
-## Paso 6: Acceder al admin
-1. Tu URL será algo como: `https://usda-backend-xxxx.onrender.com`
-2. Ve a: `https://usda-backend-xxxx.onrender.com/admin`
-3. Inicia sesión con las credenciales creadas
-
-## Ventajas de Render sobre Railway
-- ✅ Configuración más simple (render.yaml)
-- ✅ UI más intuitiva
-- ✅ PostgreSQL incluido en plan free
-- ✅ 750 horas gratis al mes
-- ✅ Deploy automático desde GitHub
-- ✅ Shell incluido para comandos Django
-
-## Notas importantes
-- El plan free de Render "duerme" después de 15 minutos de inactividad
-- La primera petición después de dormir toma ~30 segundos
-- Para producción real, considera el plan "Starter" ($7/mes)
-
-## Frontend (siguiente paso)
-Una vez funcione el backend, desplegaremos el frontend en:
-- **Vercel** (recomendado) - Gratis, optimizado para Vite/React
-- O también en Render (Web Service estático)
+El arranque del servicio no aplica migraciones. Tras restaurar y verificar el
+respaldo en un entorno aislado, aplicar las migraciones de forma controlada y
+verificar el backend y el worker antes de habilitar tráfico real.

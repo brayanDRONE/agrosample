@@ -112,7 +112,7 @@ function CherryChinaValidationContent() {
       .then((accountQuota) => {
         if (active) setQuota(accountQuota);
       })
-      .catch(() => {});
+      .catch((quotaError) => { if (active) setError(quotaError.message || 'No se pudo consultar el plan.'); });
     return () => { active = false; };
   }, []);
 
@@ -259,9 +259,11 @@ function CherryChinaValidationContent() {
 
             {quota && (
               <p className="china-quota" aria-live="polite">
-                {quota.unlimited
-                  ? 'Acceso ilimitado · consultas sin límite mensual'
-                  : `${quota.plan === 'CUSTOM' ? 'Cupo asignado' : 'Plan gratuito'} · ${quota.remaining} de ${quota.limit} informes disponibles este mes`}
+                {quota.plan === 'UNASSIGNED'
+                  ? 'Sin plan asignado. Contacta al administrador.'
+                  : quota.unlimited
+                    ? `Plan ${quota.plan} · usos ilimitados`
+                    : `Plan ${quota.plan} · ${quota.remaining} de ${quota.limit} usos disponibles`}
               </p>
             )}
 

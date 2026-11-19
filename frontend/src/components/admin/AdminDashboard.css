@@ -724,3 +724,128 @@
   font-size: 16px;
   margin: 0;
 }
+
+.admin-dashboard {
+  margin-left: 58px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f1fbf5, #ddf5ea);
+  color: #15382b;
+}
+
+.admin-dashboard .dashboard-header {
+  position: relative;
+  padding: 10px 0;
+  border: 0;
+  border-radius: 0 0 14px 0;
+  box-shadow: 0 4px 18px rgba(8, 77, 50, .09);
+}
+
+.admin-dashboard .header-content {
+  max-width: none;
+  padding: 0 32px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 24px;
+}
+
+.admin-dashboard .admin-brand {
+  padding-right: 24px;
+  border-right: 1px solid #d5e0dc;
+}
+
+.admin-dashboard .header-left { display: block; flex: 1; }
+.admin-dashboard .header-left h1 { font-size: 24px; color: #14251e; margin: 0; }
+.admin-dashboard .header-left p { margin: 2px 0 0; color: #64748b; font-size: 13px; }
+.admin-dashboard .header-right { margin-left: auto; gap: 20px; }
+.admin-dashboard .user-badge { color: #164632; font-weight: 600; white-space: nowrap; }
+.admin-dashboard .user-badge::before {
+  content: '●';
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #dff8e9;
+  color: #15925a;
+}
+.admin-dashboard .header-right .btn-secondary {
+  background: white;
+  border: 1px solid #176345;
+  color: #176345;
+}
+.admin-dashboard .dashboard-main { padding: 22px 0 32px; }
+.admin-dashboard .dashboard-container { max-width: 1400px; padding: 0 32px; }
+.admin-dashboard .dashboard-tabs { margin-bottom: 22px; border-bottom: 1px solid #d2eade; }
+.admin-dashboard .tab-button { color: #08683b; padding: 10px 16px 10px 4px; cursor: default; }
+.admin-dashboard .tab-button.active { color: #08683b; border-bottom-color: #05aa61; }
+.admin-dashboard .management-section h2 { color: #143b2b; margin: 0 0 16px; font-size: 23px; }
+.admin-dashboard .management-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.admin-dashboard .management-card {
+  border: 0;
+  border-left: 4px solid #42d66e;
+  padding: 17px 20px;
+  box-shadow: 0 4px 12px rgba(19, 84, 55, .1);
+}
+.admin-dashboard .management-card::after { content: '›'; color: #067238; font-size: 30px; margin-left: auto; }
+.admin-dashboard .management-card .card-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #e2f8eb;
+  color: #087133;
+  font-size: 32px;
+  line-height: 1;
+}
+.admin-dashboard .management-card .card-icon svg { width: 26px; height: 26px; }
+.admin-dashboard .card-content h3 { color: #14251e; margin-bottom: 4px; }
+.admin-dashboard .card-content p { color: #64748b; }
+.admin-dashboard .establishments-list-section { margin-top: 30px; }
+.admin-dashboard .establishments-list-section h3 { border: 0; padding: 0; color: #15382b; }
+.admin-dashboard .establishments-table-wrapper,
+.admin-dashboard .user-quotas-section {
+  background: #fff;
+  border: 1px solid #e1efe6;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(19, 84, 55, .09);
+}
+.admin-dashboard .establishments-table-wrapper { padding: 10px; }
+.admin-dashboard .establishments-table thead,
+.admin-dashboard .user-quotas-table thead { background: #e3f5e9; border: 0; }
+.admin-dashboard .establishments-table th,
+.admin-dashboard .user-quotas-table th { padding: 11px 14px; color: #214437; font-size: 12px; }
+.admin-dashboard .establishments-table td,
+.admin-dashboard .user-quotas-table td { padding: 10px 14px; }
+.admin-dashboard .status-badge { border-radius: 999px; padding: 5px 12px; }
+.admin-dashboard .status-badge::before { display: inline-block; margin-right: 6px; font-weight: 700; }
+.admin-dashboard .status-badge.status-active::before { content: '✓'; }
+.admin-dashboard .status-badge.status-expired::before { content: '×'; }
+.admin-dashboard .status-badge.status-suspended::before { content: '–'; }
+.admin-dashboard .admin-status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #16b950;
+}
+.admin-dashboard .status-inactive .admin-status-dot { background: #e64949; }
+.admin-dashboard .user-quotas-section { margin-top: 24px; padding: 18px 16px; }
+.admin-dashboard .user-quotas-section .section-header { margin-bottom: 16px; }
+.admin-dashboard .user-quotas-section .section-header h3 { color: #15382b; }
+.admin-dashboard .user-quotas-section .section-header p { color: #64748b; }
+.admin-dashboard .btn-primary { background: #087433; color: #fff; }
+.admin-dashboard .btn-primary:hover { background: #05612b; box-shadow: 0 4px 10px rgba(8, 116, 51, .2); }
+
+@media (max-width: 640px) {
+  .admin-dashboard { margin-left: 48px; }
+  .admin-dashboard .header-content, .admin-dashboard .dashboard-container { padding-left: 16px; padding-right: 16px; }
+  .admin-dashboard .header-content { gap: 12px; }
+  .admin-dashboard .admin-brand { border: 0; padding: 0; }
+  .admin-dashboard .header-left { flex-basis: 100%; order: 2; }
+  .admin-dashboard .header-right { gap: 8px; }
+  .admin-dashboard .header-left h1 { font-size: 20px; }
+  .admin-dashboard .management-grid { grid-template-columns: 1fr; }
+}

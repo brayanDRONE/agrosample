@@ -48,6 +48,10 @@ class CherryChinaReport(models.Model):
         on_delete=models.CASCADE,
         related_name='cherry_china_reports',
     )
+    plan_usage = models.OneToOneField(
+        'inspections.PlanUsage', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='cherry_china_report',
+    )
     csg = models.CharField(max_length=30, blank=True)
     csgs = models.JSONField(default=list, blank=True)
     csp = models.CharField(max_length=30, blank=True)

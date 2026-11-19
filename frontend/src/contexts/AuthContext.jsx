@@ -88,7 +88,15 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('access_token', response.access);
       localStorage.setItem('refresh_token', response.refresh);
       localStorage.setItem('login_at', String(Date.now()));
-      
+      if (response.user?.plan_alert) {
+        window.alert(response.user.plan_alert);
+        try {
+          await apiService.acknowledgePlanAlert(response.user.plan_alert);
+        } catch (err) {
+          console.error('No se pudo confirmar el aviso del plan:', err);
+        }
+      }
+
       // Cargar datos completos del usuario
       const userData = await apiService.getCurrentUser();
       setUser(userData);

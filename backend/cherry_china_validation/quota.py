@@ -1,61 +1,29 @@
 from django.db import transaction
-from django.utils import timezone
 
-from .models import CherryChinaPlan, CherryChinaReport
-
-
-FREE_REPORT_LIMIT = 5
-COUNTED_STATUSES = ['QUEUED', 'PROCESSING', 'COMPLETED']
-
-
-class ReportQuotaExceeded(Exception):
-    pass
-
-
-def _month_usage(user):
-    today = timezone.now().date()
-    return CherryChinaReport.objects.filter(
-        user=user,
-        created_at__year=today.year,
-        created_at__month=today.month,
-        status__in=COUNTED_STATUSES,
-    ).count()
+from inspections.models import EstablishmentPlan
+from inspections.plan_usage import _is_superadmin, establishment_for_user, plan_summary, reserve_usage
+from .models import CherryChinaReport
 
 
 def get_account_quota(user):
-    plan, _ = CherryChinaPlan.objects.get_or_create(user=user)
-    unlimited = plan.has_unlimited_usage()
-    limit = (
-        None if unlimited else
-        plan.monthly_report_limit if plan.monthly_report_limit is not None else
-        FREE_REPORT_LIMIT
-    )
-    used = _month_usage(user)
-    return {
-        'plan': 'PAID' if unlimited and plan.monthly_report_limit is None else (
-            'CUSTOM' if plan.monthly_report_limit is not None else 'FREE'
-        ),
-        'unlimited': unlimited,
-        'limit': limit,
-        'used': used,
-        'remaining': None if unlimited else max(limit - used, 0),
-    }
+    if _is_superadmin(user):
+        return {'plan': 'ADMIN', 'unlimited': True, 'limit': None, 'used': 0, 'remaining': None}
+    establishment = establishment_for_user(user)
+    if not establishment:
+        return {'plan': 'UNASSIGNED', 'unlimited': False, 'limit': 0, 'used': 0, 'remaining': 0}
+    plan = EstablishmentPlan.objects.filter(establishment=establishment).first()
+    if not plan:
+        return {'plan': 'UNASSIGNED', 'unlimited': False, 'limit': 0, 'used': 0, 'remaining': 0}
+    summary = plan_summary(plan)
+    return {**summary, 'unlimited': summary['limit'] is None}
 
 
 @transaction.atomic
 def reserve_report(user, csg, csp, csgs=None, csps=None):
-    CherryChinaPlan.objects.get_or_create(user=user)
-    plan = CherryChinaPlan.objects.select_for_update().get(user=user)
-    used = _month_usage(user)
-    limit = (
-        plan.monthly_report_limit
-        if plan.monthly_report_limit is not None
-        else FREE_REPORT_LIMIT
-    )
-    if not plan.has_unlimited_usage() and used >= limit:
-        raise ReportQuotaExceeded
+    usage = reserve_usage(user, 'china')
     return CherryChinaReport.objects.create(
         user=user,
+        plan_usage=usage,
         csg=csg,
         csgs=csgs or ([csg] if csg else []),
         csp=csp,

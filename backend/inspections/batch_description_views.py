@@ -15,6 +15,8 @@ from pathlib import Path
 from io import BytesIO
 
 from .batch_description_utils import INSFileParser, validate_ins_file
+from .models import PlanBatchArtifact
+from .plan_usage import PlanUsageError, finish_usage, reserve_usage
 
 # Configurar logger
 logger = logging.getLogger(__name__)
@@ -333,6 +335,8 @@ def save_batch_description(request):
             "errors": []
         }
     """
+    usage = None
+    artifact_created = False
     try:
         data = request.data
         
@@ -364,6 +368,11 @@ def save_batch_description(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        try:
+            usage = reserve_usage(request.user, 'batch_pdf')
+        except PlanUsageError as error:
+            return Response({'success': False, 'message': str(error)}, status=status.HTTP_403_FORBIDDEN)
+
         # Generar PDF usando reportlab
         try:
             from reportlab.lib import colors
@@ -559,19 +568,6 @@ def save_batch_description(request):
             logger.info(f"[SAVE_PDF] Guardando archivo: {filename}")
             print(f"[SAVE_PDF] Guardando archivo: {filename}")
             
-            # Guardar en media usando filesystem directo
-            file_path = f"batch_descriptions/{filename}"
-            
-            # Crear subdirectorio si no existe
-            media_root = Path(settings.MEDIA_ROOT)
-            batch_dir = media_root / 'batch_descriptions'
-            batch_dir.mkdir(parents=True, exist_ok=True)
-            
-            logger.info(f"[SAVE_PDF] Ruta del archivo: {batch_dir}")
-            print(f"[SAVE_PDF] Ruta del archivo: {batch_dir}")
-            
-            # Guardar el archivo directamente en el sistema de archivos
-            full_path = batch_dir / filename
             pdf_content = pdf_buffer.getvalue()
             pdf_size = len(pdf_content)
             
@@ -590,26 +586,11 @@ def save_batch_description(request):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
             
-            with open(full_path, 'wb') as f:
-                f.write(pdf_content)
-            
-            # Verificar que se guardó correctamente
-            file_size = full_path.stat().st_size
-            logger.info(f"[SAVE_PDF] Archivo guardado en: {full_path}")
-            logger.info(f"[SAVE_PDF] Tamaño del archivo en disco: {file_size} bytes")
-            print(f"[SAVE_PDF] Archivo guardado en: {full_path}")
-            print(f"[SAVE_PDF] Tamaño del archivo en disco: {file_size} bytes")
-            
-            # Construir URL absoluta para el PDF
-            relative_url = f"{settings.MEDIA_URL}{file_path}"
-            pdf_url = request.build_absolute_uri(relative_url)
-            
-            logger.info(f"[SAVE_PDF] URL relativa: {relative_url}")
-            print(f"[SAVE_PDF] URL relativa: {relative_url}")
-            logger.info(f"[SAVE_PDF] URL absoluta generada: {pdf_url}")
-            print(f"[SAVE_PDF] URL absoluta generada: {pdf_url}")
-            print(f"[SAVE_PDF] MEDIA_URL: {settings.MEDIA_URL}")
-            print(f"[SAVE_PDF] MEDIA_ROOT: {settings.MEDIA_ROOT}")
+            artifact = PlanBatchArtifact.objects.create(
+                user=request.user, usage=usage, filename=filename, data=pdf_content,
+            )
+            artifact_created = True
+            pdf_url = request.build_absolute_uri(f'/api/plans/batch-pdf/{artifact.pk}/')
             
             return Response(
                 {
@@ -652,3 +633,6 @@ def save_batch_description(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    finally:
+        if usage and not artifact_created:
+            finish_usage(usage, False)
