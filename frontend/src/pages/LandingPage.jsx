@@ -6,6 +6,7 @@ import InfoSection, { CtaSection } from '../components/landing/InfoSection';
 import PlansSection from '../components/landing/PlansSection';
 import ContactSection from '../components/landing/ContactSection';
 import Footer from '../components/landing/Footer';
+import WhatsAppButton from '../components/landing/WhatsAppButton';
 
 export default function LandingPage() {
   const { hash } = useLocation();
@@ -39,6 +40,7 @@ export default function LandingPage() {
         </>
       )}
       <Footer />
+      <WhatsAppButton />
     </div>
   );
 }
