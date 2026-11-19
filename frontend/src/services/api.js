@@ -170,6 +170,11 @@ export const apiService = {
     return response.data;
   },
 
+  async submitContactForm(data) {
+    const response = await api.post('/contact/', data);
+    return response.data;
+  },
+
   // ========== Establecimientos (Público) ==========
   async getEstablishments() {
     const response = await api.get('/establishments/');

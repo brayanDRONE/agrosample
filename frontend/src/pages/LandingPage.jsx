@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import HeaderLanding from '../components/landing/HeaderLanding';
 import HeroSection from '../components/landing/HeroSection';
@@ -7,18 +7,24 @@ import PlansSection from '../components/landing/PlansSection';
 import ContactSection from '../components/landing/ContactSection';
 import Footer from '../components/landing/Footer';
 
-const VIEWS = {
-  '#planes': <PlansSection />,
-  '#contacto': <ContactSection />
-};
-
 export default function LandingPage() {
   const { hash } = useLocation();
-  const view = VIEWS[hash];
+  const [selectedContactInterest, setSelectedContactInterest] = useState(null);
+  const view = hash === '#planes'
+    ? <PlansSection />
+    : hash === '#contacto'
+      ? <ContactSection selectedInterest={selectedContactInterest} />
+      : null;
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [hash]);
+
+  useEffect(() => {
+    const onSelectPlan = (event) => setSelectedContactInterest(event.detail);
+    window.addEventListener('agrosample:select-plan', onSelectPlan);
+    return () => window.removeEventListener('agrosample:select-plan', onSelectPlan);
+  }, []);
 
   return (
     <div className="landing-page" style={{ background: 'linear-gradient(180deg, #11242b 0%, #0e1f26 100%)', minHeight: '100vh' }}>

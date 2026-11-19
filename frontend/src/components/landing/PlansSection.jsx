@@ -2,6 +2,42 @@ import React, { useState } from 'react';
 import Icon from './Icon';
 import './PlansSection.css';
 
+const proPeriods = [
+  {
+    id: 'monthly',
+    name: 'Mensual',
+    months: 1,
+    price: 149990,
+    discount: 'Sin descuento',
+    savings: 0,
+    cta: 'Solicitar Pro mensual'
+  },
+  {
+    id: 'semiannual',
+    name: 'Semestral',
+    months: 6,
+    price: 799990,
+    discount: '11,1%',
+    savings: 99950,
+    badge: 'Ideal para temporada',
+    cta: 'Solicitar Pro semestral'
+  },
+  {
+    id: 'annual',
+    name: 'Anual',
+    months: 12,
+    price: 1499990,
+    discount: '16,7%',
+    savings: 299890,
+    badge: 'Mayor ahorro',
+    cta: 'Solicitar Pro anual'
+  }
+];
+
+const formatCLP = (amount) => new Intl.NumberFormat('es-CL', {
+  maximumFractionDigits: 0
+}).format(amount);
+
 const plans = [
   {
     id: 'Free',
@@ -50,7 +86,7 @@ const plans = [
     features: [
       'Acceso a los cuatro módulos',
       '1 usuario por empresa',
-      'Operaciones ilimitadas durante 30 días',
+      'Operaciones ilimitadas durante el período contratado',
       'Impresión personalizada de adhesivos',
       'Diagramación de pallets',
       'Generación de reportes PDF',
@@ -65,7 +101,8 @@ const plans = [
 
 const comparison = [
   { label: 'Usuarios por empresa', values: ['1', '1', '1'] },
-  { label: 'Operaciones permitidas', values: ['2 cada 24 horas', '150 por activación', 'Ilimitadas durante 30 días'] },
+  { label: 'Modalidad de contratación', values: ['Gratis', 'Mensual', 'Mensual, semestral y anual'] },
+  { label: 'Operaciones permitidas', values: ['2 cada 24 horas', '150 por activación', 'Ilimitadas durante el período contratado'] },
   { label: 'Módulo de muestreo', values: ['Limitado', true, true] },
   { label: 'Impresión de adhesivos', values: ['Limitado', true, true] },
   { label: 'Diagramas de pallets', values: ['Limitado', true, true] },
@@ -111,8 +148,9 @@ const faqs = [
   }
 ];
 
-function selectPlan(planId) {
-  window.dispatchEvent(new CustomEvent('agrosample:select-plan', { detail: planId }));
+function selectPlan(planId, proPeriod) {
+  const interest = planId === 'Pro' ? `Pro ${proPeriod.name.toLowerCase()}` : planId;
+  window.dispatchEvent(new CustomEvent('agrosample:select-plan', { detail: interest }));
 }
 
 function Cell({ value }) {
@@ -123,6 +161,8 @@ function Cell({ value }) {
 
 export default function PlansSection() {
   const [openFaq, setOpenFaq] = useState(0);
+  const [selectedProPeriodId, setSelectedProPeriodId] = useState('monthly');
+  const selectedProPeriod = proPeriods.find((period) => period.id === selectedProPeriodId);
 
   return (
     <section id="planes" className="plans-section">
@@ -135,21 +175,63 @@ export default function PlansSection() {
         </div>
 
         <div className="plans-grid">
-          {plans.map((plan) => (
-            <article key={plan.id} className={`plan-card${plan.popular ? ' popular' : ''}`}>
-              {plan.popular && <span className="plan-badge">Más popular</span>}
-              <h3 className="plan-name">{plan.name}</h3>
-              <p className="plan-subtitle">{plan.subtitle}</p>
-              <p className="plan-price">
-                <strong>{plan.price}</strong>
-                <span>{plan.period}</span>
-              </p>
-              <ul className="plan-features">
-                {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
-              </ul>
-              <a href="#contacto" className="plan-button" onClick={() => selectPlan(plan.id)}>{plan.cta}</a>
-            </article>
-          ))}
+          {plans.map((plan) => {
+            const isPro = plan.id === 'Pro';
+            const monthlyEquivalent = isPro
+              ? Math.round(selectedProPeriod.price / selectedProPeriod.months)
+              : null;
+
+            return (
+              <article key={plan.id} className={`plan-card${plan.popular ? ' popular' : ''}`}>
+                {plan.popular && <span className="plan-badge">Más popular</span>}
+                <h3 className="plan-name">{plan.name}</h3>
+                <p className="plan-subtitle">{plan.subtitle}</p>
+
+                {isPro && (
+                  <div className="pro-term-selector" role="group" aria-label="Modalidad de contratación del Plan Pro">
+                    {proPeriods.map((period) => (
+                      <button
+                        key={period.id}
+                        type="button"
+                        className={`pro-term-option${selectedProPeriodId === period.id ? ' active' : ''}`}
+                        aria-pressed={selectedProPeriodId === period.id}
+                        onClick={() => setSelectedProPeriodId(period.id)}
+                      >
+                        <span className="pro-term-name">{period.name}</span>
+                        <span className="pro-term-price">${formatCLP(period.price)}</span>
+                        <span className="pro-term-badge">{period.badge || '\u00a0'}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <p className="plan-price">
+                  <strong>{isPro ? `$${formatCLP(selectedProPeriod.price)}` : plan.price}</strong>
+                  <span>
+                    {isPro
+                      ? `+ IVA · ${selectedProPeriod.months} ${selectedProPeriod.months === 1 ? 'mes' : 'meses'}`
+                      : plan.period}
+                  </span>
+                </p>
+
+                {isPro && (
+                  <div key={selectedProPeriodId} className="pro-price-details" aria-live="polite">
+                    <p><span>Período</span><strong>{selectedProPeriod.months} {selectedProPeriod.months === 1 ? 'mes' : 'meses'}</strong></p>
+                    <p><span>Descuento</span><strong>{selectedProPeriod.discount}</strong></p>
+                    <p><span>Ahorro total</span><strong>${formatCLP(selectedProPeriod.savings)}</strong></p>
+                    <p><span>Equivalente mensual</span><strong>${formatCLP(monthlyEquivalent)}/mes</strong></p>
+                  </div>
+                )}
+
+                <ul className="plan-features">
+                  {plan.features.map((feature) => <li key={feature}>{feature}</li>)}
+                </ul>
+                <a href="#contacto" className="plan-button" onClick={() => selectPlan(plan.id, selectedProPeriod)}>
+                  {isPro ? selectedProPeriod.cta : plan.cta}
+                </a>
+              </article>
+            );
+          })}
         </div>
 
         <div className="compare-wrap">

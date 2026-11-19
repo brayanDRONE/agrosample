@@ -20,6 +20,7 @@ from .views_admin import (
     CurrentUserViewSet
 )
 from . import plan_views
+from .contact_views import ContactSubmissionView
 
 router = DefaultRouter()
 router.register(r'establishments', EstablishmentViewSet, basename='establishment')
@@ -36,6 +37,7 @@ router.register(r'admin/themes', AdminThemeViewSet, basename='admin-themes')
 router.register(r'users/current', CurrentUserViewSet, basename='current-user')
 
 urlpatterns = [
+    path('contact/', ContactSubmissionView.as_view(), name='contact-submit'),
     path('plans/account/', plan_views.account_plan, name='plan-account'),
     path('plans/alert/acknowledge/', plan_views.acknowledge_plan_alert, name='plan-alert-acknowledge'),
     path('plans/reserve/', plan_views.reserve_client_operation, name='plan-reserve'),

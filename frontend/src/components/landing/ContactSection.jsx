@@ -1,35 +1,63 @@
 import React, { useEffect, useState } from 'react';
+import { apiService } from '../../services/api';
 import './ContactSection.css';
 
-const CONTACT_EMAIL = 'brayannunez8@gmail.com';
-const PLAN_OPTIONS = ['Consulta general', 'Free', 'Starter', 'Pro', 'Servicios de implementación'];
+const PLAN_OPTIONS = [
+  'Consulta general',
+  'Free',
+  'Starter',
+  'Pro',
+  'Pro mensual',
+  'Pro semestral',
+  'Pro anual',
+  'Servicios de implementación'
+];
 
-export default function ContactSection() {
+export default function ContactSection({ selectedInterest }) {
   const [form, setForm] = useState({ nombre: '', empresa: '', email: '', telefono: '', interes: PLAN_OPTIONS[0], mensaje: '' });
-  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
-    const onSelectPlan = (event) => setForm((prev) => ({ ...prev, interes: event.detail }));
-    window.addEventListener('agrosample:select-plan', onSelectPlan);
-    return () => window.removeEventListener('agrosample:select-plan', onSelectPlan);
-  }, []);
+    if (PLAN_OPTIONS.includes(selectedInterest)) {
+      setForm((prev) => ({ ...prev, interes: selectedInterest }));
+    }
+  }, [selectedInterest]);
 
-  const update = (field) => (event) => setForm((prev) => ({ ...prev, [field]: event.target.value }));
+  const update = (field) => (event) => {
+    setForm((prev) => ({ ...prev, [field]: event.target.value }));
+    setStatusMessage(null);
+  };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const subject = `Contacto AgroSample.cl - ${form.interes}`;
-    const body = [
-      `Nombre: ${form.nombre}`,
-      `Empresa: ${form.empresa}`,
-      `Correo: ${form.email}`,
-      `Teléfono: ${form.telefono}`,
-      `Interés: ${form.interes}`,
-      '',
-      form.mensaje
-    ].join('\n');
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+    if (sending) return;
+
+    setSending(true);
+    setStatusMessage(null);
+    try {
+      const payload = Object.fromEntries(
+        Object.entries(form).map(([field, value]) => [field, value.trim()])
+      );
+      const result = await apiService.submitContactForm(payload);
+      setStatusMessage({ type: 'success', text: result.message });
+      setForm((prev) => ({
+        ...prev,
+        nombre: '',
+        empresa: '',
+        email: '',
+        telefono: '',
+        mensaje: ''
+      }));
+    } catch (error) {
+      const responseStatus = error.response?.status;
+      const text = responseStatus === 429
+        ? 'Se alcanzó el límite de consultas. Inténtalo nuevamente más tarde.'
+        : error.response?.data?.message || 'No pudimos enviar tu consulta. Inténtalo nuevamente más tarde.';
+      setStatusMessage({ type: 'error', text });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -78,10 +106,16 @@ export default function ContactSection() {
             Mensaje
             <textarea rows="4" required value={form.mensaje} onChange={update('mensaje')} />
           </label>
-          <button type="submit" className="lc-submit">Enviar consulta</button>
-          {sent && (
-            <p className="lc-hint">
-              Se abrió tu aplicación de correo con el mensaje listo. Envíalo para completar tu consulta.
+          <button type="submit" className="lc-submit" disabled={sending}>
+            {sending ? 'Enviando…' : 'Enviar consulta'}
+          </button>
+          {statusMessage && (
+            <p
+              className={`lc-hint lc-hint--${statusMessage.type}`}
+              role={statusMessage.type === 'error' ? 'alert' : 'status'}
+              aria-live="polite"
+            >
+              {statusMessage.text}
             </p>
           )}
         </form>

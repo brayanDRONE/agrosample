@@ -103,6 +103,100 @@
   font-size: 0.85rem;
 }
 
+.pro-term-selector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0 0 1.15rem;
+}
+
+.pro-term-option {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 0.3rem;
+  padding: 0.65rem 0.4rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.22s ease, background-color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.pro-term-option:hover {
+  border-color: rgba(132, 204, 22, 0.7);
+  transform: translateY(-2px);
+}
+
+.pro-term-option.active {
+  border-color: #9af542;
+  background: linear-gradient(160deg, rgba(140, 240, 60, 0.2), rgba(111, 209, 42, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(154, 245, 66, 0.26), 0 0 16px rgba(132, 204, 22, 0.12);
+  color: #ffffff;
+}
+
+.pro-term-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pro-term-price {
+  color: #a4f256;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.pro-term-badge {
+  min-height: 1.7em;
+  color: #d3fca8;
+  font-size: 0.59rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.pro-price-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.75rem;
+  margin: -0.5rem 0 1.2rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  animation: pro-price-change 0.24s ease both;
+}
+
+.pro-price-details p {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  margin: 0;
+}
+
+.pro-price-details span {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.69rem;
+}
+
+.pro-price-details strong {
+  color: #d9ffb5;
+  font-size: 0.78rem;
+}
+
+@keyframes pro-price-change {
+  from { opacity: 0.45; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pro-term-option,
+  .pro-price-details {
+    animation: none;
+    transition: none;
+  }
+}
+
 .plan-features {
   display: grid;
   flex: 1;
@@ -326,6 +420,19 @@
 @media (max-width: 560px) {
   .services-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pro-term-selector {
+    gap: 0.3rem;
+  }
+
+  .pro-term-option {
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+  }
+
+  .pro-term-badge {
+    font-size: 0.55rem;
   }
 }
 
