@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compareOcrReadings, parseOcrNumbers } from './useOcrImageUpload.js';
+import { compareOcrReadings, findTextRowBounds, parseOcrNumbers } from './useOcrImageUpload.js';
+
+test('agrupa píxeles de texto en filas y conserva filas separadas', () => {
+  assert.deepEqual(
+    findTextRowBounds([0, 5, 8, 0, 0, 3, 4, 0, 0, 6], 3, 1),
+    [{ start: 1, end: 2 }, { start: 5, end: 6 }, { start: 9, end: 9 }]
+  );
+});
 
 test('identifica números distintos entre dos lecturas sin mezclarlos', () => {
   const primary = parseOcrNumbers('22 52 848');

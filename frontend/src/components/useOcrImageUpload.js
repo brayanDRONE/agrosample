@@ -44,6 +44,25 @@ export function parseOcrNumbers(rawText) {
   return numbers.sort((a, b) => a - b);
 }
 
+export function findTextRowBounds(rowInkCounts, minInk, maxGap) {
+  const rows = [];
+  let start = null;
+  let end = null;
+
+  for (let y = 0; y < rowInkCounts.length; y++) {
+    if (rowInkCounts[y] < minInk) continue;
+
+    if (start === null || y - end > maxGap + 1) {
+      if (start !== null) rows.push({ start, end });
+      start = y;
+    }
+    end = y;
+  }
+
+  if (start !== null) rows.push({ start, end });
+  return rows;
+}
+
 export function compareOcrReadings(primary, alternative) {
   const primarySet = new Set(primary);
   const alternativeSet = new Set(alternative);
@@ -148,6 +167,74 @@ export function preprocessImageToCanvas(imageFile, scale = 3) {
   });
 }
 
+function blobFromCanvas(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('No se pudo generar la fila preprocesada'));
+    }, 'image/png');
+  });
+}
+
+function splitImageIntoRows(imageBlob, scale) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(imageBlob);
+
+    img.onload = async () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0);
+
+        const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const rowInkCounts = new Array(canvas.height).fill(0);
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            if (data[(y * canvas.width + x) * 4] < 190) rowInkCounts[y]++;
+          }
+        }
+
+        const minInk = Math.max(3, Math.floor(canvas.width * 0.001));
+        const rowBounds = findTextRowBounds(
+          rowInkCounts,
+          minInk,
+          Math.max(2, Math.round(scale * 2.5))
+        );
+        const padding = Math.max(8, Math.round(scale * 5));
+        const rows = await Promise.all(rowBounds.map(async ({ start, end }) => {
+          const top = Math.max(0, start - padding);
+          const bottom = Math.min(canvas.height, end + padding + 1);
+          const rowCanvas = document.createElement('canvas');
+          rowCanvas.width = canvas.width;
+          rowCanvas.height = bottom - top;
+          rowCanvas.getContext('2d').drawImage(
+            canvas,
+            0, top, canvas.width, bottom - top,
+            0, 0, canvas.width, bottom - top
+          );
+          return blobFromCanvas(rowCanvas);
+        }));
+
+        resolve(rows);
+      } catch (error) {
+        reject(error);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('No se pudo cargar la imagen preprocesada'));
+    };
+
+    img.src = url;
+  });
+}
+
 /**
  * Ejecuta OCR sobre un File/Blob de imagen.
  * @param {File} imageFile
@@ -155,29 +242,54 @@ export function preprocessImageToCanvas(imageFile, scale = 3) {
  * @returns {Promise<string[]>} Textos extraídos en las dos lecturas
  */
 export async function runOcr(imageFile, onProgress) {
-  let readingIndex = 0;
+  const progressState = { scaleIndex: 0, rowIndex: 0, rowCount: 1 };
   const worker = await createWorker('eng', 1, {
     logger: (m) => {
       if (m.status === 'recognizing text' && typeof onProgress === 'function') {
-        onProgress(Math.round((readingIndex + m.progress) * 50));
+        const scaleProgress = (
+          progressState.rowIndex + m.progress
+        ) / progressState.rowCount;
+        onProgress(Math.round((progressState.scaleIndex + scaleProgress) * 50));
       }
     },
   });
 
   try {
     await worker.setParameters({
-      // PSM 6: bloque uniforme de texto — ideal para tablas en columnas
+      // PSM 6 preserves the layout when the image has no separate text rows.
       tessedit_pageseg_mode: '6',
-      // Sin whitelist: dejar que Tesseract lea todo y filtrar números en parseOcrNumbers.
-      // El whitelist forzado puede causar que el motor distorsione caracteres.
     });
 
     const readings = [];
-    for (const scale of [3, 3.5]) {
+    for (const [scaleIndex, scale] of [3, 3.5].entries()) {
+      progressState.scaleIndex = scaleIndex;
+      progressState.rowIndex = 0;
       const imageSource = await preprocessImageToCanvas(imageFile, scale);
-      const { data: { text } } = await worker.recognize(imageSource);
-      readings.push(text);
-      readingIndex++;
+      const rowImages = await splitImageIntoRows(imageSource, scale);
+      const imagesToRecognize = rowImages.length > 0 ? rowImages : [imageSource];
+      progressState.rowCount = imagesToRecognize.length;
+
+      const rowTexts = [];
+      for (const rowImage of imagesToRecognize) {
+        if (rowImages.length > 0) {
+          await worker.setParameters({
+            tessedit_pageseg_mode: '7',
+            tessedit_char_whitelist: '0123456789',
+            preserve_interword_spaces: '1',
+          });
+        } else {
+          await worker.setParameters({
+            tessedit_pageseg_mode: '6',
+            tessedit_char_whitelist: '',
+          });
+        }
+
+        const { data: { text } } = await worker.recognize(rowImage);
+        rowTexts.push(text);
+        progressState.rowIndex++;
+      }
+      readings.push(rowTexts.join('\n'));
+      if (typeof onProgress === 'function') onProgress((scaleIndex + 1) * 50);
     }
     return readings;
   } finally {
