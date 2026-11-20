@@ -462,6 +462,40 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+.establishment-password-field {
+  position: relative;
+}
+
+.form-group .establishment-password-field input {
+  width: 100%;
+  padding-right: 48px;
+}
+
+.establishment-password-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  width: 44px;
+  height: 100%;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #4a5568;
+  cursor: pointer;
+}
+
+.establishment-password-toggle:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: -4px;
+}
+
+.establishment-password-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
 .modal-footer {
   display: flex;
   justify-content: flex-end;

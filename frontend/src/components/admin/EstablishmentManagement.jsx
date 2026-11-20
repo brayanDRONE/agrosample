@@ -9,6 +9,16 @@ import apiService from '../../services/api';
 import AdminNavigation, { AdminBrand } from './AdminNavigation';
 import './EstablishmentManagement.css';
 
+function PasswordEye({ visible }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      {!visible && <path d="M4 4 20 20" />}
+    </svg>
+  );
+}
+
 function EstablishmentManagement() {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -21,6 +31,7 @@ function EstablishmentManagement() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [selectedEstablishment, setSelectedEstablishment] = useState(null);
+  const [visiblePasswords, setVisiblePasswords] = useState({ newPassword: false, confirmation: false });
   const [renewPlan, setRenewPlan] = useState('FREE');
   const [formData, setFormData] = useState({
     exportadora: '',
@@ -200,6 +211,7 @@ function EstablishmentManagement() {
 
   const openEditModal = (establishment) => {
     setSelectedEstablishment(establishment);
+    setVisiblePasswords({ newPassword: false, confirmation: false });
     setFormData({
       exportadora: establishment.exportadora || '',
       planta_fruticola: establishment.planta_fruticola || '',
@@ -352,7 +364,7 @@ function EstablishmentManagement() {
                     <td>{est.exportadora || '-'}</td>
                     <td>{est.rut || '-'}</td>
                     <td>{est.encargado_sag || '-'}</td>
-                    <td>{est.admin_user?.username || 'Sin asignar'}</td>
+                    <td>{est.admin_user_details?.username || 'Sin asignar'}</td>
                     <td>{est.phone || '-'}</td>
                     <td>{getStatusBadge(est)}</td>
                     <td>
@@ -655,27 +667,61 @@ function EstablishmentManagement() {
                 </div>
               </div>
 
+              <div className="form-section-title">Cuenta de Acceso</div>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="edit-login-username">Usuario de inicio de sesión</label>
+                  <input id="edit-login-username" type="text" value={selectedEstablishment.admin_user_details?.username || 'Sin asignar'} readOnly />
+                </div>
+              </div>
+
               <div className="form-section-title">Cambiar Contraseña de Acceso</div>
               <p className="form-section-note">Complete estos campos solo si desea asignar una nueva contraseña</p>
               <div className="form-grid">
                 <div className="form-group">
-                  <label>Nueva Contraseña</label>
-                  <input
-                    type="password"
-                    value={formData.admin_password}
-                    onChange={(e) => setFormData({ ...formData, admin_password: e.target.value })}
-                    placeholder="Dejar vacío para mantener la actual"
-                  />
+                  <label htmlFor="edit-new-password">Nueva Contraseña</label>
+                  <div className="establishment-password-field">
+                    <input
+                      id="edit-new-password"
+                      type={visiblePasswords.newPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      value={formData.admin_password}
+                      onChange={(e) => setFormData({ ...formData, admin_password: e.target.value })}
+                      placeholder="Dejar vacío para mantener la actual"
+                    />
+                    <button
+                      type="button"
+                      className="establishment-password-toggle"
+                      aria-label={visiblePasswords.newPassword ? 'Ocultar nueva contraseña' : 'Mostrar nueva contraseña'}
+                      aria-pressed={visiblePasswords.newPassword}
+                      onClick={() => setVisiblePasswords((current) => ({ ...current, newPassword: !current.newPassword }))}
+                    >
+                      <PasswordEye visible={visiblePasswords.newPassword} />
+                    </button>
+                  </div>
                   <small className="field-hint">Mínimo 8 caracteres</small>
                 </div>
                 <div className="form-group">
-                  <label>Repetir Nueva Contraseña</label>
-                  <input
-                    type="password"
-                    value={formData.confirm_password}
-                    onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-                    placeholder="Repita la nueva contraseña"
-                  />
+                  <label htmlFor="edit-confirm-password">Repetir Nueva Contraseña</label>
+                  <div className="establishment-password-field">
+                    <input
+                      id="edit-confirm-password"
+                      type={visiblePasswords.confirmation ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      value={formData.confirm_password}
+                      onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                      placeholder="Repita la nueva contraseña"
+                    />
+                    <button
+                      type="button"
+                      className="establishment-password-toggle"
+                      aria-label={visiblePasswords.confirmation ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'}
+                      aria-pressed={visiblePasswords.confirmation}
+                      onClick={() => setVisiblePasswords((current) => ({ ...current, confirmation: !current.confirmation }))}
+                    >
+                      <PasswordEye visible={visiblePasswords.confirmation} />
+                    </button>
+                  </div>
                   <small className="field-hint">Debe coincidir con la contraseña anterior</small>
                 </div>
               </div>
