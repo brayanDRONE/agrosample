@@ -49,16 +49,23 @@ function MiniIconButton({ label, icon, onClick, disabled }) {
   );
 }
 
-function ResultCard({ title, result }) {
+function ResultCard({ title, result, isCsg = false }) {
   if (!result?.code) return null;
   return (
     <section className="china-result-card">
-      <h3>{title} {result.code ? `· ${result.code}` : ''}</h3>
+      <h3>
+        {title} · {result.code}
+        {isCsg && (
+          <span className="china-result-location">
+            Comuna: {result.commune || 'No verificado'} · Provincia: {result.province || 'No verificado'}
+          </span>
+        )}
+      </h3>
       <div className="china-check-list">
         {result.active !== undefined && <CheckRow label="Activo en SRA" value={result.active} />}
         {result.china_registered !== undefined && <CheckRow label="Inscrito para China" value={result.china_registered} />}
         {result.china_cherry_approved !== undefined && <CheckRow label="ChinaPort · habilitado para cereza" value={result.china_cherry_approved} />}
-        {result.china_approved !== undefined && <CheckRow label="Aprobado para China" value={result.china_approved} />}
+        {!isCsg && result.china_approved !== undefined && <CheckRow label="Aprobado para China" value={result.china_approved} />}
         {result.mosca_campaign_found !== undefined && <CheckRow label="Figura en listado de campañas de mosca" value={result.mosca_campaign_found} />}
         {result.mosca_campaign_current !== undefined && <CheckRow label="Campaña vigente" value={result.mosca_campaign_current} />}
         {result.descolgado_china !== undefined && <CheckRow label="Descolgado para China (cereza)" value={result.descolgado_china} />}
@@ -396,7 +403,7 @@ function CherryChinaValidationContent() {
                   <>
                   <div className="china-results-grid">
                   {(report.results?.csgs || (report.results?.csg ? [report.results.csg] : [])).map((result) => (
-                    <ResultCard key={result.code} title="Huerto (CSG)" result={result} />
+                    <ResultCard key={result.code} title="Huerto (CSG)" result={result} isCsg />
                   ))}
                   {(report.results?.csps || (report.results?.csp?.code ? [report.results.csp] : [])).map((result) => (
                     <ResultCard key={result.code} title="Packing (CSP)" result={result} />

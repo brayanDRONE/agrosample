@@ -252,6 +252,14 @@
   margin: 0 0 14px;
 }
 
+.china-result-location {
+  display: inline-block;
+  margin-left: 10px;
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
 .china-check-row {
   display: flex;
   justify-content: space-between;

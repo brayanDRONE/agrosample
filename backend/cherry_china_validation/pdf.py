@@ -33,13 +33,13 @@ def _p(value, style, color=None):
     return Paragraph(text, style)
 
 
-def _status(value):
+def _status(value, sra=False):
     if isinstance(value, str) and value.upper() == 'NO INGRESADO':
         return 'NO INGRESADO', MUTED
     if value is True:
-        return 'SI', GOOD
+        return ('ACTIVO' if sra else 'SI'), GOOD
     if value is False:
-        return 'NO', BAD
+        return ('INACTIVO' if sra else 'NO'), BAD
     return 'NO VERIFICADO', UNKNOWN
 
 
@@ -61,7 +61,7 @@ def _panel(title, rows, width, styles, accent=BLUE, status_rows=False):
     ]
     for label, value in rows:
         if status_rows:
-            label_text, label_color = _status(value)
+            label_text, label_color = _status(value, sra=label == 'Estado SRA')
             data.append([_p(label, label_style), _p(f'●  {label_text}', value_style, label_color)])
         else:
             data.append([_p(label, label_style), _p(value, value_style)])
@@ -207,8 +207,9 @@ def _csg_overview_panel(csg, width, styles):
     code = csg.get('code') or '-'
     rows = [
         ('Productor', csg.get('producer_name') or 'No verificado'),
-        ('Predio', csg.get('establishment_name') or 'No verificado'),
-        ('Estado SRA', 'ACTIVO' if csg.get('active') is True else ('INACTIVO' if csg.get('active') is False else 'NO VERIFICADO')),
+        ('Provincia', csg.get('province') or 'No verificado'),
+        ('Comuna', csg.get('commune') or 'No verificado'),
+        ('Estado SRA', _status(csg.get('active'), sra=True)[0]),
         ('Inscrito China', _status(csg.get('china_registered'))[0]),
         ('ChinaPort cereza', _status(csg.get('china_cherry_approved'))[0]),
         ('En listado mosca', _status(csg.get('mosca_campaign_found'))[0]),
@@ -324,7 +325,8 @@ def _build_validation_pdf_page(report, results, sources):
         varieties = ', '.join(csg.get('varieties') or []) or 'No verificadas'
         orchard_rows = [
             ('Productor', csg.get('producer_name') or 'No verificado'),
-            ('Predio / establecimiento', csg.get('establishment_name') or 'No verificado'),
+            ('Provincia', csg.get('province') or 'No verificado'),
+            ('Comuna', csg.get('commune') or 'No verificado'),
             ('Especie', 'CEREZA'),
             ('Variedades', varieties),
             ('Producto ChinaPort', csg.get('chinaport_product_name') or 'No verificado'),

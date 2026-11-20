@@ -9,6 +9,7 @@ from django.conf import settings
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
+from .locations import resolve_location
 from .rules import summarize_campaign_rows, summarize_chinaport_rows, summarize_descolgados
 
 
@@ -124,7 +125,7 @@ def _query_sra(page, code):
     if not match:
         return {
             'found': False,
-            'active': False,
+            'active': None,
             'producer_name': '',
             'establishment_name': '',
             'address': '',
@@ -138,7 +139,7 @@ def _query_sra(page, code):
 
     return {
         'found': True,
-        'active': '(ACTIVO)' in status_text and '(INACTIVO)' not in status_text,
+        'active': True if '(ACTIVO)' in status_text else False if '(INACTIVO)' in status_text else None,
         'producer_name': match[2] if len(match) > 2 else '',
         'establishment_name': match[1].split('Dirección:')[0].strip() if len(match) > 1 else '',
         'address': match[1].split('Dirección:', 1)[1].strip() if len(match) > 1 and 'Dirección:' in match[1] else '',
@@ -331,7 +332,7 @@ def _run_single_cherry_china_check(csg='', csp='', csps=None, context=None, page
 
     csp_codes = list(dict.fromkeys(str(code).strip() for code in (csps if csps is not None else ([csp] if csp else [])) if str(code).strip()))
     results = {
-        'csg': {'code': csg or '', 'active': None, 'producer_name': '', 'establishment_name': '', 'species': [], 'varieties': [], 'china_registered': None, 'china_approved': None, 'mosca_campaign_found': None, 'mosca_campaign_current': None, 'mosca_campaigns': [], 'descolgado_china': None, 'descolgados': []},
+        'csg': {'code': csg or '', 'active': None, 'producer_name': '', 'establishment_name': '', 'commune': '', 'province': '', 'species': [], 'varieties': [], 'china_registered': None, 'mosca_campaign_found': None, 'mosca_campaign_current': None, 'mosca_campaigns': [], 'descolgado_china': None, 'descolgados': []},
         'csp': {'code': csp_codes[0] if csp_codes else '', 'china_registered': None, 'china_approved': None, 'mosca_campaign_found': None, 'mosca_campaign_current': None, 'mosca_campaigns': []},
         'csps': [],
         'chinaport': {'csg': None, 'csp': None},
@@ -354,10 +355,13 @@ def _run_single_cherry_china_check(csg='', csp='', csps=None, context=None, page
         for source_page in pages:
             source_page.set_default_timeout(18000)
 
+        sra_address = ''
+        csg_result = {}
         if csg:
             try:
                 sra = _query_sra(page, csg)
                 results['csg'].update({key: sra[key] for key in ('active', 'producer_name', 'establishment_name', 'species', 'varieties')})
+                sra_address = sra.get('address', '')
                 sources.append({'name': 'SRA', 'status': 'ok', 'found': sra['found']})
             except Exception:
                 sources.append(_source_failure('SRA'))
@@ -365,10 +369,11 @@ def _run_single_cherry_china_check(csg='', csp='', csps=None, context=None, page
             try:
                 csg_result = _query_china_powerbi(china_page, CHINA_PBI_URL, csg, 'CSG Inscritos', 'CSG')
                 results['csg']['china_registered'] = csg_result['found']
-                results['csg'].update({key: csg_result[key] for key in ('region', 'commune') if key in csg_result})
+                results['csg']['region'] = csg_result.get('region', '')
                 sources.append({'name': 'China-CSG', 'status': 'ok', 'found': csg_result['found']})
             except Exception:
                 sources.append(_source_failure('China-CSG'))
+            results['csg'].update(resolve_location(sra_address, csg_result.get('commune', ''), csg_result.get('region', '')))
         csp_results_by_code = {}
         for csp_code in csp_codes:
             csp_result = {

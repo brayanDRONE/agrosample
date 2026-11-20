@@ -13,12 +13,14 @@ from rest_framework.test import APIClient
 from inspections.models import Establishment, UserProfile
 from inspections.plan_usage import PlanUsageError, assign_plan, finish_usage, reserve_usage
 
+from .locations import resolve_location
 from .models import CherryChinaReport
 from .pdf import build_validation_pdf
 from .quota import get_account_quota, reserve_report
 from .rules import summarize_campaign_rows, summarize_chinaport_rows, summarize_descolgados
 from .sources import (
     _map_powerbi_row,
+    _run_single_cherry_china_check,
     map_descolgados_cells,
     parse_cherry_species,
     run_cherry_china_checks,
@@ -110,6 +112,77 @@ class CherryChinaQuotaTests(TestCase):
 
 
 class CherryChinaSourceRuleTests(TestCase):
+    def test_location_uses_sra_address_and_official_province(self):
+        self.assertEqual(
+            resolve_location('Parcela 4, Sector Norte, MALLOA, DEL LIBERTADOR GRAL. BERNARDO O HIGGINS', 'Malloa', "Libertador General Bernardo O'Higgins"),
+            {'commune': 'Malloa', 'province': 'Cachapoal'},
+        )
+        self.assertEqual(
+            resolve_location('', 'VICUNA', 'Coquimbo'),
+            {'commune': 'Vicuña', 'province': 'Elqui'},
+        )
+
+    def test_location_does_not_guess_missing_conflicting_or_ambiguous_values(self):
+        unknown = {'commune': '', 'province': ''}
+        self.assertEqual(resolve_location('Parcela desconocida'), unknown)
+        self.assertEqual(resolve_location('Parcela, Malloa, Región de Coquimbo'), unknown)
+        self.assertEqual(resolve_location('Parcela, Malloa, Libertador General Bernardo O Higgins', 'Rancagua', "Libertador General Bernardo O'Higgins"), unknown)
+        duplicate = [
+            {'commune': 'Ejemplo', 'province': 'Una', 'region': 'Maule'},
+            {'commune': 'Ejemplo', 'province': 'Otra', 'region': 'Coquimbo'},
+        ]
+        with patch('cherry_china_validation.locations._territorial_codes', return_value=duplicate):
+            self.assertEqual(resolve_location('', 'Ejemplo'), unknown)
+            self.assertEqual(resolve_location('', 'Ejemplo', 'Maule'), {'commune': 'Ejemplo', 'province': 'Una'})
+
+    @patch('cherry_china_validation.sources._query_chinaport', return_value={'verified': True, 'found': True})
+    @patch('cherry_china_validation.sources._query_descolgados', return_value=None)
+    @patch('cherry_china_validation.sources._query_mosca_tab', return_value={'found': False, 'current': False, 'campaigns': []})
+    @patch('cherry_china_validation.sources._query_china_powerbi')
+    @patch('cherry_china_validation.sources._query_sra')
+    def test_source_results_include_location_and_keep_csp_approval(self, sra, powerbi, mosca, descolgados, chinaport):
+        sra.return_value = {
+            'found': True, 'active': True, 'producer_name': 'Productor', 'establishment_name': 'Huerto',
+            'address': 'Parcela, Malloa, Libertador General Bernardo O Higgins', 'species': [], 'varieties': [],
+        }
+        powerbi.side_effect = [
+            {'found': True, 'commune': 'Malloa', 'region': "Libertador General Bernardo O'Higgins"},
+            {'found': True},
+            {'found': False},
+        ]
+        results, _ = _run_single_cherry_china_check(
+            '176264', '175848', context=MagicMock(), pages=(MagicMock(), MagicMock(), MagicMock()),
+        )
+        self.assertEqual(results['csg']['commune'], 'Malloa')
+        self.assertEqual(results['csg']['province'], 'Cachapoal')
+        self.assertNotIn('china_approved', results['csg'])
+        self.assertIs(results['csp']['china_approved'], False)
+
+    def test_pdf_shows_sra_states_and_location_for_single_and_multiple_csgs(self):
+        report = SimpleNamespace(pk=99, csg='176264', csp='', csgs=['176264', '176265'])
+        csgs = [
+            {'code': '176264', 'active': True, 'province': 'Cachapoal', 'commune': 'Malloa', 'establishment_name': 'Predio secreto'},
+            {'code': '176265', 'active': False, 'province': 'Elqui', 'commune': 'Vicuña'},
+        ]
+        for subjects in (csgs[:1], csgs):
+            pdf_bytes = build_validation_pdf(report, {'csg': subjects[0], 'csgs': subjects}, [])
+            with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
+                text = '\n'.join(page.extract_text() or '' for page in pdf.pages)
+            self.assertIn('ACTIVO', text)
+            self.assertRegex(text, r'Estado SRA\s+(?:\S+\s+)?ACTIVO\b')
+            self.assertIn('Cachapoal', text)
+            self.assertIn('Malloa', text)
+            self.assertNotIn('Predio secreto', text)
+            if len(subjects) > 1:
+                self.assertRegex(text, r'Estado SRA\s+INACTIVO\b')
+                self.assertIn('Vicuña', text)
+        for state, expected in ((False, 'INACTIVO'), (None, 'NO VERIFICADO')):
+            subject = {'code': '176264', 'active': state}
+            pdf_bytes = build_validation_pdf(report, {'csg': subject, 'csgs': [subject]}, [])
+            with pdfplumber.open(BytesIO(pdf_bytes)) as pdf:
+                text = '\n'.join(page.extract_text() or '' for page in pdf.pages)
+            self.assertRegex(text, rf'Estado SRA\s+\S+\s+{expected}\b')
+
     def test_pdf_places_two_csgs_on_each_letter_page(self):
         csgs = [
             {'code': code, 'producer_name': f'Productor {code}', 'establishment_name': f'Predio {code}', 'active': True, 'species': ['CEREZA'], 'varieties': ['BING'], 'mosca_campaigns': [], 'descolgado_china': False, 'descolgados': []}
