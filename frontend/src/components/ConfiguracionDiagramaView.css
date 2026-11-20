@@ -34,7 +34,7 @@
   align-items: center;
   padding: 24px 32px;
   border-bottom: 2px solid #e5e7eb;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: var(--theme-gradient);
   color: white;
   border-radius: 16px 16px 0 0;
 }
@@ -65,15 +65,15 @@
 /* Info alert */
 .configuracion-info {
   padding: 20px 32px;
-  background: #eff6ff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--surface-soft);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .info-alert {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  color: #1e40af;
+  color: var(--theme-secondary);
 }
 
 .info-alert svg {
@@ -90,6 +90,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 16px 32px;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
@@ -117,13 +119,21 @@
 .config-table-container {
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .config-table {
   width: 100%;
+  min-width: 760px;
+  table-layout: fixed;
   border-collapse: collapse;
 }
+
+.config-table th:nth-child(1) { width: 14%; }
+.config-table th:nth-child(2) { width: 18%; }
+.config-table th:nth-child(3) { width: 18%; }
+.config-table th:nth-child(4) { width: 34%; }
+.config-table th:nth-child(5) { width: 16%; }
 
 .config-table thead {
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
@@ -158,13 +168,13 @@
 }
 
 .pallet-number-cell {
-  width: 20%;
+  white-space: nowrap;
 }
 
 .pallet-badge {
   display: inline-block;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: var(--theme-gradient);
   color: white;
   font-weight: 700;
   font-size: 0.9em;
@@ -173,9 +183,12 @@
 
 .config-input {
   width: 100%;
+  min-width: 0;
   padding: 10px 14px;
   border: 2px solid #d1d5db;
   border-radius: 6px;
+  background: #fff;
+  color: var(--text-primary);
   font-size: 1em;
   font-weight: 600;
   transition: all 0.2s ease;
@@ -183,8 +196,8 @@
 
 .config-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb), 0.15);
 }
 
 .config-input::placeholder {
@@ -194,7 +207,6 @@
 
 .total-cell {
   text-align: center;
-  width: 15%;
 }
 
 .total-badge {
@@ -209,7 +221,7 @@
 }
 
 .total-badge.has-value {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: var(--theme-gradient);
   color: white;
 }
 
@@ -292,14 +304,14 @@
   cursor: not-allowed;
 }
 
-.btn-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+.configuracion-modal .btn-success {
+  background: var(--theme-gradient);
   color: white;
 }
 
-.btn-success:hover:not(:disabled) {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+.configuracion-modal .btn-success:hover:not(:disabled) {
+  background: var(--theme-secondary);
+  box-shadow: 0 4px 12px rgba(var(--theme-primary-rgb), 0.3);
 }
 
 .btn-secondary {
@@ -389,7 +401,7 @@
 .distribucion-template {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .template-badge {
@@ -398,12 +410,14 @@
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #1e40af;
+  flex-wrap: wrap;
+  min-width: 0;
+  background: var(--surface-soft);
+  color: var(--theme-secondary);
   font-weight: 600;
   font-size: 0.9em;
   border-radius: 6px;
-  border: 1px solid #93c5fd;
+  border: 1px solid var(--border-color);
 }
 
 .distribucion-personalizada {
@@ -434,9 +448,12 @@
 
 .cara-input {
   flex: 1;
+  min-width: 0;
   padding: 6px 10px;
   border: 2px solid #d1d5db;
   border-radius: 4px;
+  background: #fff;
+  color: var(--text-primary);
   font-size: 0.9em;
   font-weight: 600;
   transition: all 0.2s ease;
@@ -444,8 +461,8 @@
 
 .cara-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 2px rgba(var(--theme-primary-rgb), 0.15);
 }
 
 .btn-icon {
@@ -466,14 +483,14 @@
 }
 
 .btn-edit {
-  color: #3b82f6;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  color: var(--theme-secondary);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-color);
 }
 
 .btn-edit:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
+  background: var(--gray-200);
+  border-color: var(--theme-primary);
 }
 
 .btn-remove {

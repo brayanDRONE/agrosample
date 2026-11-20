@@ -532,22 +532,24 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
                       </td>
                       <td>
                         <input
-                          type="number"
-                          min="1"
+                          type="text"
+                          inputMode="numeric"
                           value={config.base}
-                          onChange={(e) => handleConfigChange(index, 'base', e.target.value)}
+                          onChange={(e) => handleConfigChange(index, 'base', e.target.value.replace(/\D/g, ''))}
                           placeholder="Ej: 8"
                           className="config-input"
+                          aria-label={`Base del pallet ${config.numero_pallet}`}
                         />
                       </td>
                       <td>
                         <input
-                          type="number"
-                          min="1"
+                          type="text"
+                          inputMode="numeric"
                           value={config.cantidad_cajas}
-                          onChange={(e) => handleConfigChange(index, 'cantidad_cajas', e.target.value)}
+                          onChange={(e) => handleConfigChange(index, 'cantidad_cajas', e.target.value.replace(/\D/g, ''))}
                           placeholder="Ej: 28"
                           className="config-input"
+                          aria-label={`Cantidad de cajas del pallet ${config.numero_pallet}`}
                         />
                       </td>
                       <td>
@@ -579,11 +581,12 @@ function ConfiguracionDiagramaView({ inspection: inspectionProp, onConfigured, o
                                   <div key={caraIdx} className="cara-input-group">
                                     <label className="cara-label">Cara {String.fromCharCode(65 + caraIdx)}</label>
                                     <input
-                                      type="number"
-                                      min="1"
+                                      type="text"
+                                      inputMode="numeric"
                                       value={cols}
-                                      onChange={(e) => handleDistribucionChange(index, caraIdx, e.target.value)}
+                                      onChange={(e) => handleDistribucionChange(index, caraIdx, e.target.value.replace(/\D/g, ''))}
                                       className="cara-input"
+                                      aria-label={`Cara ${String.fromCharCode(65 + caraIdx)} del pallet ${config.numero_pallet}`}
                                     />
                                     {distribucion.length > 1 && (
                                       <button

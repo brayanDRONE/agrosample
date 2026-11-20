@@ -699,19 +699,6 @@
   background: #f9fafb;
 }
 
-.ocr-disagreement {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px;
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
-  background: #fffbeb;
-  color: #78350f;
-  font-size: 0.85rem;
-  overflow-wrap: anywhere;
-}
-
 .ocr-preview-stats {
   display: flex;
   gap: 8px;
