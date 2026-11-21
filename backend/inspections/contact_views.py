@@ -13,6 +13,36 @@ from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
+RESEND_ERROR_TYPES = {
+    'invalid_permission', 'restricted_api_key', 'suspended_api_key', 'validation_error',
+    'missing_api_key', 'rate_limit_exceeded', 'application_error', 'service_unavailable',
+}
+
+
+def _resend_error_details(error):
+    try:
+        body = json.loads(error.read(16384))
+    except (ValueError, UnicodeDecodeError):
+        return 'unrecognized_response', 'unknown'
+    if not isinstance(body, dict):
+        return 'unrecognized_response', 'unknown'
+    error_type = body.get('name')
+    if not isinstance(error_type, str) or error_type not in RESEND_ERROR_TYPES:
+        error_type = 'unknown'
+    message = str(body.get('message', '')).lower()
+    reason = 'unknown'
+    if 'only send testing emails' in message:
+        reason = 'test_sender_restriction'
+    elif 'domain' in message and 'not verified' in message:
+        reason = 'domain_not_verified'
+    elif 'api key' in message and 'not active' in message:
+        reason = 'api_key_inactive'
+    elif 'api key' in message and 'suspended' in message:
+        reason = 'api_key_suspended'
+    elif 'missing required scopes' in message:
+        reason = 'missing_scopes'
+    return error_type, reason
+
 
 class ContactSubmissionSerializer(serializers.Serializer):
     nombre = serializers.CharField(max_length=100)
@@ -89,7 +119,11 @@ class ContactSubmissionView(APIView):
                     logger.error('Resend returned an unexpected status: %s', response.status)
                     return self._send_failed_response()
         except HTTPError as error:
-            logger.warning('Resend rejected a contact email with status %s.', error.code)
+            error_type, reason = _resend_error_details(error)
+            logger.warning(
+                'Resend rejected a contact email with status %s, type %s, reason %s.',
+                error.code, error_type, reason,
+            )
             return self._send_failed_response()
         except (URLError, TimeoutError):
             logger.exception('Could not reach Resend to send a contact email.')

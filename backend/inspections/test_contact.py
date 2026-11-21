@@ -72,10 +72,32 @@ class ContactSubmissionTests(SimpleTestCase):
             fp=BytesIO(b'provider details'),
         )
 
-        response = self.client.post('/api/contact/', self.payload, format='json')
+        with self.assertLogs('inspections.contact_views', level='WARNING') as logs:
+            response = self.client.post('/api/contact/', self.payload, format='json')
 
         self.assertEqual(response.status_code, 502)
+        self.assertIn('unrecognized_response', logs.output[0])
         self.assertEqual(
             response.data['message'],
             'No pudimos enviar tu consulta. Inténtalo nuevamente más tarde.',
         )
+
+    @patch('inspections.contact_views.urlopen')
+    def test_logs_only_safe_provider_error_classification(self, urlopen):
+        urlopen.side_effect = HTTPError(
+            'https://api.resend.com/emails',
+            403,
+            'Forbidden',
+            hdrs=None,
+            fp=BytesIO(json.dumps({
+                'name': 'validation_error',
+                'message': 'The private.example.com domain is not verified.',
+            }).encode()),
+        )
+        with self.assertLogs('inspections.contact_views', level='WARNING') as logs:
+            response = self.client.post('/api/contact/', self.payload, format='json')
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn('validation_error', logs.output[0])
+        self.assertIn('domain_not_verified', logs.output[0])
+        self.assertNotIn('private.example.com', logs.output[0])
