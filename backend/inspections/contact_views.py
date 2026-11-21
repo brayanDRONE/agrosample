@@ -109,6 +109,7 @@ class ContactSubmissionView(APIView):
             headers={
                 'Authorization': f'Bearer {settings.RESEND_API_KEY}',
                 'Content-Type': 'application/json',
+                'User-Agent': 'AgroSample/1.0',
             },
             method='POST',
         )

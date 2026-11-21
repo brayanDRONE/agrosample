@@ -39,6 +39,7 @@ class ContactSubmissionTests(SimpleTestCase):
         resend_request = urlopen.call_args.args[0]
         self.assertEqual(resend_request.full_url, 'https://api.resend.com/emails')
         self.assertEqual(resend_request.get_header('Authorization'), 'Bearer test-resend-key')
+        self.assertEqual(resend_request.get_header('User-agent'), 'AgroSample/1.0')
         resend_payload = json.loads(resend_request.data)
         self.assertEqual(resend_payload['to'], ['inbox@example.com'])
         self.assertEqual(resend_payload['reply_to'], 'ana@example.com')
