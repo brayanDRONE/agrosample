@@ -4,6 +4,7 @@ import './HeaderLanding.css';
 
 const NAV = [
   { hash: '', label: 'Inicio' },
+  { hash: '#videos', label: 'Videos' },
   { hash: '#planes', label: 'Planes' },
   { hash: '#contacto', label: 'Contacto' }
 ];

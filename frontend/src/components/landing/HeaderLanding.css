@@ -100,13 +100,32 @@
 }
 
 @media (max-width: 900px) {
-  .header-subtitle,
-  .nav-link {
+  .header-subtitle {
     display: none;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 650px) {
+  .header-landing-content {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .header-nav {
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .nav-link,
+  .btn-access {
+    font-size: 0.8rem;
+  }
+
+  .btn-access {
+    padding: 0.45rem 0.65rem;
+  }
+
   .header-title {
     font-size: 1.25rem;
   }
